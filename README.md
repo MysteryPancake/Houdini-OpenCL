@@ -26,7 +26,7 @@ Some people get tempted to use OpenCL just because it's fast. While OpenCL is fa
 
 Like VEX, OpenCL supports multithreading so the performance of VEX and OpenCL are similar. OpenCL is only faster if you write code that takes advantage of what it does well.
 
-To write good OpenCL code, it helps to know how OpenCL runs operations.
+To take advantage of OpenCL fully, you must know how OpenCL runs operations.
 
 ## How OpenCL runs operations
 
