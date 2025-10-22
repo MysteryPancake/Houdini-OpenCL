@@ -30,9 +30,9 @@ To take advantage of OpenCL fully, you must know how OpenCL runs operations.
 
 ## How OpenCL runs operations
 
-OpenCL runs in parallel, so operations don't normally run in order.
+OpenCL runs in parallel, so operations never run in order.
 
-This makes OpenCL a bad choice for any algorithm that must run in order. Such algorithms should be run in VEX instead.
+This makes OpenCL a bad choice for any algorithm that requires order. Such algorithms should be run in VEX instead.
 
 A regular for loop would run in series:
 
