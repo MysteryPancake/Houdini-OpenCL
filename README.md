@@ -24,13 +24,15 @@ It's much faster than VEX at certain tasks, like feedback loops (Attribute Blur)
 
 Some people get tempted to use OpenCL just because it's fast. While OpenCL is fast, it's painful to use and easy to cause memory leaks if you don't know programming well. For this reason you should only use OpenCL when absolutely necessary. Otherwise it's better to use VEX.
 
-Like VEX, OpenCL supports multithreading so the performance of VEX and OpenCL are generally similar. OpenCL is only faster if you write code that takes advantage of what it does well. To do this, it helps to know how OpenCL runs operations.
+Like VEX, OpenCL supports multithreading so the performance of VEX and OpenCL are similar. OpenCL is only faster if you write code that takes advantage of what it does well.
 
-## How OpenCL runs
+To write good OpenCL code, it helps to know how OpenCL runs operations.
+
+## How OpenCL runs operations
 
 OpenCL runs in parallel, so operations don't normally run in order.
 
-This makes OpenCL a bad choice for any algorithm that must run in order. These algorithms should be run in VEX instead.
+This makes OpenCL a bad choice for any algorithm that must run in order. Such algorithms should be run in VEX instead.
 
 A regular for loop would run in series:
 
@@ -41,5 +43,10 @@ A regular for loop would run in series:
 OpenCL runs in parallel, so it runs in chunks instead. If each chunk was 4 numbers long, it might run in this order:
 
 ```c
+// Chunk 0    | Chunk 1   | Chunk 2       | Chunk 3
 8, 9, 10, 11, 0, 1, 2, 3, 12, 13, 14, 15, 4, 5, 6, 7
 ```
+
+The chunks are called **local workgroups**. Each **local workgroup** is part of a **global workgroup**. Each number is called a **workitem**.
+
+<img src="./images/opencl_workgroups.png"></img>
