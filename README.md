@@ -53,7 +53,7 @@ OpenCL runs in parallel, so it runs in chunks instead. If each chunk was 4 numbe
 
 <img src="./images/opencl_workgroups.png">
 
-As you'd expect, you can access the [offset and size](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for these things.
+As you'd expect, you can access the offset and size for these things.
 
 ```c
 // Offsets
@@ -67,9 +67,9 @@ int local_size = get_local_size(0);
 int num_groups = get_num_groups(0);
 ```
 
-Often there's only one global workgroup, but there can be many.
+[Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
 
-For example if you use worksets, it runs the same kernel multiple times, so it's like having multiple global workgroups.
+Often there's only one global workgroup, but there can be many. For example if you use worksets, it runs the same kernel multiple times, so it's like having multiple global workgroups.
 
 <img src="./images/multiple_global_workgroups.png" width="500">
 
