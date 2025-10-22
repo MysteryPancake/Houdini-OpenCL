@@ -47,6 +47,16 @@ OpenCL runs in parallel, so it runs in chunks instead. If each chunk was 4 numbe
 8, 9, 10, 11, 0, 1, 2, 3, 12, 13, 14, 15, 4, 5, 6, 7
 ```
 
-The chunks are called **local workgroups**. Each **local workgroup** is part of a **global workgroup**. Each number is called a **workitem**.
+- Each number is called a **workitem**.
+- Chunks are called **local workgroups**. 
+- Each **local workgroup** is part of a **global workgroup**. 
 
 <img src="./images/opencl_workgroups.png"></img>
+
+Like you'd expect, there's a number for the offset and size of each of these things.
+
+```c
+int global_id = get_global_id(0); // Use @elemnum if using @ bindings
+int local_id = get_local_id(0);
+int group_id = get_group_id(0);
+```
