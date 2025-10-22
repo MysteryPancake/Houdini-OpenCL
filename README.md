@@ -47,16 +47,30 @@ OpenCL runs in parallel, so it runs in chunks instead. If each chunk was 4 numbe
 8, 9, 10, 11, 0, 1, 2, 3, 12, 13, 14, 15, 4, 5, 6, 7
 ```
 
-- Each number is called a **workitem**.
-- Chunks are called **local workgroups**. 
-- Each **local workgroup** is part of a **global workgroup**. 
+- Each number is called a **workitem**. `0` is a workitem.
+- Chunks are called **local workgroups**. `8, 9, 10, 11` is a **local workgroup** of size 4.
+- Each **local workgroup** is part of a **global workgroup**. Though unspecified, assume the above is in global workgroup `0`.
 
-<img src="./images/opencl_workgroups.png"></img>
+<img src="./images/opencl_workgroups.png">
 
-Like you'd expect, there's a number for the offset and size of each of these things.
+As you'd expect, you can access the [offset and size](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for these things.
 
 ```c
+// Offsets
 int global_id = get_global_id(0); // Use @elemnum if using @ bindings
 int local_id = get_local_id(0);
 int group_id = get_group_id(0);
+
+// Sizes
+int global_size = get_global_size(0);
+int local_size = get_local_size(0);
+int num_groups = get_num_groups(0);
 ```
+
+Often there's only one global workgroup, but there can be many.
+
+For example if you use worksets, it runs the same kernel multiple times, so it's like having multiple global workgroups.
+
+<img src="./images/multiple_global_workgroups.png" width="500">
+
+<img src="./images/multiple_global_workgroups2.png">
