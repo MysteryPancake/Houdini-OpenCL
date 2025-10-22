@@ -49,7 +49,7 @@ OpenCL runs in parallel, so it runs in chunks instead. If each chunk was 4 numbe
 
 - Each number is called a **workitem**. `0` is a workitem.
 - Chunks are called **local workgroups**. `8, 9, 10, 11` is a **local workgroup** of size 4.
-- Each **local workgroup** is part of a **global workgroup**. Though unspecified, assume the above is in global workgroup `0`.
+- Each **local workgroup** is part of a **global workgroup**. All of the above could be in a single global workgroup `0`.
 
 <img src="./images/opencl_workgroups.png">
 
