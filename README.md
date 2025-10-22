@@ -57,12 +57,12 @@ As you'd expect, you can access the [offset and size](https://registry.khronos.o
 
 ```c
 // Offsets
-int global_id = get_global_id(0); // Use @elemnum if using @ bindings
+int global_id = get_global_id(0); // @elemnum when using @ bindings
 int local_id = get_local_id(0);
 int group_id = get_group_id(0);
 
 // Sizes
-int global_size = get_global_size(0);
+int global_size = get_global_size(0); // @attr.len when using @ bindings
 int local_size = get_local_size(0);
 int num_groups = get_num_groups(0);
 ```
