@@ -320,7 +320,7 @@ The same idea applies to most other vector types, such as vector4 (quaternion) a
 
 ```cpp
 // Read a vector4 (quaternion) attribute
-float4 orient = vload3(idx, orient_array);
+float4 orient = vload4(idx, orient_array);
 
 // Write a vector4 (quaternion) attribute
 vstore3(orient, idx, orient_array);
