@@ -177,7 +177,7 @@ VEX automatically binds these, thanks to the Autobind feature enabled by default
 
 <img src="./images/vex_autobind.png" width="400">
 
-OpenCL doesn't have this feature, we need to bind them manually. To do this, add an OpenCL node and go to the "Bindings" tab.
+OpenCL doesn't have this feature, we need to bind them manually. This is done in the "Bindings" tab.
 
 #### Binding `v@P`
 
