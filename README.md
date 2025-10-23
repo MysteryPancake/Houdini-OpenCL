@@ -309,7 +309,7 @@ There are various solutions to this:
 
 1. Design your code to avoid this problem to begin with [(for example using worksets)](#worksets-in-opencl)
 2. [Use atomic operations](https://registry.khronos.org/OpenCL/extensions/ext/cl_ext_float_atomics.html)
-3. [Use memory fences](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
+3. [Use memory fences (barriers)](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
 
 ## Worksets in OpenCL
 
