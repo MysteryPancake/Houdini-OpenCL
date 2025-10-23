@@ -64,8 +64,9 @@ OpenCL runs in parallel, using chunks instead. If each chunk was 4 items long, i
 ```
 
 - Chunks are called **local workgroups**. `8, 9, 10, 11` is a **local workgroup** of size 4.
-- Each **local workgroup** is part of a **global workgroup**. All of these numbers could be in global workgroup `0`.
+- Each **local workgroup** is part of a **global workgroup**. All of these numbers could be in **global workgroup** `0`.
 - Each number is called a **workitem**. `0` is a workitem.
+- Each **workitem** runs code contained within a **kernel**.
 
 <img src="./images/opencl_workgroups.png">
 
@@ -89,7 +90,7 @@ int num_groups = get_num_groups(0);
 
 OpenCL supports varying precision for all data types, just like VEX. Data can be 16-bit (half), 32-bit (float) or 64-bit (double).
 
-Varying precision requires rewriting your code to use varying types.
+Varying precision requires rewriting your code to use different variable types.
 
 - `int, float, float3, float4` all use 32-bit precision. This may not be enough for sensitive operations.
 - `exint, fpreal, fpreal3, fpreal4` are new types defined by SideFX with automatically varying precision.
@@ -191,11 +192,11 @@ This causes a race condition. One workitem will take priority and god knows whic
 
 There are various solutions to this:
 
-1. Design your code to avoid this problem to begin with [(for example using worksets)](#1-worksets-in-opencl)
+1. Design your code to avoid this problem to begin with [(for example using worksets)](#worksets-in-opencl)
 2. [Use atomic operations](https://registry.khronos.org/OpenCL/extensions/ext/cl_ext_float_atomics.html)
 3. [Use memory fences](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
 
-### 1. Worksets in OpenCL
+## Worksets in OpenCL
 
 When reads and writes overlap, you can avoid race conditions by breaking the operation into sections of data that don't affect eachother.
 
@@ -219,7 +220,7 @@ I think of it like multiple global workgroups. This diagram isn't correct though
 
 <img src="./images/multiple_global_workgroups2.png">
 
-## Fix "1 warning generated"
+## Fix "1 warning generated" errors
 
 Sometimes OpenCL spams the message "1 warning generated", but doesn't spam the actual warning.
 
@@ -229,13 +230,11 @@ Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
 
 ## Where to find OpenCL resources
 
-Houdini doesn't have many OpenCL resources apart from [OpenCL for VEX Users](https://www.sidefx.com/docs/houdini/vex/ocl.html).
-
 I recommend checking the Houdini files for examples. The `houdini/ocl` folder in your Houdini folder contains tons of OpenCL files.
 
 ```cpp
 // Type this in any text field to evaluate the path
-// On Windows: C:/Program Files/Side Effects Software/Houdini <VERSION>/houdini/ocl
+// On Windows: C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl
 $HH/ocl
 ```
 
@@ -245,7 +244,7 @@ This is also where you find helper libraries, such as the matrix library `matrix
 
 ```cpp
 // Type this in any text field to evaluate the path
-// On Windows: C:/Program Files/Side Effects Software/Houdini <VERSION>/houdini/ocl/include/matrix.h
+// On Windows: C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl/include/matrix.h
 $HH/ocl/include/matrix.h
 
 // To include a library located in houdini/ocl/include:
@@ -254,6 +253,12 @@ $HH/ocl/include/matrix.h
 // To include files in other directories:
 #include "../sim/vbd_energy.cl"
 ```
+
+There's some other tutorials online, but they may not use the most up-to-date syntax:
+
+- [OpenCL for VEX Users](https://www.sidefx.com/docs/houdini/vex/ocl.html)
+- [OpenCL COP for VEX Users](https://www.sidefx.com/tutorials/opencl-cop-for-vex-users/)
+- [OpenCL Masterclass (old but functional)](https://www.sidefx.com/tutorials/houdini-165-masterclass-opencl/)
 
 Another place to look is Copernicus. Some Copernicus nodes contain OpenCL nodes with embedded code inside them.
 
