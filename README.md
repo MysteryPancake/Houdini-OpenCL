@@ -113,7 +113,9 @@ This only affects the loop range, not data access. You can write a totally diffe
 
 ## Precision
 
-OpenCL supports varying precision for all data types, just like VEX. Data can be 16-bit (half), 32-bit (float) or 64-bit (double).
+OpenCL supports varying precision for all data types, just like VEX.
+
+Data can be 16-bit (half), 32-bit (float) or 64-bit (double).
 
 Varying precision requires rewriting your code to use different variable types.
 
