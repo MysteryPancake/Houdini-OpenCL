@@ -560,7 +560,7 @@ inline void atomicAddFloatCAS(volatile __global float *addr, float v)
 }
 ```
 
-The total sum is stored in a `@Psum` variable, which I used to add together the eigenvectors.
+The total sum is stored in a `@Psum` attribute. It scales the amplitude in the feedback loop below.
 
 ```cpp
 #bind point &P fpreal3
@@ -569,9 +569,9 @@ The total sum is stored in a `@Psum` variable, which I used to add together the 
 
 @KERNEL
 {
-     //
+     // Feedback loop, this should only run over @eigenvector entries in total
      if (@iteration >= @eigenvector.len) return;
-     
+
      fpreal x = @eigenvector.compAt(@iteration, @elemnum);
      fpreal3 total = @Psum.getAt(0);
      fpreal offset = (fpreal)@iteration / (@max_frequency - 1);
