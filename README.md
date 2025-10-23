@@ -26,7 +26,7 @@ OpenCL is only faster if you write code that takes advantage of it. This require
 
 As you'll see on this page, OpenCL is painful to use. For this reason, I recommend always using VEX instead of OpenCL unless absolutely necessary.
 
-## OpenCL strengths
+## Strengths
 
 OpenCL is simple and can be the fastest language when used correctly. It's similar to VEX since they're both C-style languages.
 
@@ -34,7 +34,7 @@ While VEX only runs on the CPU, OpenCL can run on the GPU, CPU and any other dev
 
 OpenCL is much faster than VEX at certain tasks, like feedback loops (Attribute Blur) and anything involving neighbours (Vellum). It's commonly found in solvers and used for image processing in Copernicus.
 
-## OpenCL weaknesses
+## Weaknesses
 
 OpenCL is painful to use and it's easy to cause memory leaks and crash Houdini if you don't know programming. For this reason, you should only use OpenCL when absolutely necessary.
 
@@ -86,7 +86,7 @@ int num_groups = get_num_groups(0);
 
 [Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
 
-## OpenCL precision
+## Precision
 
 OpenCL supports varying precision for all data types, just like VEX. Data can be 16-bit (half), 32-bit (float) or 64-bit (double).
 
@@ -184,7 +184,7 @@ This is exactly what @-bindings use. They replace `@P` with the equivalent OpenC
 
 <img src="./images/at_bindings.png" width="900">
 
-## OpenCL parallel processing headaches
+## Parallel processing headaches
 
 OpenCL runs in parallel, so what happens if multiple workitems try to change the same data at the same time?
 
@@ -230,29 +230,10 @@ Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
 
 ## Where to find OpenCL resources
 
-I recommend checking the Houdini files for examples. The `houdini/ocl` folder in your Houdini folder contains tons of OpenCL files.
+I recommend checking the Houdini files for examples. The `houdini/ocl` folder contains tons of OpenCL files.
 
-```cpp
-// Type this in any text field to evaluate the path
-// On Windows: C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl
-$HH/ocl
-```
-
-This is also where you find helper libraries, such as the matrix library `matrix.h`.
-
-`#include` means to insert the code from a file into your file. You can do this for any OpenCL file in `houdini/ocl`.
-
-```cpp
-// Type this in any text field to evaluate the path
-// On Windows: C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl/include/matrix.h
-$HH/ocl/include/matrix.h
-
-// To include a library located in houdini/ocl/include:
-#include <matrix.h>
-
-// To include files in other directories:
-#include "../sim/vbd_energy.cl"
-```
+- Generic path: `$HH/ocl`
+- On Windows: `C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl`
 
 There's some other tutorials online, but they may not use the most up-to-date syntax:
 
@@ -265,6 +246,101 @@ Another place to look is Copernicus. Some Copernicus nodes contain OpenCL nodes 
 Though it's uncommon, some solvers like the Ripple Solver contain OpenCL nodes with embedded code inside them.
 
 I'm also working on [a solver written in OpenCL](https://github.com/MysteryPancake/Houdini-VBD). The code is in the `ocl` folder on that page.
+
+## Matrices in OpenCL
+
+OpenCL doesn't have good support for matrices. For this reason, SideFX wrote a `matrix.h` header that ships with Houdini.
+
+It helps to keep this file open while writing any code involving matrices, as there's barely any documentation for it.
+
+You need to include this file with `#include <matrix.h>` to use matrix operations in OpenCL.
+
+- Generic path: `$HH/ocl/include/matrix.h`
+- On Windows: `C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl/include/matrix.h`
+
+`#include` means to insert the code from a file into your file. You can do this for any OpenCL header in `houdini/ocl`.
+
+```cpp
+// To include the matrix header located in houdini/ocl/include:
+#include <matrix.h>
+```
+
+```cpp
+// To include files in other directories:
+#include "../sim/vbd_energy.cl"
+```
+
+### Creating a matrix
+
+You can create a matrix by declaring a variable with no value. You might want to fill it with zeroes or identity afterwards.
+
+```cpp
+// Create a 3x3 matrix called mat
+mat3 mat
+
+// Fill mat with zeroes
+mat3zero(mat);
+
+// Fill mat with identity matrix
+mat3identity(mat)
+```
+
+### Accessing matrix entries
+
+Note how matrix types are defined in `matrix.h`:
+
+```cpp
+// A 3x3 matrix in row-major order (to match UT_Matrix3)
+// NOTE: fpreal3 is 4 floats, so this is size 12
+typedef fpreal3 mat3[3];  
+
+// A 3x2 matrix in row-major order
+typedef fpreal2 mat32[3];
+
+// A 2x2 matrix in row-major order, stored in a single fpreal4
+typedef fpreal4 mat2;
+
+// A 4x4 matrix in row-major order, stored in a single fpreal16
+typedef fpreal16 mat4;
+```
+
+- All matrix types are derived from `fpreal`, so they all have [variable precision](#precision).
+- `mat2` and `mat4` are vector types, but `mat3` and `mat32` are arrays of vectors.
+
+Since `mat3` and `mat32` are array types, they are accessed differently.
+
+```cpp
+// Accessing mat2 entries (float4 type)
+mat2 mat;
+mat.x = 1.0f; // mat[0] and mat.s0 also work
+mat.y = 2.0f; // mat[1] and mat.s1 also work
+mat.z = 3.0f; // mat[2] and mat.s2 also work
+mat.w = 4.0f; // mat[3] and mat.s3 also work
+```
+
+```cpp
+// Accessing mat4 entries (float16 type)
+mat4 mat;
+mat.x = 1.0f; // mat[0] and mat.s0 also work
+mat.y = 2.0f; // mat[1] and mat.s1 also work
+// ...
+```
+
+```cpp
+// Accessing mat3 entries (array of float3)
+mat3 mat;
+mat[0][0] = 1.0f; // mat[0].s0 also works
+mat[0][1] = 2.0f; // mat[0].s1 also works
+// ...
+```
+
+```cpp
+// Accessing mat32 entries (array of float2)
+mat32 mat;
+mat[0][0] = 1.0f; // mat[0].s0 also works
+mat[0][1] = 2.0f; // mat[0].s1 also works
+// ...
+```
 
 ## SOP: Laplacian Filter
 
