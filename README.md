@@ -91,11 +91,9 @@ OpenCL supports varying precision for all data types, just like VEX. Data can be
 
 Varying precision requires rewriting your code to use varying types.
 
-`int, float, float3, float4` all use 32-bit precision. This may not be enough for sensitive operations.
-
-`exint, fpreal, fpreal3, fpreal4` are new types defined by SideFX with automatically varying precision.
-
-`mat2, mat3, mat4` matrix types all have varying precision by default, so no changes are required.
+- `int, float, float3, float4` all use 32-bit precision. This may not be enough for sensitive operations.
+- `exint, fpreal, fpreal3, fpreal4` are new types defined by SideFX with automatically varying precision.
+- `mat2, mat3, mat4` matrix types all have varying precision by default, so no changes are required.
 
 To enable varying precision, all OpenCL nodes have a global precision setting in the "Options" tab:
 
