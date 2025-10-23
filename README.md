@@ -40,7 +40,7 @@ OpenCL is much faster than VEX at certain tasks, like feedback loops (Attribute 
 
 OpenCL is painful to use. It's easy to cause memory leaks and crash Houdini if you don't know programming. For this reason, you should only use OpenCL when absolutely necessary.
 
-It's is intended for low-level data processing, so it's missing high-level functions like `intersect()` and `xyzdist()` [(though I'm working on this)](https://github.com/MysteryPancake/Houdini-Fun/blob/main/Primuv_Xyzdist.md). It only supports basic operations like reads, writes and math.
+It's designed for low-level data processing, so it's missing high-level functions like `intersect()` and `xyzdist()` [(though I'm working on this)](https://github.com/MysteryPancake/Houdini-Fun/blob/main/Primuv_Xyzdist.md). It only supports basic operations like reads, writes and math.
 
 It often requires writing tons of tedious boilerplate code, though this is improved by [@-bindings](#-bindings-at-bindings). It barely supports matrices, requiring `matrix.h` for basic matrix operations.
 
