@@ -70,13 +70,13 @@ OpenCL runs in parallel. Unlike in VEX, operations cannot run in order.
 
 This makes OpenCL a bad choice for any algorithm that requires order. Such algorithms should be run in VEX instead.
 
-A regular for loop would run in series:
+A regular for loop runs in series:
 
 ```c
 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 ```
 
-OpenCL runs in parallel, so it runs in chunks instead. If each chunk was 4 numbers long, it might run in this order:
+OpenCL runs in parallel, using chunks instead. If each chunk was 4 items long, it might run in this order:
 
 ```c
 // |    Chunk 0    |   Chunk 1   |     Chunk 2     |   Chunk 3  |
