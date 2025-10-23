@@ -20,7 +20,7 @@ Houdini has many other built-in programming languages including Python, VEX/VOPS
 | VEX/VOPS | CPU only | Medium | Fast | Some | Yes |
 | OpenCL | CPU + GPU + Anything supporting OpenCL | Hard | Fast | Very few | Yes |
 
-It's easy to be tempted to use OpenCL for everything, but it's not magically faster at everything. Both VEX and OpenCL support multithreading, so their performance is similar most of the time.
+It's tempting to use OpenCL for everything, but it's not magically faster at everything. Both VEX and OpenCL support multithreading, so their performance is similar most of the time.
 
 OpenCL is only faster if you write code that takes advantage of it. This requires knowing [how OpenCL runs](#how-opencl-runs).
 
