@@ -85,6 +85,84 @@ int num_groups = get_num_groups(0);
 
 [Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
 
+## Binding attribute types
+
+If using @-bindings, `@KERNEL` automatically generates the kernel arguments for you. If not, you have to add them manually.
+
+You can use whatever naming you want, it won't affect anything. Attributes are bound in the order defined in the "Bindings" tab.
+
+OpenCL binds regular attributes as arrays. Array attributes are binded like subarrays within a larger array.
+
+`restrict` adds [minor optimizations assuming a pointer isn't used elsewhere](https://www.youtube.com/watch?v=TBGu3NNpF1Q). It's not essential but will be auto generated.
+
+### Floating types: `float, vector2, vector, vector4, matrix2, matrix3, matrix`
+
+Floating types add 2 arguments to the kernel. The length of the array, and the array itself.
+
+```c
+int _bound_attr_length, // length (number of entries) for the float attribute
+global float* restrict _bound_attr, // array of the float attribute values, in index order
+```
+
+### Integer types: `int`
+
+Integer types add 2 arguments to the kernel. The length of the array, and the array itself.
+
+```c
+int _bound_attr_length, // length (number of entries) for the int attribute
+global int* restrict _bound_attr, // array of the int attribute values, in index order
+```
+
+### Floating array types: `float[]`
+
+Floating array types add 3 arguments to the kernel. The length of the array, the start of each subarray, and the array of subarrays.
+
+```c
+int _bound_attr_length,
+global int* restrict _bound_attr_index,
+global int* restrict _bound_attr,
+```
+
+### Integer array types: `int[]`
+
+Integer array types add 3 arguments to the kernel. The length of the array, the start of each subarray, and the array of subarrays.
+
+```c
+int _bound_attr_length,
+global int* restrict _bound_attr_index,
+global float* restrict _bound_attr,
+```
+
+## @-bindings (at-bindings)
+
+@-bindings are an optional feature added by SideFX to save you from writing tedious boilerplate OpenCL code.
+
+I don't recommend using @-bindings until you learn how to write regular OpenCL, because they add another layer of confusion.
+
+@-bindings automatically do these things for you:
+
+- Automatically add bindings to attributes/data (not shown in the "Bindings" tab)
+- Automatically add kernel arguments to pass in the attribute/data
+- Automatically add `#define` directives to let you access the attribute/data with `@` syntax
+
+@-bindings generate the exact same OpenCL code under the hood, but let you use a VEX-like syntax instead.
+
+You can view the regular OpenCL code by going to the "Generated Code" tab and clicking "Generate Kernel". This is the OpenCL it actually runs.
+
+In in the generated kernel, you'll see a lot of `#define` lines. `#define` is a C preprocessor directive that replaces text with other text.
+
+```c
+// Replace hello with goodbye
+#define hello goodbye
+
+// Prints "goodbye"
+printf("hello");
+```
+
+This is exactly what @-bindings use. They replace `@P` with the equivalent OpenCL read/write instruction for that data type.
+
+<img src="./images/at_bindings.png" width="900">
+
 ## OpenCL parallel processing headaches
 
 OpenCL runs in parallel, so what happens if multiple workitems try to change the same data at the same time?
@@ -120,36 +198,6 @@ This option runs the same kernel multiple times with different data sizes. It wa
 I think of it like multiple global workgroups. This diagram isn't correct though, since it's really the same kernel each time.
 
 <img src="./images/multiple_global_workgroups2.png">
-
-## @-bindings (at-bindings)
-
-@-bindings are an optional feature added by SideFX to save you from writing tedious boilerplate OpenCL code.
-
-I don't recommend using @-bindings until you learn how to write regular OpenCL, because they add another layer of confusion.
-
-@-bindings automatically do these things for you:
-
-- Automatically add bindings to attributes/data (not shown in the "Bindings" tab)
-- Automatically add kernel arguments to pass in the attribute/data
-- Automatically add `#define` directives to let you access the attribute/data with `@` syntax
-
-@-bindings generate the exact same OpenCL code under the hood, but let you use a VEX-like syntax instead.
-
-You can view the regular OpenCL code by going to the "Generated Code" tab and clicking "Generate Kernel". This is the OpenCL it actually runs.
-
-In in the generated kernel, you'll see a lot of `#define` lines. `#define` is a C preprocessor directive that replaces text with other text.
-
-```c
-// Replace hello with goodbye
-#define hello goodbye
-
-// Prints "goodbye"
-printf("hello");
-```
-
-This is exactly what @-bindings use. They replace `@P` with the equivalent OpenCL read/write instruction for that data type.
-
-<img src="./images/at_bindings.png" width="900">
 
 ## Fix "1 warning generated"
 
