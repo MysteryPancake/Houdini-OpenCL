@@ -163,11 +163,13 @@ Add an OpenCL node and untick "Enable @-Binding".
 
 #### Binding attributes
 
+As a reminder, here's the VEX from before:
+
 ```js
 v@P += v@N * f@noise;
 ```
 
-This VEX involves 3 attributes: `v@P`, `v@N` and `f@noise`.
+You can see it involves 3 attributes: `v@P`, `v@N` and `f@noise`.
 
 VEX automatically binds these, thanks to the Autobind feature enabled by default.
 
