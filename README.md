@@ -85,6 +85,28 @@ int num_groups = get_num_groups(0);
 
 [Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
 
+## OpenCL precision
+
+OpenCL supports varying precision for all data types, just like VEX. Data can be 16-bit (half), 32-bit (float) or 64-bit (double).
+
+Varying precision requires rewriting your code to use varying types.
+
+`int, float, float3, float4` all use 32-bit precision. This may not be enough for sensitive operations.
+
+`exint, fpreal, fpreal3, fpreal4` are new types defined by SideFX with automatically varying precision.
+
+`mat2, mat3, mat4` matrix types all have varying precision by default, so no changes are required.
+
+To enable varying precision, all OpenCL nodes have a global precision setting in the "Options" tab:
+
+<img src="./images/precision.png" width="400">
+
+They also let you change the precision of each attribute in the "Bindings" tab:
+
+<img src="./images/precision2.png" width="400">
+
+I prefer to use varying precision types for everything, in case I want to move to 64-bit later.
+
 ## Binding attribute types
 
 If using @-bindings, `@KERNEL` automatically generates the kernel arguments for you. If not, you have to add them manually.
