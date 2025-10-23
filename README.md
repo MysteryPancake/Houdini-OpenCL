@@ -242,7 +242,7 @@ kernel void kernelName(
 {}
 ```
 
-Let's write the kernel body. Remember how OpenCL runs in workgroups? Sometimes the data is shorter than the workgroup size.
+Remember how OpenCL runs in workgroups? Sometimes the data is shorter than the workgroup size.
 
 Say the local workgroup size is 16. If the geometry has 100 points, then `v@P` has 100 values.
 
