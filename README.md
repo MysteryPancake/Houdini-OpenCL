@@ -153,6 +153,9 @@ v@P += v@N * f@noise;
 
 <img src="./images/peak1.png" width="400">
 
+| [Download the HIP file!](./hips/demo1.hiplc?raw=true) |
+| --- |
+
 While it may look overwhelming, it's about to get worse. We're going to translate it into OpenCL.
 
 ### Plain OpenCL version
@@ -370,6 +373,9 @@ kernel void kernelName(
 
 <img src="./images/opencl_equivalent_vex.png" width="600">
 
+| [Download the HIP file!](./hips/demo1.hiplc?raw=true) |
+| --- |
+
 You can see how much more verbose it's become compared to the OpenCL version. What can we do to fix this?
 
 ### @-bindings version
@@ -401,6 +407,9 @@ Each @-binding begins with `#bind`, followed by the attribute's class, name and 
 ```
 
 <img src="./images/at_bindings_equivalent_vex.png" width="600">
+
+| [Download the HIP file!](./hips/demo1.hiplc?raw=true) |
+| --- |
 
 Look at how much shorter it is for the same result! But what's it really doing under the hood?
 
