@@ -88,7 +88,7 @@ int num_groups = get_num_groups(0);
 
 [Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
 
-The workgroup diagram above is by [Martin Schreiber](https://www.researchgate.net/figure/Overview-of-OpenCL-work-group-and-work-items_fig2_275522832), and depicts 1D workgroups.
+The workgroup diagram above is by [Martin Schreiber](https://www.researchgate.net/figure/Overview-of-OpenCL-work-group-and-work-items_fig2_275522832), and shows 1D workgroups.
 
 It's also possible for workgroups to be 2D, 3D or higher. You might see this with volumes or heightfields.
 
