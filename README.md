@@ -173,7 +173,7 @@ Floating types add 2 arguments to the kernel. The length of the array, and the a
 }
 ```
 
-#### Regular OpenCL
+#### Plain OpenCL
 
 ```cpp
 kernel void kernelName(
@@ -200,7 +200,7 @@ Integer types add 2 arguments to the kernel. The length of the array, and the ar
 }
 ```
 
-#### Regular OpenCL
+#### Plain OpenCL
 
 ```cpp
 kernel void kernelName(
@@ -227,7 +227,7 @@ Floating array types add 3 arguments to the kernel. The length of the array, the
 }
 ```
 
-#### Regular OpenCL
+#### Plain OpenCL
 
 ```cpp
 kernel void kernelName(
@@ -255,7 +255,7 @@ Integer array types add 3 arguments to the kernel. The length of the array, the 
 }
 ```
 
-#### Regular OpenCL
+#### Plain OpenCL
 
 ```cpp
 kernel void kernelName(
@@ -273,7 +273,7 @@ kernel void kernelName(
 
 @-bindings are an optional feature added by SideFX to save you from writing tedious boilerplate OpenCL code.
 
-I don't recommend using @-bindings until you learn how to write regular OpenCL, because they add another layer of confusion.
+I don't recommend using @-bindings until you learn plain OpenCL, because they add another layer of confusion.
 
 @-bindings automatically do these things for you:
 
@@ -283,7 +283,7 @@ I don't recommend using @-bindings until you learn how to write regular OpenCL, 
 
 @-bindings generate the exact same OpenCL code under the hood, but let you use a VEX-like syntax instead.
 
-You can view the regular OpenCL code by going to the "Generated Code" tab and clicking "Generate Kernel". This is the OpenCL it actually runs.
+You can view the plain OpenCL code by going to the "Generated Code" tab and clicking "Generate Kernel". This is the OpenCL it actually runs.
 
 In in the generated kernel, you'll see a lot of `#define` lines. `#define` is a C preprocessor directive that replaces text with other text.
 
