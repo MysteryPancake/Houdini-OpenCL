@@ -513,8 +513,10 @@ Since OpenCL runs in parallel, it's hard to calculate a global sum due to [paral
 
 There's many workarounds, but I chose to use both workgroup reduction and atomic operations.
 
-1. Sum each local workgroup (called a partial sum). I used `work_group_reduce_add3()` defined in `reduce.h`.
-2. After all the partial sums complete, the first workitem in each local workgroup uses `atomic_add()` to compute the global sum.
+1. Sum each local workgroup, often called a partial sum. I used `work_group_reduce_add3()` from `reduce.h`.
+2. After all the partial sums complete, the first workitem in each local workgroup uses `atomic_add()` to add onto the global sum.
+
+<img src="./images/workgroup_reduction.png">
 
 Atomic operations force OpenCL to run in a sequential way, ruining the benefits of parallel processing. Try to avoid them as much as possible.
 
