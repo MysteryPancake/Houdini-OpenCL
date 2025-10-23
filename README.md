@@ -107,7 +107,7 @@ printf("hello");
 
 This is exactly what @ bindings are doing. They replace `@P` with the equivalent OpenCL read/write instruction for that data type.
 
-## Fixing "1 warning generated" OpenCL error
+## Fixing "1 warning generated" errors
 
 Sometimes OpenCL spams the message "1 warning generated", but doesn't spam the actual warning.
 
