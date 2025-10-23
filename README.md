@@ -145,7 +145,7 @@ This only affects the loop range, not data access. You can read/write totally di
 
 ## Translating from VEX to OpenCL
 
-Take a look at this incredible VEX code.
+Take a look at this incredible VEX code. I put my blood, sweat and tears into it.
 
 It moves each point along the normal based on noise, much like the Peak node.
 
@@ -158,7 +158,7 @@ v@P += v@N * f@noise;
 | [Download the HIP file!](./hips/demo1.hiplc?raw=true) |
 | --- |
 
-While it may look overwhelming, it's about to get worse. We're going to translate it into OpenCL.
+I know it looks overwhelming already, but it's about to get worse. We're going to translate it into OpenCL.
 
 ### Plain OpenCL version
 
