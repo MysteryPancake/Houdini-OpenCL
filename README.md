@@ -122,8 +122,8 @@ OpenCL binds regular attributes as arrays. Array attributes are binded like suba
 Floating types add 2 arguments to the kernel. The length of the array, and the array itself.
 
 ```cpp
-int _bound_attr_length, // length (number of entries) for the float attribute
-global float* restrict _bound_attr, // array of the float attribute values, in index order
+int _bound_attr_length, // length (number of entries) of the float attribute
+global float* restrict _bound_attr, // array of float attribute values, in index order
 ```
 
 ### Integer types: `int`
@@ -131,8 +131,8 @@ global float* restrict _bound_attr, // array of the float attribute values, in i
 Integer types add 2 arguments to the kernel. The length of the array, and the array itself.
 
 ```cpp
-int _bound_attr_length, // length (number of entries) for the int attribute
-global int* restrict _bound_attr, // array of the int attribute values, in index order
+int _bound_attr_length, // length (number of entries) of the int attribute
+global int* restrict _bound_attr, // array of int attribute values, in index order
 ```
 
 ### Floating array types: `float[]`
@@ -140,9 +140,9 @@ global int* restrict _bound_attr, // array of the int attribute values, in index
 Floating array types add 3 arguments to the kernel. The length of the array, the start of each subarray, and the array of subarrays.
 
 ```cpp
-int _bound_attr_length, // length (number of entries) for the int attribute
-global int* restrict _bound_attr_index, // array of the starting indices of each subarray within the flattened array
-global int* restrict _bound_attr, // array of the int attribute values, flattened in index order
+int _bound_attr_length, // length (number of entries) of the int attribute
+global int* restrict _bound_attr_index, // array of starting indices of subarrays within the flattened array
+global int* restrict _bound_attr, // array of int attribute values, flattened in index order
 ```
 
 ### Integer array types: `int[]`
@@ -150,9 +150,9 @@ global int* restrict _bound_attr, // array of the int attribute values, flattene
 Integer array types add 3 arguments to the kernel. The length of the array, the start of each subarray, and the array of subarrays.
 
 ```cpp
-int _bound_attr_length, // length (number of entries) for the float attribute
-global int* restrict _bound_attr_index, // array of the starting indices of each subarray within the flattened array
-global float* restrict _bound_attr, // array of the float attribute values, flattened in index order
+int _bound_attr_length, // length (number of entries) of the float attribute
+global int* restrict _bound_attr_index, // array of starting indices of subarrays within the flattened array
+global float* restrict _bound_attr, // array of float attribute values, flattened in index order
 ```
 
 ## @-bindings (at-bindings)
