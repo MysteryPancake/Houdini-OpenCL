@@ -204,9 +204,7 @@ Remember to mark `v@P` as "Writeable", since we changed it in the VEX code (`v@P
 
 <img src="./images/opencl_noise.png" width="500">
 
-Now we can write the actual kernel. Each code snippet may contain multiple kernels. Houdini picks the one with the matching Kernel Name.
-
-<img src="./images/blank_kernel.png" width="500">
+Now we can write the actual kernel.
 
 #### Blank kernel
 
@@ -217,9 +215,15 @@ kernel void kernelName()
 {}
 ```
 
+Each code snippet may contain multiple kernels. Houdini picks the one with the matching Kernel Name.
+
+<img src="./images/blank_kernel.png" width="500">
+
 #### Kernel arguments
 
-Each binding must be added manually to the kernel arguments. The argument names don't matter, but the order must match.
+Each kernel has arguments passed to it based on the bindings in the "Bindings" tab.
+
+The argument names don't matter, but the order must match.
 
 Vector and float types both add 2 arguments to the kernel: the length of the array, and the array itself.
 
@@ -378,7 +382,7 @@ kernel void kernelName(
 | [Download the HIP file!](./hips/demo1.hiplc?raw=true) |
 | --- |
 
-You can see how much more verbose it's become compared to the OpenCL version. What can we do to fix this?
+You can see how much more verbose it's become compared to the VEX version. What can we do to fix this?
 
 ### @-bindings version
 
