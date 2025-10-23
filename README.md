@@ -48,7 +48,7 @@ It doesn't support dynamic sized arrays, assuming most data has a fixed size. Ho
 
 OpenCL is only faster than VEX when you write code that takes advantage of what it does well.
 
-OpenCL runs in parallel. Operations can't be run in order like in VEX. This makes OpenCL a bad choice for any algorithm that requires order. These algorithms should be run in VEX instead.
+OpenCL runs in parallel. This makes OpenCL a bad choice for any algorithm that requires order. These algorithms should be run in Detail mode in VEX instead.
 
 A regular for loop runs in series:
 
