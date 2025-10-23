@@ -122,7 +122,7 @@ The @-binding equivalent is the first attribute marked with `&`.
 #bind point &P float3
 ```
 
-This only affects the loop range, not data access. You can write a totally different attribute if you want.
+This only affects the loop range, not data access. You can read/write totally different attributes if you want.
 
 ## Precision
 
