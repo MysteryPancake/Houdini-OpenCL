@@ -365,6 +365,11 @@ Since `mat3` is an array of vectors, loading it from memory requires loading 3 v
 - `mat3load(idx, matrix_attr_array, loaded_matrix)` is used to read a matrix.
 - `mat3store(loaded_matrix, idx, matrix_attr_array)` is used to write a matrix.
 
+<img src="./images/read_write_matrix.png" width="600">
+
+| [Download the HIP file!](./hips/matrix_example.hiplc?raw=true) |
+| --- |
+
 ```cpp
 #include <matrix.h>
 
@@ -390,7 +395,12 @@ kernel void kernelName(
 
 ### Applying matrices
 
+You can use `vec = mat3vecmul(mat, vec)` to transform a vector using a 3x3 matrix.
 
+<img src="./images/apply_matrix.png" width="600">
+
+| [Download the HIP file!](./hips/matrix_example.hiplc?raw=true) |
+| --- |
 
 ```cpp
 #include <matrix.h>
