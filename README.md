@@ -231,9 +231,9 @@ Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
 
 ## Where to find OpenCL resources
 
-Houdini doesn't have many OpenCL resources. I strongly recommend checking the Houdini files for examples.
+Houdini doesn't have many OpenCL resources apart from [OpenCL for VEX Users](https://www.sidefx.com/docs/houdini/vex/ocl.html).
 
-The `houdini/ocl` folder in your Houdini directory contains tons of OpenCL files.
+I recommend checking the Houdini files for examples. The `houdini/ocl` folder in your Houdini folder contains tons of OpenCL files.
 
 ```cpp
 // Type this in any text field to evaluate the path
