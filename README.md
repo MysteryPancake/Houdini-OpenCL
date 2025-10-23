@@ -261,7 +261,7 @@ Though it's uncommon, some solvers like the Ripple Solver contain OpenCL nodes w
 
 I'm also working on [a solver written in OpenCL](https://github.com/MysteryPancake/Houdini-VBD). The code is in the `ocl` folder on that page.
 
-## SOPS: Laplacian Filter
+## SOP: Laplacian Filter
 
 The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) can be used to make a geometry equalizer.
 
