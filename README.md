@@ -61,7 +61,7 @@ OpenCL is painful to use. It's easy to cause memory leaks and crash Houdini if y
 
 It's designed for low-level data processing, so it's missing high-level functions like `intersect()` and `xyzdist()` [(though I'm working on this)](https://github.com/MysteryPancake/Houdini-Fun/blob/main/Primuv_Xyzdist.md). It only supports basic operations like reads, writes and math.
 
-It often requires writing tons of tedious boilerplate code, though this is improved by [@-bindings](#-bindings-at-bindings). It barely supports matrices, requiring `matrix.h` for basic matrix operations.
+It often requires writing tons of tedious boilerplate code, though this is improved by [@-bindings](#-bindings-version). It barely supports matrices, requiring `matrix.h` for basic matrix operations.
 
 It doesn't support dynamic sized arrays, most data must have a fixed size. However, arrays passed to OpenCL (like attributes) may have different sizes each time the kernel is run.
 
@@ -372,15 +372,22 @@ kernel void kernelName(
 
 You can see how much more verbose it's become compared to the OpenCL version. What can we do to fix this?
 
-### @-binding version
+### @-bindings version
 
-SideFX added @-bindings to automate most of the tedious process we had to follow above.
+@-bindings are an optional feature added by SideFX to save you from writing tedious boilerplate OpenCL code.
 
-@-bindings add shortcuts for common read/write operations like `vload3()` and `vstore3()`.
+I don't recommend using @-bindings until you learn plain OpenCL, because they add another layer of confusion.
 
-@-bindings also automate the kernel arguments, and automate away the Bindings tab.
+They automatically do these things for you:
 
-Bindings now use a different syntax. Each begins with `#bind`, followed by the class, name and data type.
+- Automatically add bindings to attributes/data (not shown in the "Bindings" tab)
+- Automatically add shortcuts for common read/write operations like `vload3()` and `vstore3()`
+- Automatically add kernel arguments to pass in the attribute/data
+- Automatically add `#define` directives to let you access the attribute/data with `@` syntax
+
+They generate the exact same OpenCL code under the hood, but let you use a VEX-like syntax instead.
+
+Each @-binding begins with `#bind`, followed by the attribute's class, name and data type.
 
 ```cpp
 #bind point &P fpreal3
@@ -576,22 +583,6 @@ kernel void kernelName(
     // ...
 }
 ```
-
-## @-bindings (at-bindings)
-
-@-bindings are an optional feature added by SideFX to save you from writing tedious boilerplate OpenCL code.
-
-I don't recommend using @-bindings until you learn plain OpenCL, because they add another layer of confusion.
-
-@-bindings automatically do these things for you:
-
-- Automatically add bindings to attributes/data (not shown in the "Bindings" tab)
-- Automatically add kernel arguments to pass in the attribute/data
-- Automatically add `#define` directives to let you access the attribute/data with `@` syntax
-
-@-bindings generate the exact same OpenCL code under the hood, but let you use a VEX-like syntax instead.
-
-You can view the plain OpenCL code by going to the "Generated Code" tab and clicking "Generate Kernel". This is the code it actually runs.
 
 ## Matrices in OpenCL
 
