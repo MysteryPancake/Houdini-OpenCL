@@ -40,7 +40,7 @@ OpenCL is painful to use and it's easy to cause memory leaks and crash Houdini i
 
 OpenCL is intended for low-level data processing, so it's missing high-level functions like `intersect()` and `xyzdist()` [(though I'm working on this)](https://github.com/MysteryPancake/Houdini-Fun/blob/main/Primuv_Xyzdist.md). It only supports basic operations like reads, writes and math.
 
-It often requires writing tons of tedious boilerplate code, though this is improved by [@ bindings](#@-bindings). It barely supports matrices, requiring `matrix.h` for basic matrix operations.
+It often requires writing tons of tedious boilerplate code, though this is improved by [@-bindings](#-bindings-at-bindings). It barely supports matrices, requiring `matrix.h` for basic matrix operations.
 
 It doesn't support dynamic sized arrays, assuming most data has a fixed size. However, arrays passed to OpenCL (like attributes) may have different sizes each time the kernel is run.
 
@@ -73,31 +73,31 @@ Like you'd expect, you can access the [offset and sizes](https://registry.khrono
 
 ```c
 // Offsets
-int global_id = get_global_id(0); // @elemnum when using @ bindings
+int global_id = get_global_id(0); // @elemnum when using @-bindings
 int local_id = get_local_id(0);
 int group_id = get_group_id(0);
 
 // Sizes
-int global_size = get_global_size(0); // @attr.len when using @ bindings
+int global_size = get_global_size(0); // @attr.len when using @-bindings
 int local_size = get_local_size(0);
 int num_groups = get_num_groups(0);
 ```
 
 [Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
 
-## @ bindings
+## @-bindings (at-bindings)
 
-@ bindings are an optional feature added by SideFX to save you from writing tedious boilerplate OpenCL code.
+@-bindings are an optional feature added by SideFX to save you from writing tedious boilerplate OpenCL code.
 
-I don't recommend using @ bindings until you learn how to write regular OpenCL, because they add another layer of confusion.
+I don't recommend using @-bindings until you learn how to write regular OpenCL, because they add another layer of confusion.
 
-@ bindings automatically do these things for you:
+@-bindings automatically do these things for you:
 
 - Automatically add bindings to attributes/data (not shown in the "Bindings" tab)
 - Automatically add kernel arguments to pass in the attribute/data
 - Automatically add `#define` directives to let you access the attribute/data with `@` syntax
 
-@ bindings generate the exact same OpenCL code under the hood, but let you use a VEX-like syntax instead.
+@-bindings generate the exact same OpenCL code under the hood, but let you use a VEX-like syntax instead.
 
 You can view the regular OpenCL code by going to the "Generated Code" tab and clicking "Generate Kernel". This is the OpenCL it actually runs.
 
@@ -111,7 +111,7 @@ In in the generated kernel, you'll see a lot of `#define` lines. `#define` is a 
 printf("hello");
 ```
 
-This is exactly what @ bindings are doing. They replace `@P` with the equivalent OpenCL read/write instruction for that data type.
+This is exactly what @-bindings use. They replace `@P` with the equivalent OpenCL read/write instruction for that data type.
 
 ## Worksets in OpenCL
 
