@@ -81,7 +81,7 @@ For example if you use worksets, it runs the same kernel multiple times. Concept
 
 ## @ bindings
 
-@ bindings are an optional feature added by SideFX to avoid writing tedious boilerplate code you often need with OpenCL.
+@ bindings are an optional feature added by SideFX to save you from writing tedious boilerplate OpenCL code.
 
 I don't recommend using @ bindings until you learn how to write regular OpenCL, because they add another layer of confusion.
 
