@@ -38,13 +38,15 @@ OpenCL is much faster than VEX at certain tasks, like feedback loops (Attribute 
 
 OpenCL is painful to use and it's easy to cause memory leaks if you don't know programming. For this reason, you should only use OpenCL when absolutely necessary. Otherwise it's better to use VEX.
 
-OpenCL is intended for low-level data processing, so it's missing high-level functions like `intersect()` and `xyzdist()` [(though I'm working on this)](https://github.com/MysteryPancake/Houdini-Fun/blob/main/Primuv_Xyzdist.md). It only supports basic operations like reads, writes and math. It barely has any support for matrices, requiring `matrix.h` to do anything.
+OpenCL is intended for low-level data processing, so it's missing high-level functions like `intersect()` and `xyzdist()` [(though I'm working on this)](https://github.com/MysteryPancake/Houdini-Fun/blob/main/Primuv_Xyzdist.md). It only supports basic operations like reads, writes and math.
 
-It often requires writing tons of tedious boilerplate code, though this is improved by [@ bindings](#@-bindings).
+It often requires writing tons of tedious boilerplate code, though this is improved by [@ bindings](#@-bindings). It barely supports matrices, requiring `matrix.h` for basic matrix operations.
 
-It doesn't support dynamic sized data, like variable sized arrays. However, arrays passed into OpenCL (such as attributes) can have different lengths each time the kernel gets run.
+It doesn't support dynamic sized arrays, assuming most data has a fixed size. However, arrays passed to OpenCL (like attributes) may have different sizes each time the kernel is run.
 
 ## How OpenCL runs
+
+OpenCL is only faster than VEX when you write code that takes advantage of what it does well.
 
 OpenCL runs in parallel. Operations can't be run in order like in VEX. This makes OpenCL a bad choice for any algorithm that requires order. These algorithms should be run in VEX instead.
 
