@@ -145,7 +145,9 @@ This only affects the loop range, not data access. You can read/write totally di
 
 ## Translating from VEX to OpenCL
 
-Take a look at this incredible VEX code. It moves each point along the normal based on noise, much like the Peak node.
+Take a look at this incredible VEX code.
+
+It moves each point along the normal based on noise, much like the Peak node.
 
 ```js
 v@P += v@N * f@noise;
