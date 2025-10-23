@@ -34,6 +34,8 @@ While VEX only runs on the CPU, OpenCL can run on the GPU, CPU and any other dev
 
 OpenCL is much faster than VEX at certain tasks, like feedback loops (Attribute Blur) and anything involving neighbours (Vellum). It's commonly found in solvers and used for image processing in Copernicus.
 
+<img src="./images/opencl_speed.png">
+
 ## Weaknesses
 
 OpenCL is painful to use. It's easy to cause memory leaks and crash Houdini if you don't know programming. For this reason, you should only use OpenCL when absolutely necessary.
@@ -85,6 +87,17 @@ int num_groups = get_num_groups(0);
 ```
 
 [Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
+
+The workgroup diagram above is by [Martin Schreiber](https://www.researchgate.net/figure/Overview-of-OpenCL-work-group-and-work-items_fig2_275522832), and depicts 1D workgroups.
+
+It's also possible for workgroups to be 2D, 3D or higher. You might see this with volumes or heightfields.
+
+```cpp
+// Volumes and heightfields may have multiple global IDs
+int idx = get_global_id(0);
+int idy = get_global_id(1);
+int idz = get_global_id(2);
+```
 
 ## How OpenCL decides what to run over
 
@@ -352,7 +365,7 @@ mat[0][1] = 2.0f; // mat[0].s1 also works
 
 ### Binding matrices
 
-Matrices should be bound as float arrays. `matrix3` contains 3x3=9 floats, and `matrix` contains 4x4=16 floats.
+Matrices should be bound as float arrays. `matrix3` contains 3x3=9 floats. `matrix` contains 4x4=16 floats.
 
 | Binding `matrix3` (3x3) | Binding `matrix` (4x4) |
 | --- | --- |
@@ -446,10 +459,6 @@ void rotfromaxis(fpreal3 axis, fpreal angle, mat3 m)
 }
 ```
 
-## SOP: Laplacian Filter
-
-TODO
-
 ## Copernicus: Radial Blur
 
 Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses @ binding syntax.
@@ -467,22 +476,109 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 
 @KERNEL
 {
-    float2 offset = @P - @center;
-    float4 result = 0.;
-    float scale = 1;
-    
-    for (int i = 0; i <= @quality; ++i) {
-        result += @src.imageSample(offset * scale + @center) / (@quality + 1);
-        offset = rotate2D(offset, @rotation / @quality);
-        scale -= @scale / @quality;
-    }
-    
-    @dst.set(result);
+     float2 offset = @P - @center;
+     float4 result = 0.;
+     float scale = 1;
+     
+     for (int i = 0; i <= @quality; ++i) {
+          result += @src.imageSample(offset * scale + @center) / (@quality + 1);
+          offset = rotate2D(offset, @rotation / @quality);
+          scale -= @scale / @quality;
+     }
+     
+     @dst.set(result);
 }
 ```
 
 | [Download the HIP file!](./hips/cops/radial_blur.hiplc?raw=true) |
 | --- |
+
+## SOP: Laplacian Filter (Advanced)
+
+The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) lets you break geometry into frequencies, similar to a fourier transform.
+
+You can exaggerate or reduce certain frequencies (eigenvectors) of the geometry for various blurring and sharpening effects.
+
+This is based on [White Dog's](https://x.com/whitedo27114277?lang=en) fantastic [Eigenspace Projection example](https://drive.google.com/drive/folders/1gFYlmsFgpeihmcqZLFITvYQIW5mpYyJd).
+
+White Dog's example adds together many numbers in a feedback loop in parallel to compute a global sum. This is a great candidate for OpenCL!
+
+<p align="left">
+  <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter.png" height="250">
+  <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter2.png" height="250">
+</p>
+
+| [Download the HDA!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/laplacian_filter.hiplc) |
+| --- | --- |
+
+You can do large math operations in parallel using [workgroup reduction](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/workGroupFunctions.html) in OpenCL.
+
+Since OpenCL runs in parallel, it's hard to calculate a global sum due to [parallel processing headaches](#parallel-processing-headaches).
+
+There's many possible workarounds. I chose to sum each local workgroup (called a partial sum). After all the partial sums are complete, I used `atomic_add()` for the global sum.
+
+`atomic_add()` is a synchronous addition operation. It gets slow when overused too much, so try to avoid it as much as possible. It also doesn't work on floating types like `fpreal3`, only `int`. I found a workaround in `$HH/ocl/deform/blendshape.cl`.
+
+```cpp
+#include <reduce.h>
+
+// atomic_add() doesn't support floats. This is a workaround from $HH/ocl/deform/blendshape.cl
+#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
+inline void atomicAddFloatCAS(volatile __global float *addr, float v)
+{
+    union { float f; uint u; } oldVal, newVal;
+    do {
+        oldVal.f = *addr;
+        newVal.f = oldVal.f + v;
+    } while (atomic_cmpxchg(
+        (volatile __global uint *)addr,
+        oldVal.u, newVal.u) != oldVal.u);
+}
+#define ATOMIC_ADD_F(addr,val)  atomicAddFloatCAS((volatile __global float*)(addr), (float)(val))
+
+#bind point &rest fpreal3 name=__rest
+#bind point eigenvector fpreal[] input=1
+#bind detail &Psum fpreal3 name=__Psum
+
+@KERNEL
+{
+    if (@iteration >= @eigenvector.len) return;
+
+    // Each iteration is an eigenfrequency we need to add
+    fpreal x = @eigenvector.compAt(@iteration, @elemnum);
+    
+    // Sum within the current workgroup
+    fpreal3 P_group_sum = tofpreal3(work_group_reduce_add3(toaccum3(@rest * x)));
+    
+    // Sum all workgroups to get the global total
+    if (get_local_id(0) == 0)
+    {
+        ATOMIC_ADD_F(&@Psum.data[0], P_group_sum.x);
+        ATOMIC_ADD_F(&@Psum.data[1], P_group_sum.y);
+        ATOMIC_ADD_F(&@Psum.data[2], P_group_sum.z);
+    }
+}
+```
+
+The total sum is stored in a `@Psum` variable, which I used to add together the eigenvectors.
+
+```cpp
+#bind point &P fpreal3
+#bind point eigenvector fpreal[] input=1
+#bind detail &Psum fpreal3 name=__Psum
+
+@KERNEL
+{
+     //
+     if (@iteration >= @eigenvector.len) return;
+     
+     fpreal x = @eigenvector.compAt(@iteration, @elemnum);
+     fpreal3 total = @Psum.getAt(0);
+     fpreal offset = (fpreal)@iteration / (@max_frequency - 1);
+     fpreal amplitude = @amplitude.getAt(offset);
+     @P.set(@P + total * x * amplitude);
+}
+```
 
 ## More OpenCL resources
 
