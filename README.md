@@ -491,11 +491,12 @@ Floating types add 2 arguments to the kernel: the length of the array, and the a
 #### @-binding syntax
 
 ```cpp
-#bind point attr float  // if float
-#bind point attr float2 // if vector2
-#bind point attr float3 // if vector
-#bind point attr float4 // if vector4
-#bind point attr float9 // if matrix3
+#bind point attr float   // if float
+#bind point attr float2  // if vector2
+#bind point attr float3  // if vector
+#bind point attr float4  // if vector4
+#bind point attr float9  // if matrix3
+#bind point attr float16 // if matrix
 
 @KERNEL {
     // ...
