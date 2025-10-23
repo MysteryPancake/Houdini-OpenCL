@@ -44,7 +44,7 @@ It's designed for low-level data processing, so it's missing high-level function
 
 It often requires writing tons of tedious boilerplate code, though this is improved by [@-bindings](#-bindings-at-bindings). It barely supports matrices, requiring `matrix.h` for basic matrix operations.
 
-It doesn't support dynamic sized arrays, assuming most data has a fixed size. However, arrays passed to OpenCL (like attributes) may have different sizes each time the kernel is run.
+It doesn't support dynamic sized arrays, most data must have a fixed size. However, arrays passed to OpenCL (like attributes) may have different sizes each time the kernel is run.
 
 ## How OpenCL runs
 
