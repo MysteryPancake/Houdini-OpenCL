@@ -160,38 +160,113 @@ OpenCL binds regular attributes as arrays. Array attributes are binded like suba
 
 Floating types add 2 arguments to the kernel. The length of the array, and the array itself.
 
+#### @-binding syntax
+
 ```cpp
-int _bound_attr_length, // length (number of entries) of the float attribute
-global float* restrict _bound_attr, // array of float attribute values, in index order
+#bind point attr float  // if float
+#bind point attr float2 // if vector2
+#bind point attr float3 // if vector
+#bind point attr float4 // if vector4
+
+@KERNEL {
+    // ...
+}
+```
+
+#### Regular OpenCL
+
+```cpp
+kernel void kernelName(
+    // ...
+    int _bound_attr_length, // length (number of entries) of the float attribute
+    global float* restrict _bound_attr, // array of float attribute values, in index order
+    // ...
+) {
+    // ...
+}
 ```
 
 ### Integer types: `int`
 
 Integer types add 2 arguments to the kernel. The length of the array, and the array itself.
 
+#### @-binding syntax
+
 ```cpp
-int _bound_attr_length, // length (number of entries) of the int attribute
-global int* restrict _bound_attr, // array of int attribute values, in index order
+#bind point attr int
+
+@KERNEL {
+    // ...
+}
+```
+
+#### Regular OpenCL
+
+```cpp
+kernel void kernelName(
+    // ...
+    int _bound_attr_length, // length (number of entries) of the int attribute
+    global int* restrict _bound_attr, // array of int attribute values, in index order
+    // ...
+) {
+    // ...
+}
 ```
 
 ### Floating array types: `float[]`
 
 Floating array types add 3 arguments to the kernel. The length of the array, the start of each subarray, and the array of subarrays.
 
+#### @-binding syntax
+
 ```cpp
-int _bound_attr_length, // length (number of entries) of the int attribute
-global int* restrict _bound_attr_index, // array of starting indices of subarrays within the flattened array
-global int* restrict _bound_attr, // array of int attribute values, flattened in index order
+#bind point attr float[]
+
+@KERNEL {
+    // ...
+}
+```
+
+#### Regular OpenCL
+
+```cpp
+kernel void kernelName(
+    // ...
+    int _bound_attr_length, // length (number of entries) of the int attribute
+    global int* restrict _bound_attr_index, // array of starting indices of subarrays within the flattened array
+    global int* restrict _bound_attr, // array of int attribute values, flattened in index order
+    // ...
+) {
+    // ...
+}
 ```
 
 ### Integer array types: `int[]`
 
 Integer array types add 3 arguments to the kernel. The length of the array, the start of each subarray, and the array of subarrays.
 
+#### @-binding syntax
+
 ```cpp
-int _bound_attr_length, // length (number of entries) of the float attribute
-global int* restrict _bound_attr_index, // array of starting indices of subarrays within the flattened array
-global float* restrict _bound_attr, // array of float attribute values, flattened in index order
+#bind point attr int[]
+
+@KERNEL {
+    // ...
+}
+```
+
+#### Regular OpenCL
+
+```cpp
+kernel void kernelName(
+    // ...
+    int _bound_attr_length, // length (number of entries) of the float attribute
+    global int* restrict _bound_attr_index, // array of starting indices of subarrays within the flattened array
+    global float* restrict _bound_attr, // array of float attribute values, flattened in index order
+    // ...
+) {
+    // ...
+}
 ```
 
 ## @-bindings (at-bindings)
