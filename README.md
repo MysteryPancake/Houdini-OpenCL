@@ -137,3 +137,37 @@ Sometimes OpenCL spams the message "1 warning generated", but doesn't spam the a
 This can be fixed by setting the environment variable `HOUDINI_OCL_REPORT_BUILD_LOGS` to `1` before starting Houdini.
 
 Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
+
+## Copernicus: Radial Blur
+
+Simple radial blur shader I made for Balthazar on the CGWiki Discord.
+
+<img src="./images/cops/radial_blur.png?raw=true" width="600">
+
+```c
+#bind layer src? val=0
+#bind layer !&dst
+
+#bind parm quality int val=10
+#bind parm center float2 val=0
+#bind parm scale float val=0.2
+#bind parm rotation float val=0
+
+@KERNEL
+{
+    float2 offset = @P - @center;
+    float4 result = 0.;
+    float scale = 1;
+    
+    for (int i = 0; i <= @quality; ++i) {
+        result += @src.imageSample(offset * scale + @center) / (@quality + 1);
+        offset = rotate2D(offset, @rotation / @quality);
+        scale -= @scale / @quality;
+    }
+    
+    @dst.set(result);
+}
+```
+
+| [Download the HIP file!](./hips/cops/radial_blur.hiplc?raw=true) |
+| --- |
