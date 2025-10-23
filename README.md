@@ -140,9 +140,9 @@ global int* restrict _bound_attr, // array of the int attribute values, in index
 Floating array types add 3 arguments to the kernel. The length of the array, the start of each subarray, and the array of subarrays.
 
 ```cpp
-int _bound_attr_length,
-global int* restrict _bound_attr_index,
-global int* restrict _bound_attr,
+int _bound_attr_length, // length (number of entries) for the int attribute
+global int* restrict _bound_attr_index, // array of the starting indices of each subarray within the flattened array
+global int* restrict _bound_attr, // array of the int attribute values, flattened in index order
 ```
 
 ### Integer array types: `int[]`
@@ -150,9 +150,9 @@ global int* restrict _bound_attr,
 Integer array types add 3 arguments to the kernel. The length of the array, the start of each subarray, and the array of subarrays.
 
 ```cpp
-int _bound_attr_length,
-global int* restrict _bound_attr_index,
-global float* restrict _bound_attr,
+int _bound_attr_length, // length (number of entries) for the float attribute
+global int* restrict _bound_attr_index, // array of the starting indices of each subarray within the flattened array
+global float* restrict _bound_attr, // array of the float attribute values, flattened in index order
 ```
 
 ## @-bindings (at-bindings)
