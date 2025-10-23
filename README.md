@@ -133,25 +133,25 @@ printf("hello");
 
 This is exactly what @ bindings are doing. They replace `@P` with the equivalent OpenCL read/write instruction for that data type.
 
-## OpenCL worksets
+## Worksets in OpenCL
 
-Sometimes you need to run an operation over clusters of data.
+Sometimes you need to run an operation over small sections of a larger bunch of data.
 
-For example, Vellum (XPBD) runs over clusters of prims, and [Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) runs over clusters of points.
+For example, Vellum (XPBD) runs over sections of prims, while [Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) and Otis run over sections of points.
 
 <img src="./images/vellum_vs_vbd.png" width="800">
 
-Clusters can be generated using the Graph Color node. This computes the offset and size of each cluster.
+Vellum, VBD and Otis use the Graph Color node to generate these sections. It computes the offset and size of each data section.
 
 <img src="./images/graph_color.png" width="500">
 
-To run an operation based on these cluster ranges, you can use the workset option on any OpenCL node.
+To run an operation over data sections, you can use the workset option on any OpenCL node.
 
 <img src="./images/multiple_global_workgroups.png" width="500">
 
-This option runs the kernel multiple times in a row. It passes the global index offset as another kernel argument.
+This option runs the same kernel multiple times, with different data lengths. It passes the global index offset as another kernel argument.
 
-I think of it as multiple global workgroups. This diagram isn't really correct though, as it's the same kernel each time.
+I think of this like multiple global workgroups. This diagram isn't really correct though, because it's really the same kernel each time.
 
 <img src="./images/multiple_global_workgroups2.png">
 
