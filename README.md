@@ -251,9 +251,9 @@ kernel void kernelName(
 {}
 ```
 
-#### Kernel bounds checking
-
 Now let's begin the kernel body.
+
+#### Kernel bounds checking
 
 Remember how OpenCL runs in workgroups? Sometimes the data is shorter than the workgroup size.
 
