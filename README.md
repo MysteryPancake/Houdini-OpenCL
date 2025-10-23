@@ -103,7 +103,7 @@ int idz = get_global_id(2);
 
 In VEX, you can run over Detail, Primitives, Points and Vertices.
 
-OpenCL doesn't care what you run it over. It just gives you the ID of the current element, nothing else changes.
+OpenCL doesn't care what you run it over, it just gives you the ID of the current element and hopes for the best.
 
 `get_global_id(0)` is the same as `@ptnum`, `@vtxnum`, and `@primnum` in VEX. Use `@elemnum` if using @-bindings.
 
