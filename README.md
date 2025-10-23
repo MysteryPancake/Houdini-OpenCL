@@ -24,7 +24,7 @@ It's tempting to use OpenCL for everything, but it's not magically faster at eve
 
 OpenCL is only faster if you write code that takes advantage of it. This requires knowing [how OpenCL runs](#how-opencl-runs).
 
-As you'll see on this page, OpenCL is painful to use. For this reason, I recommend always using VEX instead of OpenCL unless absolutely necessary.
+As you'll see on this page, OpenCL is painful to use. For this reason, I recommend using VEX instead of OpenCL unless absolutely necessary.
 
 ## Strengths
 
