@@ -52,13 +52,13 @@ OpenCL runs in parallel. Operations can't be run in order like in VEX. This make
 
 A regular for loop runs in series:
 
-```c
+```cpp
 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 ```
 
 OpenCL runs in parallel, using chunks instead. If each chunk was 4 items long, it might run in this order:
 
-```c
+```cpp
 // |    Chunk 0    |   Chunk 1   |     Chunk 2     |   Chunk 3  |
      8, 9, 10, 11,   0, 1, 2, 3,   12, 13, 14, 15,   4, 5, 6, 7
 ```
@@ -71,7 +71,7 @@ OpenCL runs in parallel, using chunks instead. If each chunk was 4 items long, i
 
 Like you'd expect, you can access the [offset and sizes](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for these things.
 
-```c
+```cpp
 // Offsets
 int global_id = get_global_id(0); // @elemnum when using @-bindings
 int local_id = get_local_id(0);
@@ -99,7 +99,7 @@ OpenCL binds regular attributes as arrays. Array attributes are binded like suba
 
 Floating types add 2 arguments to the kernel. The length of the array, and the array itself.
 
-```c
+```cpp
 int _bound_attr_length, // length (number of entries) for the float attribute
 global float* restrict _bound_attr, // array of the float attribute values, in index order
 ```
@@ -108,7 +108,7 @@ global float* restrict _bound_attr, // array of the float attribute values, in i
 
 Integer types add 2 arguments to the kernel. The length of the array, and the array itself.
 
-```c
+```cpp
 int _bound_attr_length, // length (number of entries) for the int attribute
 global int* restrict _bound_attr, // array of the int attribute values, in index order
 ```
@@ -117,7 +117,7 @@ global int* restrict _bound_attr, // array of the int attribute values, in index
 
 Floating array types add 3 arguments to the kernel. The length of the array, the start of each subarray, and the array of subarrays.
 
-```c
+```cpp
 int _bound_attr_length,
 global int* restrict _bound_attr_index,
 global int* restrict _bound_attr,
@@ -127,7 +127,7 @@ global int* restrict _bound_attr,
 
 Integer array types add 3 arguments to the kernel. The length of the array, the start of each subarray, and the array of subarrays.
 
-```c
+```cpp
 int _bound_attr_length,
 global int* restrict _bound_attr_index,
 global float* restrict _bound_attr,
@@ -151,7 +151,7 @@ You can view the regular OpenCL code by going to the "Generated Code" tab and cl
 
 In in the generated kernel, you'll see a lot of `#define` lines. `#define` is a C preprocessor directive that replaces text with other text.
 
-```c
+```cpp
 // Replace hello with goodbye
 #define hello goodbye
 
@@ -213,7 +213,7 @@ Houdini doesn't have many OpenCL resources. I strongly recommend checking the Ho
 
 The `houdini/ocl` folder in your Houdini directory contains tons of OpenCL files.
 
-```c
+```cpp
 // Type this in any text field to evaluate the path
 // On Windows: C:/Program Files/Side Effects Software/Houdini <VERSION>/houdini/ocl
 $HH/ocl
@@ -223,7 +223,7 @@ This is also where you find helper libraries, such as the matrix library `matrix
 
 `#include` means to insert the code from a file into your file. You can do this for any OpenCL file in `houdini/ocl`.
 
-```c
+```cpp
 // Type this in any text field to evaluate the path
 // On Windows: C:/Program Files/Side Effects Software/Houdini <VERSION>/houdini/ocl/include/matrix.h
 $HH/ocl/include/matrix.h
@@ -247,7 +247,7 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 
 <img src="./images/cops/radial_blur.png?raw=true" width="600">
 
-```c
+```cpp
 #bind layer src? val=0
 #bind layer !&dst
 
