@@ -95,9 +95,10 @@ I don't recommend using @ bindings until you learn how to write regular OpenCL, 
 
 You can view the regular OpenCL code by going to the "Generated Code" tab and clicking "Generate Kernel". This is the OpenCL it actually runs.
 
-In in the generated kernel, you'll see a lot of `#define` lines. `#define` is a C preprocessor directive that replaces text. For example:
+In in the generated kernel, you'll see a lot of `#define` lines. `#define` is a C preprocessor directive that replaces text with other text. For example:
 
 ```c
+// Replace hello with goodbye
 #define hello goodbye
 
 // Prints "goodbye"
