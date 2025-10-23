@@ -85,6 +85,42 @@ int num_groups = get_num_groups(0);
 
 [Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
 
+## OpenCL parallel headaches
+
+OpenCL runs in parallel, so what happens if multiple workitems try to change the same data at the same time?
+
+This causes a race condition. One workitem will take priority and god knows which one it will be.
+
+There are various solutions to this:
+
+1. Design your code to avoid this problem to begin with [(for example using worksets)](#1-worksets-in-opencl)
+2. [Use atomic operations](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomicFunctions.html)
+3. [Use memory fences](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
+
+### 1. Worksets in OpenCL
+
+When reads and writes overlap, you can avoid race conditions by breaking the operation into sections of data that don't affect eachother.
+
+This happens with solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) and Otis.
+
+Vellum runs over sections of prims, while VBD and Otis run over sections of points.
+
+<img src="./images/vellum_vs_vbd.png" width="800">
+
+Vellum, VBD and Otis use the Graph Color node to generate these sections. It computes the offset and size of each data section.
+
+<img src="./images/graph_color.png" width="500">
+
+To run an operation over data sections, you can use the workset option on any OpenCL node.
+
+<img src="./images/multiple_global_workgroups.png" width="500">
+
+This option runs the same kernel multiple times with different data sizes. It waits for the previous kernel to synchronize before going onto the next one. It passes the global index offset as another kernel argument.
+
+I think of it like multiple global workgroups. This diagram isn't correct though, since it's really the same kernel each time.
+
+<img src="./images/multiple_global_workgroups2.png">
+
 ## @-bindings (at-bindings)
 
 @-bindings are an optional feature added by SideFX to save you from writing tedious boilerplate OpenCL code.
@@ -112,28 +148,6 @@ printf("hello");
 ```
 
 This is exactly what @-bindings use. They replace `@P` with the equivalent OpenCL read/write instruction for that data type.
-
-## Worksets in OpenCL
-
-Sometimes you need to run an operation over small sections of a larger bunch of data.
-
-For example, Vellum (XPBD) runs over sections of prims, while [Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) and Otis run over sections of points.
-
-<img src="./images/vellum_vs_vbd.png" width="800">
-
-Vellum, VBD and Otis use the Graph Color node to generate these sections. It computes the offset and size of each data section.
-
-<img src="./images/graph_color.png" width="500">
-
-To run an operation over data sections, you can use the workset option on any OpenCL node.
-
-<img src="./images/multiple_global_workgroups.png" width="500">
-
-This option runs the same kernel multiple times, with different data lengths. It passes the global index offset as another kernel argument.
-
-I think of this like multiple global workgroups. This diagram isn't really correct though, because it's really the same kernel each time.
-
-<img src="./images/multiple_global_workgroups2.png">
 
 ## Fix "1 warning generated"
 
