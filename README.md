@@ -228,25 +228,6 @@ This can be fixed by setting the environment variable `HOUDINI_OCL_REPORT_BUILD_
 
 Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
 
-## Where to find OpenCL resources
-
-I recommend checking the Houdini files for examples. The `houdini/ocl` folder contains tons of OpenCL files.
-
-- Generic path: `$HH/ocl`
-- On Windows: `C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl`
-
-There's some other tutorials online, but they may not use the most up-to-date syntax:
-
-- [OpenCL for VEX Users](https://www.sidefx.com/docs/houdini/vex/ocl.html)
-- [OpenCL COP for VEX Users](https://www.sidefx.com/tutorials/opencl-cop-for-vex-users/)
-- [OpenCL Masterclass (old but functional)](https://www.sidefx.com/tutorials/houdini-165-masterclass-opencl/)
-
-Another place to look is Copernicus. Some Copernicus nodes contain OpenCL nodes with embedded code inside them.
-
-Though it's uncommon, some solvers like the Ripple Solver contain OpenCL nodes with embedded code inside them.
-
-I'm also working on [a solver written in OpenCL](https://github.com/MysteryPancake/Houdini-VBD). The code is in the `ocl` folder on that page.
-
 ## Matrices in OpenCL
 
 OpenCL doesn't have good support for matrices. For this reason, SideFX wrote a `matrix.h` header that ships with Houdini.
@@ -261,12 +242,12 @@ You need to include this file with `#include <matrix.h>` to use matrix operation
 `#include` means to insert the code from a file into your file. You can do this for any OpenCL header in `houdini/ocl`.
 
 ```cpp
-// To include the matrix header located in houdini/ocl/include:
+// To include the matrix header located in "houdini/ocl/include"
 #include <matrix.h>
 ```
 
 ```cpp
-// To include files in other directories:
+// To include files in other directories
 #include "../sim/vbd_energy.cl"
 ```
 
@@ -276,7 +257,7 @@ You can create a matrix by declaring a variable with no value. You might want to
 
 ```cpp
 // Create a 3x3 matrix called mat
-mat3 mat
+mat3 mat;
 
 // Fill mat with zeroes
 mat3zero(mat);
@@ -287,7 +268,7 @@ mat3identity(mat)
 
 ### Accessing matrix entries
 
-Note how matrix types are defined in `matrix.h`:
+It's important to note how matrix types are defined in `matrix.h`:
 
 ```cpp
 // A 3x3 matrix in row-major order (to match UT_Matrix3)
@@ -379,3 +360,22 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 
 | [Download the HIP file!](./hips/cops/radial_blur.hiplc?raw=true) |
 | --- |
+
+## More OpenCL resources
+
+I strongly recommend checking the Houdini files for examples. The `houdini/ocl` folder contains tons of OpenCL files.
+
+- Generic path: `$HH/ocl`
+- On Windows: `C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl`
+
+There's some other tutorials online, but they may not use the most up-to-date syntax:
+
+- [OpenCL for VEX Users](https://www.sidefx.com/docs/houdini/vex/ocl.html)
+- [OpenCL COP for VEX Users](https://www.sidefx.com/tutorials/opencl-cop-for-vex-users/)
+- [OpenCL Masterclass (old but functional)](https://www.sidefx.com/tutorials/houdini-165-masterclass-opencl/)
+
+Another place to look is Copernicus. Some Copernicus nodes contain OpenCL nodes with embedded code inside them.
+
+Though it's uncommon, some solvers like the Ripple Solver contain OpenCL nodes with embedded code inside them.
+
+I'm also working on [a solver written in OpenCL](https://github.com/MysteryPancake/Houdini-VBD). The code is in the `ocl` folder on that page.
