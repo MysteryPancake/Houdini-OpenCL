@@ -137,7 +137,7 @@ I don't recommend using @-bindings until you learn how to write regular OpenCL, 
 
 You can view the regular OpenCL code by going to the "Generated Code" tab and clicking "Generate Kernel". This is the OpenCL it actually runs.
 
-In in the generated kernel, you'll see a lot of `#define` lines. `#define` is a C preprocessor directive that replaces text with other text. For example:
+In in the generated kernel, you'll see a lot of `#define` lines. `#define` is a C preprocessor directive that replaces text with other text.
 
 ```c
 // Replace hello with goodbye
@@ -148,6 +148,8 @@ printf("hello");
 ```
 
 This is exactly what @-bindings use. They replace `@P` with the equivalent OpenCL read/write instruction for that data type.
+
+<img src="./images/at_bindings.png" width="900">
 
 ## Fix "1 warning generated"
 
