@@ -242,6 +242,10 @@ kernel void kernelName(
 {}
 ```
 
+#### Kernel bounds checking
+
+Now let's begin the kernel body.
+
 Remember how OpenCL runs in workgroups? Sometimes the data is shorter than the workgroup size.
 
 Say the local workgroup size is 16. If the geometry has 100 points, then `v@P` has 100 values.
@@ -252,7 +256,7 @@ This causes `112-100 = 12` extra workitems.
 
 <img src="./images/out_of_range.png">
 
-Never process data outside the workgroup size, because this causes memory leaks and crashes.
+Make sure never to process data out of bounds. This causes memory leaks and crashes.
 
 You can skip extra workitems with `return`. This ends the kernel immediately for that workitem.
 
