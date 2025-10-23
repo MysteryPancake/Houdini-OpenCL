@@ -105,3 +105,11 @@ printf("hello");
 ```
 
 This is exactly what @ bindings are doing. They replace `@P` with the equivalent OpenCL read/write instruction for that data type.
+
+## Fixing "1 warning generated" OpenCL error
+
+Sometimes OpenCL spams the message "1 warning generated", but doesn't spam the actual warning.
+
+This can be fixed by setting the environment variable `HOUDINI_OCL_REPORT_BUILD_LOGS` to `1` before starting Houdini.
+
+Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
