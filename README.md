@@ -51,7 +51,7 @@ While VEX only runs on the CPU, OpenCL can run on the GPU, CPU and any other dev
 
 OpenCL is much faster than VEX at certain tasks, like feedback loops (Attribute Blur) and anything involving neighbours (Vellum). It's commonly found in solvers and used for image processing in Copernicus.
 
-<img src="./images/opencl_speed.png">
+<img src="./images/opencl_speed.png" width="400">
 
 ## Weaknesses
 
