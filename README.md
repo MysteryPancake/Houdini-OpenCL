@@ -480,9 +480,9 @@ I prefer to use varying precision types for everything, in case I want to move t
 
 If using @-bindings, `@KERNEL` automatically generates the kernel arguments for you. If not, you have to add them manually.
 
-You can use whatever naming you want, it won't affect anything. Attributes are bound in the order defined in the "Bindings" tab.
+Attributes are bound in the order defined in the "Bindings" tab. You can use whatever naming you want, it won't affect anything.
 
-OpenCL binds regular attributes as arrays. Array attributes are binded like subarrays within a larger array.
+Houdini binds most attributes as arrays. Array attributes are also bound as arrays, by flattening them into a giant array.
 
 ### Floating types: `float, vector2, vector, vector4, matrix2, matrix3, matrix`
 
@@ -495,6 +495,7 @@ Floating types add 2 arguments to the kernel: the length of the array, and the a
 #bind point attr float2 // if vector2
 #bind point attr float3 // if vector
 #bind point attr float4 // if vector4
+#bind point attr float9 // if matrix3
 
 @KERNEL {
     // ...
