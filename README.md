@@ -18,7 +18,7 @@ OpenCL is the lowest level language you can access in Houdini, and can be the fa
 
 It's is similar to VEX since they're both C-style languages, but it's much simpler and barely has any libraries.
 
-OpenCL is intended for data processing. There's no `intersect()` or `xyzdist()`, only reading, writing and basic math operations.
+OpenCL is intended for low-level data processing. It doesn't have any high-level functions like `intersect()` or `xyzdist()`, only reading, writing and basic math operations.
 
 While VEX only runs on the CPU, OpenCL can run on the GPU, CPU and any other devices that support it. It's a general purpose computing language so it's not specific to Houdini.
 
