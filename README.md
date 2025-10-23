@@ -220,7 +220,7 @@ Vector and float types both add 2 arguments to the kernel: the length of the arr
 
 ```cpp
 int attr_length, // length (number of entries) of the float attribute
-global float* restrict attr, // array of float attribute values, in index order
+global float* attr, // array of float attribute values, in index order
 ```
 
 We have 3 attributes, so there's 2*3 = 6 arguments in total.
@@ -469,8 +469,6 @@ You can use whatever naming you want, it won't affect anything. Attributes are b
 
 OpenCL binds regular attributes as arrays. Array attributes are binded like subarrays within a larger array.
 
-`restrict` adds [minor optimizations assuming a pointer isn't used elsewhere](https://www.youtube.com/watch?v=TBGu3NNpF1Q). It's not essential but will be auto generated.
-
 ### Floating types: `float, vector2, vector, vector4, matrix2, matrix3, matrix`
 
 Floating types add 2 arguments to the kernel: the length of the array, and the array itself.
@@ -494,7 +492,7 @@ Floating types add 2 arguments to the kernel: the length of the array, and the a
 kernel void kernelName(
     // ...
     int attr_length, // length (number of entries) of the float attribute
-    global float* restrict attr, // array of float attribute values, in index order
+    global float* attr, // array of float attribute values, in index order
     // ...
 ) {
     // ...
@@ -521,7 +519,7 @@ Integer types add 2 arguments to the kernel: the length of the array, and the ar
 kernel void kernelName(
     // ...
     int attr_length, // length (number of entries) of the int attribute
-    global int* restrict attr, // array of int attribute values, in index order
+    global int* attr, // array of int attribute values, in index order
     // ...
 ) {
     // ...
@@ -548,8 +546,8 @@ Floating array types add 3 arguments to the kernel: the length of the array, the
 kernel void kernelName(
     // ...
     int attr_length, // length (number of entries) of the float attribute
-    global int* restrict attr_index, // array of the starting indices of each subarray
-    global float* restrict attr, // array of float attribute values, flattened in index order
+    global int* attr_index, // array of the starting indices of each subarray
+    global float* attr, // array of float attribute values, flattened in index order
     // ...
 ) {
     // ...
@@ -576,8 +574,8 @@ Integer array types add 3 arguments to the kernel: the length of the array, the 
 kernel void kernelName(
     // ...
     int attr_length, // length (number of entries) of the int attribute
-    global int* restrict attr_index, // array of the starting indices of each subarray
-    global int* restrict attr, // array of int attribute values, flattened in index order
+    global int* attr_index, // array of the starting indices of each subarray
+    global int* attr, // array of int attribute values, flattened in index order
     // ...
 ) {
     // ...
