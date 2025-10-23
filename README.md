@@ -263,19 +263,7 @@ I'm also working on [a solver written in OpenCL](https://github.com/MysteryPanca
 
 ## SOP: Laplacian Filter
 
-The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) can be used to make a geometry equalizer.
-
-Like with sound, you can exaggerate or reduce certain frequencies (eigenvectors) of the geometry.
-
-Thanks again to [White Dog](https://x.com/whitedo27114277?lang=en) for his [Eigenspace Projection example](https://drive.google.com/drive/folders/1gFYlmsFgpeihmcqZLFITvYQIW5mpYyJd)! I remade it in OpenCL for better performance.
-
-<p align="left">
-  <img src="./images/laplacianfilter.png?raw=true" height="250">
-  <img src="./images/laplacianfilter2.png?raw=true" height="250">
-</p>
-
-| [Download the HDA!](./hdas/MysteryPancake.laplacian_filter.1.0.hdalc?raw=true) | [Download the HIP file!](./hdas/laplacian_filter.hiplc?raw=true) |
-| --- | --- |
+TODO
 
 ## Copernicus: Radial Blur
 
