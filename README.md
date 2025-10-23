@@ -14,11 +14,11 @@ It's the lowest level language you can access in Houdini without using the HDK, 
 
 Houdini has many other built-in programming languages including Python, VEX/VOPS and OpenCL.
 
-| Language | Runs on | Pain | Speed | Libraries/helper functions | Supports multithreading
+| Language | Runs on | Pain | Speed | Libraries | Supports multithreading
 | --- | --- | --- | --- | --- | --- |
-| Python | CPU + GPU | Easy | Slow | Many | Yes |
-| VEX/VOPS | CPU only | Medium | Fast | Some | Yes |
-| OpenCL | CPU + GPU + Anything supporting OpenCL | Hard | Fast | Very few | Yes |
+| Python | CPU + GPU | <img src="./images/pain1.png" height="100"> | Slow | Many | Yes |
+| VEX/VOPS | CPU only | <img src="./images/pain2.png" height="100"> | Fast | Some | Yes |
+| OpenCL | CPU + GPU + Anything supporting OpenCL | <img src="./images/pain3.png" height="100"> | Fast | Very few | Yes |
 
 It's tempting to use OpenCL for everything, but it's not magically faster at everything. Both VEX and OpenCL support multithreading, so their performance is similar most of the time.
 
