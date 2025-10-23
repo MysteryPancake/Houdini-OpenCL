@@ -233,7 +233,7 @@ Floating array types add 3 arguments to the kernel. The length of the array, the
 kernel void kernelName(
     // ...
     int _bound_attr_length, // length (number of entries) of the int attribute
-    global int* restrict _bound_attr_index, // array of starting indices of subarrays within the flattened array
+    global int* restrict _bound_attr_index, // array of the starting indices of each subarray
     global int* restrict _bound_attr, // array of int attribute values, flattened in index order
     // ...
 ) {
@@ -261,7 +261,7 @@ Integer array types add 3 arguments to the kernel. The length of the array, the 
 kernel void kernelName(
     // ...
     int _bound_attr_length, // length (number of entries) of the float attribute
-    global int* restrict _bound_attr_index, // array of starting indices of subarrays within the flattened array
+    global int* restrict _bound_attr_index, // array of the starting indices of each subarray
     global float* restrict _bound_attr, // array of float attribute values, flattened in index order
     // ...
 ) {
