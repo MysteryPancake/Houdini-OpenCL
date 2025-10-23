@@ -86,6 +86,24 @@ int num_groups = get_num_groups(0);
 
 [Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
 
+## How OpenCL decides what to run over
+
+In VEX, you can run over Detail, Primitives, Points and Vertices.
+
+OpenCL doesn't care what you run it over. It just gives you the ID of the current element, nothing else changes.
+
+`get_global_id(0)` is the same as `@ptnum`, `@vtxnum`, and `@primnum` in VEX. Use `@elemnum` if using @-bindings.
+
+But how does it decide which to use? It depends on the "Run Over" setting in the "Options" tab.
+
+<img src="./images/run_over.png" width="400">
+
+The default is "First Writeable Attribute", meaning it uses the length of the attribute marked as writable.
+
+<img src="./images/writeable_attribute.png" width="500">
+
+This only affects the loop range, not data access. You can write a totally different attribute if you want.
+
 ## Precision
 
 OpenCL supports varying precision for all data types, just like VEX. Data can be 16-bit (half), 32-bit (float) or 64-bit (double).
@@ -321,6 +339,92 @@ mat32 mat;
 mat[0][0] = 1.0f; // mat[0].s0 also works
 mat[0][1] = 2.0f; // mat[0].s1 also works
 // ...
+```
+
+### Binding matrices
+
+Matrices should be bound as float arrays. `matrix3` contains 3x3=9 floats, and `matrix` contains 4x4=16 floats.
+
+| Binding `matrix3` (3x3) | Binding `matrix` (4x4) |
+| --- | --- |
+| <img src="./images/matrix3_binding.png"> | <img src="./images/matrix4_binding.png"> |
+
+### Reading/writing matrices
+
+Since `mat3` is an array of vectors, loading it from memory requires loading 3 vectors in a row.
+
+- `mat3load(idx, matrix_attr_array, loaded_matrix)` is used to read a matrix.
+- `mat3store(loaded_matrix, idx, matrix_attr_array)` is used to write a matrix.
+
+```cpp
+#include <matrix.h>
+
+kernel void kernelName(
+    int matrix_attr_length,
+    global float* matrix_attr
+)
+{
+    int idx = get_global_id(0);
+    if (idx >= matrix_attr_length) return;
+    
+    // Load matrix from matrix_attr array into loaded_matrix variable
+    mat3 loaded_matrix;
+    mat3load(idx, matrix_attr, loaded_matrix);
+    
+    // Add 10 to the first value (top corner) of the matrix
+    loaded_matrix[0][0] = 10.0f;
+    
+    // Store it again back in the attribute
+    mat3store(loaded_matrix, idx, matrix_attr);
+}
+```
+
+### Applying matrices
+
+
+
+```cpp
+#include <matrix.h>
+
+#bind parm axis fpreal3
+#bind parm angle fpreal
+
+#bind point &P fpreal3
+
+// Made by jan on Discord
+void rotfromaxis(fpreal3 axis, fpreal angle, mat3 m)
+{
+    // Normalize the axis (ensure it's a unit vector)
+    axis = normalize(axis);
+
+    // Precompute trigonometric values
+    fpreal c = cos(angle);
+    fpreal s = sin(angle);
+    fpreal t = 1.0f - c;
+
+    // Extract axis components for clarity
+    fpreal ux = axis.x;
+    fpreal uy = axis.y;
+    fpreal uz = axis.z;
+
+    // Construct the rotation matrix columns using Rodrigues' formula
+    fpreal3 c0 = { t*ux*ux + c,    t*ux*uy - s*uz, t*ux*uz + s*uy };
+    fpreal3 c1 = { t*ux*uy + s*uz, t*uy*uy + c,    t*uy*uz - s*ux };
+    fpreal3 c2 = { t*ux*uz - s*uy, t*uy*uz + s*ux, t*uz*uz + c    };
+
+    // Build the matrix from columns
+    mat3fromcols(c0, c1, c2, m);
+}
+
+@KERNEL
+{
+    mat3 rot;
+    rotfromaxis(@axis, @angle, rot);
+
+    fpreal3 pos = @P;
+    pos = mat3vecmul(rot, pos);
+    @P.set(pos);
+}
 ```
 
 ## SOP: Laplacian Filter
