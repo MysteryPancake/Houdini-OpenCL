@@ -244,7 +244,9 @@ Let's write the kernel body. Remember how OpenCL runs in workgroups? Sometimes t
 
 Say the local workgroup size is 16. If the geometry has 100 points, then `v@P` has 100 values.
 
-100 doesn't divide cleanly into 16. The highest multiple is `ceil(100/16)*16 = 112`. This causes `112-100 = 12` extra workitems.
+100 doesn't divide cleanly into 16. The highest multiple is `ceil(100/16)*16 = 112`.
+
+This causes `112-100 = 12` extra workitems.
 
 <img src="./images/out_of_range.png">
 
