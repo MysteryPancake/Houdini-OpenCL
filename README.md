@@ -485,8 +485,9 @@ There's some other tutorials online, but they may not use the most up-to-date sy
 - [OpenCL COP for VEX Users](https://www.sidefx.com/tutorials/opencl-cop-for-vex-users/)
 - [OpenCL Masterclass (old but functional)](https://www.sidefx.com/tutorials/houdini-165-masterclass-opencl/)
 
-Another place to look is Copernicus. Some Copernicus nodes contain OpenCL nodes with embedded code inside them.
+There's also lots of embedded OpenCL code within solvers and Copernicus.
 
-Though it's uncommon, some solvers like the Ripple Solver contain OpenCL nodes with embedded code inside them.
+- Copernicus nodes like Dilate Erode contain OpenCL nodes with embedded code inside them.
+- Solver nodes like the Ripple Solver contain OpenCL nodes with embedded code inside them.
 
-I'm also working on [a solver written in OpenCL](https://github.com/MysteryPancake/Houdini-VBD). The code is in the `ocl` folder on that page.
+I'm also working on [a solver written in OpenCL](https://github.com/MysteryPancake/Houdini-VBD). The code is in the `ocl` folder.
