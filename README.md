@@ -98,9 +98,16 @@ But how does it decide which to use? It depends on the "Run Over" setting in the
 
 <img src="./images/run_over.png" width="400">
 
-The default is "First Writeable Attribute", meaning it uses the length of the attribute marked as writable.
+The default is "First Writeable Attribute", so it picks the length of the first attribute marked as writeable.
 
 <img src="./images/writeable_attribute.png" width="500">
+
+The @-binding equivalent is the first attribute marked with `&`.
+
+```cpp
+// & means the attribute is writeable
+#bind point &P float3
+```
 
 This only affects the loop range, not data access. You can write a totally different attribute if you want.
 
