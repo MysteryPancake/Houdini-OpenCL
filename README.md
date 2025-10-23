@@ -48,11 +48,11 @@ Houdini has many built-in programming languages including Python, VEX/VOPS and O
 | VEX/VOPS | CPU only | Medium | Fast | Some |
 | OpenCL | CPU + GPU + Anything supporting OpenCL | Hard | Fast | Very few |
 
-OpenCL is the lowest level language you can access in Houdini, and can be the fastest if used correctly.
+OpenCL is the lowest level language you can access in Houdini, and can be the fastest when used correctly.
 
 It's is similar to VEX since they're both C-style languages, but it's much simpler and barely has any libraries.
 
-OpenCL is intended for low-level data processing. It doesn't have any high-level functions like `intersect()` or `xyzdist()`, only reading, writing and basic math operations.
+OpenCL is intended for low-level data processing. It doesn't have any high-level functions like `intersect()` or `xyzdist()`, only basic operations like reading, writing and math.
 
 While VEX only runs on the CPU, OpenCL can run on the GPU, CPU and any other devices that support it. It's a general purpose computing language so it's not specific to Houdini.
 
