@@ -101,7 +101,7 @@ To enable varying precision, all OpenCL nodes have a global precision setting in
 
 <img src="./images/precision.png" width="400">
 
-They also let you change the precision of each attribute in the "Bindings" tab:
+You can then change the precision of each attribute in the "Bindings" tab:
 
 <img src="./images/precision2.png" width="400">
 
