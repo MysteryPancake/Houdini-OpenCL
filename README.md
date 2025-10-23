@@ -589,50 +589,6 @@ I don't recommend using @-bindings until you learn plain OpenCL, because they ad
 
 You can view the plain OpenCL code by going to the "Generated Code" tab and clicking "Generate Kernel". This is the code it actually runs.
 
-## Parallel processing headaches
-
-OpenCL runs in parallel, so what happens if multiple workitems try to change the same data at the same time?
-
-This causes a race condition. One workitem will take priority and god knows which it'll be.
-
-There are various solutions to this:
-
-1. Design your code to avoid this problem to begin with [(for example using worksets)](#worksets-in-opencl)
-2. [Use atomic operations](https://registry.khronos.org/OpenCL/extensions/ext/cl_ext_float_atomics.html)
-3. [Use memory fences (barriers)](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
-
-## Worksets in OpenCL
-
-When reads and writes overlap, you can avoid race conditions by breaking the operation into sections of data that don't affect eachother.
-
-This happens with solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) and Otis.
-
-Vellum runs over sections of prims, while VBD and Otis run over sections of points.
-
-<img src="./images/vellum_vs_vbd.png" width="800">
-
-Vellum, VBD and Otis use the Graph Color node to generate these sections. It computes the offset and size of each data section.
-
-<img src="./images/graph_color.png" width="500">
-
-To run an operation over data sections, you can use the workset option on any OpenCL node.
-
-<img src="./images/multiple_global_workgroups.png" width="500">
-
-This option runs the same kernel multiple times with different data sizes. It waits for the previous kernel to synchronize before going onto the next one. It passes the global index offset as another kernel argument.
-
-I think of it like multiple global workgroups. This diagram isn't correct though, since it's really the same kernel each time.
-
-<img src="./images/multiple_global_workgroups2.png">
-
-## Fix "1 warning generated" errors
-
-Sometimes OpenCL spams the message "1 warning generated", but doesn't spam the actual warning.
-
-This can be fixed by setting the environment variable `HOUDINI_OCL_REPORT_BUILD_LOGS` to `1` before starting Houdini.
-
-Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
-
 ## Matrices in OpenCL
 
 OpenCL doesn't have good support for matrices. For this reason, SideFX wrote a `matrix.h` header that ships with Houdini.
@@ -823,6 +779,50 @@ void rotfromaxis(fpreal3 axis, fpreal angle, mat3 m)
     @P.set(pos);
 }
 ```
+
+## Parallel processing headaches
+
+OpenCL runs in parallel, so what happens if multiple workitems try to change the same data at the same time?
+
+This causes a race condition. One workitem will take priority and god knows which it'll be.
+
+There are various solutions to this:
+
+1. Design your code to avoid this problem to begin with [(for example using worksets)](#worksets-in-opencl)
+2. [Use atomic operations](https://registry.khronos.org/OpenCL/extensions/ext/cl_ext_float_atomics.html)
+3. [Use memory fences (barriers)](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
+
+## Worksets in OpenCL
+
+When reads and writes overlap, you can avoid race conditions by breaking the operation into sections of data that don't affect eachother.
+
+This happens with solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) and Otis.
+
+Vellum runs over sections of prims, while VBD and Otis run over sections of points.
+
+<img src="./images/vellum_vs_vbd.png" width="800">
+
+Vellum, VBD and Otis use the Graph Color node to generate these sections. It computes the offset and size of each data section.
+
+<img src="./images/graph_color.png" width="500">
+
+To run an operation over data sections, you can use the workset option on any OpenCL node.
+
+<img src="./images/multiple_global_workgroups.png" width="500">
+
+This option runs the same kernel multiple times with different data sizes. It waits for the previous kernel to synchronize before going onto the next one. It passes the global index offset as another kernel argument.
+
+I think of it like multiple global workgroups. This diagram isn't correct though, since it's really the same kernel each time.
+
+<img src="./images/multiple_global_workgroups2.png">
+
+## Fix "1 warning generated" errors
+
+Sometimes OpenCL spams the message "1 warning generated", but doesn't spam the actual warning.
+
+This can be fixed by setting the environment variable `HOUDINI_OCL_REPORT_BUILD_LOGS` to `1` before starting Houdini.
+
+Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
 
 ## Copernicus: Radial Blur
 
