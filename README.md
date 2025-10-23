@@ -495,13 +495,9 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 
 ## SOP: Laplacian Filter (Advanced)
 
-The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) lets you break geometry into frequencies, similar to a fourier transform.
+The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) lets you break geometry into frequencies, similar to a fourier transform. You can exaggerate or reduce certain frequencies (eigenvectors) of the geometry for blurring and sharpening effects.
 
-You can exaggerate or reduce certain frequencies (eigenvectors) of the geometry for various blurring and sharpening effects.
-
-This is based on [White Dog's](https://x.com/whitedo27114277?lang=en) fantastic [Eigenspace Projection example](https://drive.google.com/drive/folders/1gFYlmsFgpeihmcqZLFITvYQIW5mpYyJd).
-
-White Dog's example adds together many numbers in a feedback loop in parallel to compute a global sum. This is a great candidate for OpenCL!
+This is based on [White Dog's Eigenspace Projection example](https://drive.google.com/drive/folders/1gFYlmsFgpeihmcqZLFITvYQIW5mpYyJd). It uses global sums in a feedback loop. Perfect candidate for OpenCL!
 
 <p align="left">
   <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter.png" height="250">
@@ -515,9 +511,14 @@ You can do large math operations in parallel using [workgroup reduction](https:/
 
 Since OpenCL runs in parallel, it's hard to calculate a global sum due to [parallel processing headaches](#parallel-processing-headaches).
 
-There's many possible workarounds. I chose to sum each local workgroup (called a partial sum). After all the partial sums are complete, I used `atomic_add()` for the global sum.
+There's many workarounds, but I chose to use both workgroup reduction and atomic operations.
 
-`atomic_add()` is a synchronous addition operation. It gets slow when overused too much, so try to avoid it as much as possible. It also doesn't work on floating types like `fpreal3`, only `int`. I found a workaround in `$HH/ocl/deform/blendshape.cl`.
+1. Sum each local workgroup (called a partial sum). I used `work_group_reduce_add3()` defined in `reduce.h`.
+2. After all the partial sums complete, the first workitem in each local workgroup uses `atomic_add()` to compute the global sum.
+
+Atomic operations force OpenCL to run in a sequential way, ruining the benefits of parallel processing. Try to avoid them as much as possible.
+
+Sadly `atomic_add()` only works on `int` types, not `fpreal3`. I found a workaround in `$HH/ocl/deform/blendshape.cl` called `atomicAddFloatCAS()`.
 
 ```cpp
 #include <reduce.h>
