@@ -197,7 +197,7 @@ Remember to mark `v@P` as "Writeable", since we changed it in the VEX code (`v@P
 
 <img src="./images/opencl_noise.png" width="500">
 
-Now we can write the actual kernel. Each OpenCL snippet can contain multiple kernels. Houdini picks the one with the matching Kernel Name.
+Now we can write the actual kernel. Each code snippet may contain multiple kernels. Houdini picks the one with the matching Kernel Name.
 
 <img src="./images/blank_kernel.png" width="500">
 
