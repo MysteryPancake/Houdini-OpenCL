@@ -18,6 +18,8 @@ OpenCL is the lowest level language you can access in Houdini, and can be the fa
 
 It's is similar to VEX since they're both C-style languages, but it's much simpler and barely has any libraries.
 
+OpenCL is intended for data processing. There's no `intersect()` or `xyzdist()`, only reading, writing and basic math operations.
+
 While VEX only runs on the CPU, OpenCL can run on the GPU, CPU and any other devices that support it. It's a general purpose computing language so it's not specific to Houdini.
 
 It's much faster than VEX at certain tasks, like feedback loops (Attribute Blur) and anything involving neighbours (Vellum). It's commonly found in solvers and used for image processing in COPS.
@@ -28,9 +30,9 @@ Like VEX, OpenCL supports multithreading so the performance of VEX and OpenCL ar
 
 To take advantage of OpenCL fully, you must know how OpenCL runs operations.
 
-## How OpenCL runs operations
+## How OpenCL runs
 
-OpenCL runs in parallel, so operations never run in order.
+OpenCL runs in parallel. Unlike in VEX, operations cannot run in order.
 
 This makes OpenCL a bad choice for any algorithm that requires order. Such algorithms should be run in VEX instead.
 
@@ -43,17 +45,17 @@ A regular for loop would run in series:
 OpenCL runs in parallel, so it runs in chunks instead. If each chunk was 4 numbers long, it might run in this order:
 
 ```c
-// Chunk 0    | Chunk 1   | Chunk 2       | Chunk 3
-8, 9, 10, 11, 0, 1, 2, 3, 12, 13, 14, 15, 4, 5, 6, 7
+// |    Chunk 0    |   Chunk 1   |     Chunk 2     |   Chunk 3  |
+     8, 9, 10, 11,   0, 1, 2, 3,   12, 13, 14, 15,   4, 5, 6, 7
 ```
 
-- Each number is called a **workitem**. `0` is a workitem.
 - Chunks are called **local workgroups**. `8, 9, 10, 11` is a **local workgroup** of size 4.
-- Each **local workgroup** is part of a **global workgroup**. All of the above could be in a single global workgroup `0`.
+- Each **local workgroup** is part of a **global workgroup**. All of these numbers could be in global workgroup `0`.
+- Each number is called a **workitem**. `0` is a workitem.
 
 <img src="./images/opencl_workgroups.png">
 
-As you'd expect, you can access the offset and size for these things.
+Like you'd expect, you can access the [offset and sizes](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for these things.
 
 ```c
 // Offsets
@@ -76,3 +78,30 @@ For example if you use worksets, it runs the same kernel multiple times. Concept
 <img src="./images/multiple_global_workgroups.png" width="500">
 
 <img src="./images/multiple_global_workgroups2.png">
+
+## @ bindings
+
+@ bindings are an optional feature added by SideFX to avoid writing tedious boilerplate code you often need with OpenCL.
+
+I don't recommend using @ bindings until you learn how to write regular OpenCL, because they add another layer of confusion.
+
+@ bindings automatically do these things for you:
+
+- Automatically add bindings to attributes/data (not shown in the "Bindings" tab)
+- Automatically add kernel arguments to pass in the attribute/data
+- Automatically add `#define` directives to let you access the attribute/data with `@` syntax
+
+@ bindings generate the exact same OpenCL code under the hood, but let you use a VEX-like syntax instead.
+
+You can view the regular OpenCL code by going to the "Generated Code" tab and clicking "Generate Kernel". This is the OpenCL it actually runs.
+
+In in the generated kernel, you'll see a lot of `#define` lines. `#define` is a C preprocessor directive that replaces text. For example:
+
+```c
+#define hello goodbye
+
+// Prints "goodbye"
+printf("hello");
+```
+
+This is exactly what @ bindings are doing. They replace `@P` with the equivalent OpenCL read/write instruction for that data type.
