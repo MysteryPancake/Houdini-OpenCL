@@ -951,7 +951,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 #### GLSL version
 
 ```cpp
-void mainImage( out vec4 fragColor, in vec2 fragCoord )
+void mainImage( out vec4 fragColor, in vec2 fragCoord ) // Integer pixel coordinates
 {
      // Modulate with a sine wave
      fragCoord = sin(fragCoord * 0.05);
@@ -960,6 +960,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
      fragColor = vec4(fragCoord, 0.0, 1.0);
 }
 ```
+
+<img src="./images/cops/shadertoy_conversion4.png" width="700">
 
 #### OpenCL version
 
@@ -979,6 +981,11 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
     @dst.set((float4)(fragCoord, 0.0f, 1.0f));
 }
 ```
+
+<img src="./images/cops/shadertoy_conversion3.png" width="700">
+
+| [Download the HIP file!](./hips/cops/shadertoy_examples.hiplc?raw=true) |
+| --- |
 
 ### iResolution in OpenCL
 
