@@ -874,7 +874,7 @@ Most shaders are written in GLSL, an OpenGL language found on popular shader web
 
 The following rules are a starting point to convert GLSL shaders to the OpenCL equivalent.
 
-### Type conversions
+### GLSL to OpenCL types
 
 - `vec2` must be replaced with `float2`
 - `vec3` must be replaced with `float3`
@@ -887,14 +887,14 @@ The following rules are a starting point to convert GLSL shaders to the OpenCL e
 - `float16` is equivalent to `mat4`
 - `fract(x)` must be replaced with `x - floor(x)`
 
-### Typecasting conversions
+### OpenCL typecasting
 
 - Typecasting is done by putting the type before the variable in brackets, for example `(int)x`
 - You can't cast vectors directly, for example `(int2)x` to `(float2)x`. You should use `convert_float2(x)`
 - OpenCL is strongly typed. All math operations require variables to have matching types.
 - Never add `@` before variable names in the input code, such as `int x = 1`. Keep the naming identical.
 
-### mainImage conversions
+### mainImage() in OpenCL
 
 - `mainImage(...) { ... }` must be replaced with the OpenCL equivalent, `@KERNEL { ... }`
 - Functions must be defined above `@KERNEL`, never inside it
@@ -941,23 +941,24 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 | [Download the HIP file!](./hips/shadertoy_examples.hiplc?raw=true) |
 | --- |
 
-### fragCoord conversions
+### fragCoord in OpenCL
 
 - `fragCoord` is the position in pixel coordinates. It must be replaced with `@ixy`, which has `int2` type.
 - `@ix` can be used to get the x coordinate only, same as `@ixy.x`
 - `@iy` can be used to get the y coordinate only, same as `@ixy.y`
 
-### iResolution conversions
+### iResolution in OpenCL
 
 - `iResolution` is the size of the image in pixels. It must be replaced with `@res`, which has `int2` type.
 - `@xres` can be used to get the x coordinate only, same as `@res.x`
 - `@yres` can be used to get the y coordinate only, same as `@res.y`
 
-### fragColor conversions
+### fragColor in OpenCL
+
 - `fragColor` is the output color. It must be replaced with `@dst`, which has `float4` type when set to RGBA.
 - `fragColor = x` must be replaced with `@dst.set(x)`
 
-### Buffer conversions
+### GLSL buffers in OpenCL
 
 - ShaderToy supports multiple buffers with feedback. This is equivalent to Block Begin and Block End nodes in Houdini.
 - Buffers in ShaderToy are equivalent to layers in OpenCL. You can bind layers using the following syntax:
@@ -975,7 +976,7 @@ The `#bind` syntax supports 3 name decorations:
 ! = no read
 ```
 
-### Binding conversions
+### GLSL bindings in OpenCL
 
 - Binding is not required for built-in attributes like `@Time`, `@Frame`, `@P`, `@ixy` and `@res`.
 - `fragCoord / iResolution.xy` normalizes the position coordinate. This division simplifies to `@P.texture`, which has `float2` type.
@@ -993,7 +994,7 @@ The `#bind` syntax supports 3 name decorations:
 
 [Check the OpenCL documentation](https://www.sidefx.com/docs/houdini/vex/ocl.html) for more information.
 
-### Matrix conversions
+### Matrices in OpenCL
 
 - Matrices can't be constructed using `mat3 m = (mat3)(x, y, z)`. You must use `mat3fromcols(x, y, z, m)`.
 - The following matrix functions are built-in, located in `matrix.h`. Use these where possible:
