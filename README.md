@@ -870,9 +870,9 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 
 Copernicus mainly uses OpenCL, but sadly no one outside Houdini really uses it for graphics programming.
 
-Shaders are commonly written in GLSL, an OpenGL language found on popular shader websites such as [ShaderToy](https://www.shadertoy.com/).
+Shaders are commonly written in GLSL, an OpenGL language found on popular shader websites like [ShaderToy](https://www.shadertoy.com/).
 
-The following rules are a good starting point to convert GLSL shaders to the OpenCL equivalent.
+These rules are a decent starting point to convert GLSL shaders to the OpenCL equivalent.
 
 ### GLSL to OpenCL types
 
@@ -882,9 +882,7 @@ The following rules are a good starting point to convert GLSL shaders to the Ope
 - `vec2(...)` must be replaced with `(float2)(...)`
 - `vec3(...)` must be replaced with `(float3)(...)`
 - `vec4(...)` must be replaced with `(float4)(...)`
-- `mat2`, `mat3` and `mat4` stay the same
-- `float4` is equivalent to `mat2`
-- `float16` is equivalent to `mat4`
+- `mat2`, `mat3` and `mat4` stay the same.
 - `fract(x)` must be replaced with `x - floor(x)`
 
 ### OpenCL typecasting
@@ -978,7 +976,7 @@ The `#bind` syntax supports 3 name decorations:
 
 ### GLSL bindings in OpenCL
 
-- Binding is not required for built-in attributes like `@Time`, `@Frame`, `@P`, `@ixy` and `@res`.
+- Binding is not required for built-in attributes like `@Time`, `@Frame`, `@P`, `@ixy` and `@res`
 - `fragCoord / iResolution.xy` normalizes the position coordinate. This division simplifies to `@P.texture`, which has `float2` type.
 - `iTime` must be replaced with `@Time`. This has `float` type.
 - `iFrame` must be replaced with `@Frame`. This has `float` type.
@@ -996,8 +994,11 @@ The `#bind` syntax supports 3 name decorations:
 
 ### Matrices in OpenCL
 
-- Matrices can't be constructed using `mat3 m = (mat3)(x, y, z)`. You must use `mat3fromcols(x, y, z, m)`.
-- The following matrix functions are built-in, located in `matrix.h`. Use these where possible:
+- `float4` is equivalent to `mat2`
+- `float3[3]` is equivalent to `mat3`
+- `float16` is equivalent to `mat4`
+- Matrices can't be constructed using `mat3 m = (mat3)(x, y, z)`. You must use `mat3fromcols(x, y, z, m)`
+- The following matrix functions are built-in, located in `matrix.h`:
 
 ```cpp
 static fpreal vec3sum(const fpreal3 v)
