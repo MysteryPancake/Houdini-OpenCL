@@ -904,14 +904,14 @@ These rules are a decent starting point to convert GLSL shaders to the OpenCL eq
 ```cpp
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
 {
-    // Normalized pixel coordinates (from 0 to 1)
-    vec2 uv = fragCoord / iResolution.xy;
-
-    // Time varying pixel color
-    vec3 col = 0.5 + 0.5 * cos(iTime + uv.xyx + vec3(0, 2, 4));
-
-    // Output to screen
-    fragColor = vec4(col, 1.0);
+     // Normalized pixel coordinates (from 0 to 1)
+     vec2 uv = fragCoord / iResolution.xy;
+     
+     // Time varying pixel color
+     vec3 col = 0.5 + 0.5 * cos(iTime + uv.xyx + vec3(0, 2, 4));
+     
+     // Output to screen
+     fragColor = vec4(col, 1.0);
 }
 ```
 
@@ -926,14 +926,14 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
 @KERNEL
 {
-    // Normalized pixel coordinates (from 0 to 1)
-    float2 uv = @P.texture; // Equivalent to convert_float2(@ixy) / convert_float2(@res)
-    
-    // Time varying pixel color
-    float3 col = 0.5f + 0.5f * cos(@Time + uv.xyx + (float3)(0, 2, 4));
-    
-    // Output to screen
-    @dst.set((float4)(col, 1.0f));
+     // Normalized pixel coordinates (from 0 to 1)
+     float2 uv = @P.texture; // Equivalent to convert_float2(@ixy) / convert_float2(@res)
+     
+     // Time varying pixel color
+     float3 col = 0.5f + 0.5f * cos(@Time + uv.xyx + (float3)(0, 2, 4));
+     
+     // Output to screen
+     @dst.set((float4)(col, 1.0f));
 }
 ```
 
@@ -947,6 +947,38 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 - `fragCoord` is the position in pixel coordinates. It must be replaced with `@ixy`, which has `int2` type.
 - `@ix` can be used to get the x coordinate only, same as `@ixy.x`
 - `@iy` can be used to get the y coordinate only, same as `@ixy.y`
+
+#### GLSL version
+
+```cpp
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+     // Modulate with a sine wave
+     fragCoord = sin(fragCoord * 0.05);
+     
+     // Output to screen
+     fragColor = vec4(fragCoord, 0.0, 1.0);
+}
+```
+
+#### OpenCL version
+
+```cpp
+#bind layer src? val=0
+#bind layer !&dst
+
+@KERNEL
+{
+    // Integer pixel coordinates
+    float2 fragCoord = convert_float2(@ixy);
+    
+    // Modulate with a sine wave
+    fragCoord = sin(fragCoord * 0.05f);
+    
+    // Output to screen
+    @dst.set((float4)(fragCoord, 0.0f, 1.0f));
+}
+```
 
 ### iResolution in OpenCL
 
