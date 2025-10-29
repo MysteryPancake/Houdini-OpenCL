@@ -899,7 +899,7 @@ These rules are a decent starting point to convert GLSL shaders to the OpenCL eq
 - `mainImage(...) { ... }` must be replaced with the OpenCL equivalent, `@KERNEL { ... }`
 - Functions must be defined above `@KERNEL`, never inside it
 
-#### [GLSL version](https://www.shadertoy.com/new)
+#### GLSL version
 
 ```cpp
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
@@ -917,7 +917,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
 <img src="./images/cops/shadertoy_conversion2.png" width="700">
 
-#### [OpenCL version](./hips/cops/shadertoy_examples.hiplc?raw=true)
+#### OpenCL version
 
 ```cpp
 #bind layer src? val=0
