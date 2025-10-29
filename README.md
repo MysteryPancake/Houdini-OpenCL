@@ -956,9 +956,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 - `fragColor` is the output color. It must be replaced with `@dst`, which has `float4` type when set to RGBA.
 - `fragColor = x` must be replaced with `@dst.set(x)`
 
-### GLSL buffers in OpenCL
+### ShaderToy buffers in OpenCL
 
-- ShaderToy supports multiple buffers with feedback. This is equivalent to Block Begin and Block End nodes in Houdini.
 - Buffers in ShaderToy are equivalent to layers in OpenCL. You can bind layers using the following syntax:
 
 ```cpp
@@ -973,6 +972,8 @@ The `#bind` syntax supports 3 name decorations:
 ? = optional
 ! = no read
 ```
+
+- ShaderToy supports multiple buffers with feedback. Feedback is equivalent to using `Block Begin` and `Block End` nodes in Houdini.
 
 ### GLSL bindings in OpenCL
 
