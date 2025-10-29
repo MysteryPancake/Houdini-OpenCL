@@ -977,6 +977,13 @@ The following rules are a starting point to convert GLSL shaders to the OpenCL e
 - `float16` is equivalent to `mat4`
 - `fract(x)` must be replaced with `x - floor(x)`
 
+### Typecasting conversions
+
+- Typecasting is done by putting the type before the variable in brackets, for example `(int)x`
+- You can't cast vectors directly, for example `(int2)x` to `(float2)x`. You should use `convert_float2(x)`
+- OpenCL is strongly typed. All math operations require variables to have matching types.
+- Never add `@` before variable names in the input code, such as `int x = 1`. Keep the naming identical.
+
 ### mainImage conversions
 
 - `mainImage(...) { ... }` must be replaced with the OpenCL equivalent, `@KERNEL { ... }`
@@ -985,8 +992,16 @@ The following rules are a starting point to convert GLSL shaders to the OpenCL e
 Before:
 
 ```cpp
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-	...
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    // Normalized pixel coordinates (from 0 to 1)
+    vec2 uv = fragCoord / iResolution.xy;
+
+    // Time varying pixel color
+    vec3 col = 0.5 + 0.5 * cos(iTime + uv.xyx + vec3(0, 2, 4));
+
+    // Output to screen
+    fragColor = vec4(col, 1.0);
 }
 ```
 
@@ -994,10 +1009,18 @@ After:
 
 ```cpp
 #bind layer src? val=0
-#bind layer !&dst
+#bind layer !&dst // equivalent to fragColor
 
-@KERNEL {
-	...
+@KERNEL
+{
+    // Normalized pixel coordinates (from 0 to 1)
+    float2 uv = @P.texture; // Equivalent to convert_float2(@ixy) / convert_float2(@res)
+    
+    // Time varying pixel color
+    float3 col = 0.5f + 0.5f * cos(@Time + uv.xyx + (float3)(0, 2, 4));
+    
+    // Output to screen
+    @dst.set((float4)(col, 1.0f));
 }
 ```
 
@@ -1014,31 +1037,8 @@ After:
 - `@yres` can be used to get the y coordinate only, same as `@res.y`
 
 ### fragColor conversions
-- `fragColor` is the output color. It must be replaced with `@dst`, which has `float4` type when RGBA.
+- `fragColor` is the output color. It must be replaced with `@dst`, which has `float4` type when set to RGBA.
 - `fragColor = x` must be replaced with `@dst.set(x)`
-
-### Typecasting conversions
-
-- You can't cast vectors directly, for example `(int2)x` to `(float2)x`. You should use `convert_float2(x)`
-- Never add `@` before variable names in the input code, such as `int x = 1`. Keep the naming identical.
-- Typecasting is done by putting the type before the variable in brackets, for example `(float2)x`
-- OpenCL is strongly typed. All math operations require variables to have matching types.
-
-### Binding conversions
-
-- Binding is not required for built-in attributes like `@Time`, `@Frame`, `@P`, `@ixy` and `@res`.
-- `fragCoord / iResolution.xy` normalizes the position coordinate. This division simplifies to `@P`, which has `float2` type.
-- `iTime` must be replaced with `@Time`. This has `float` type.
-- `iFrame` must be replaced with `@Frame`. This has `float` type.
-- `iChannel0` must be replaced with `@src`
-- `texture(iChannel0, xy)` must be replaced with `@src.imageSample(xy)`
-- `textureLod(iChannel0, xy, 0)` doesn't exist. It must replaced with `@src.imageSample(xy)`
-- Any variables of type `sampler2D` must be replaced with `@src`
-- iMouse doesn't exist. It can be replaced with a `@mouse` binding:
-
-```cpp
-#bind parm mouse float3 val=0
-```
 
 ### Buffer conversions
 
@@ -1056,6 +1056,22 @@ The `#bind` syntax supports 3 name decorations:
 & = write
 ? = optional
 ! = no read
+```
+
+### Binding conversions
+
+- Binding is not required for built-in attributes like `@Time`, `@Frame`, `@P`, `@ixy` and `@res`.
+- `fragCoord / iResolution.xy` normalizes the position coordinate. This division simplifies to `@P.texture`, which has `float2` type.
+- `iTime` must be replaced with `@Time`. This has `float` type.
+- `iFrame` must be replaced with `@Frame`. This has `float` type.
+- `iChannel0` must be replaced with `@src`
+- `texture(iChannel0, xy)` must be replaced with `@src.imageSample(xy)`
+- `textureLod(iChannel0, xy, 0)` doesn't exist. It must replaced with `@src.imageSample(xy)`
+- Any variables of type `sampler2D` must be replaced with `@src`
+- iMouse doesn't exist. It can be replaced with a `@mouse` binding:
+
+```cpp
+#bind parm mouse float3 val=0
 ```
 
 [Check the OpenCL documentation](https://www.sidefx.com/docs/houdini/vex/ocl.html) for more information.
