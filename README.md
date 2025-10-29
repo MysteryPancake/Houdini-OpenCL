@@ -955,3 +955,155 @@ The total sum is stored in a `@Psum` attribute. It scales the amplitude in the f
      @P.set(@P + total * x * amplitude);
 }
 ```
+
+## Converting ShaderToy (GLSL) to Copernicus (OpenCL)
+
+Most shaders in Copernicus are written in OpenCL. Sadly no one really uses OpenCL for graphics programming, since it's not designed for this.
+
+Most shaders are written in GLSL, an OpenGL language found on popular shader websites such as [ShaderToy](https://www.shadertoy.com/).
+
+The following rules are a starting point to convert GLSL shaders to the OpenCL equivalent.
+
+### Type conversions
+
+- `vec2` must be replaced with `float2`
+- `vec3` must be replaced with `float3`
+- `vec4` must be replaced with `float4`
+- `vec2(...)` must be replaced with `(float2)(...)`
+- `vec3(...)` must be replaced with `(float3)(...)`
+- `vec4(...)` must be replaced with `(float4)(...)`
+- `mat2`, `mat3` and `mat4` stay the same
+- `float4` is equivalent to `mat2`
+- `float16` is equivalent to `mat4`
+- `fract(x)` must be replaced with `x - floor(x)`
+
+### mainImage conversions
+
+- `mainImage(...) { ... }` must be replaced with the OpenCL equivalent, `@KERNEL { ... }`
+- Functions must be defined above `@KERNEL`, never inside it
+
+Before:
+
+```cpp
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+	...
+}
+```
+
+After:
+
+```cpp
+#bind layer src? val=0
+#bind layer !&dst
+
+@KERNEL {
+	...
+}
+```
+
+### fragCoord conversions
+
+- `fragCoord` is the position in pixel coordinates. It must be replaced with `@ixy`, which has `int2` type.
+- `@ix` can be used to get the x coordinate only, same as `@ixy.x`
+- `@iy` can be used to get the y coordinate only, same as `@ixy.y`
+
+### iResolution conversions
+
+- `iResolution` is the size of the image in pixels. It must be replaced with `@res`, which has `int2` type.
+- `@xres` can be used to get the x coordinate only, same as `@res.x`
+- `@yres` can be used to get the y coordinate only, same as `@res.y`
+
+### fragColor conversions
+- `fragColor` is the output color. It must be replaced with `@dst`, which has `float4` type when RGBA.
+- `fragColor = x` must be replaced with `@dst.set(x)`
+
+### Typecasting conversions
+
+- You can't cast vectors directly, for example `(int2)x` to `(float2)x`. You should use `convert_float2(x)`
+- Never add `@` before variable names in the input code, such as `int x = 1`. Keep the naming identical.
+- Typecasting is done by putting the type before the variable in brackets, for example `(float2)x`
+- OpenCL is strongly typed. All math operations require variables to have matching types.
+
+### Binding conversions
+
+- Binding is not required for built-in attributes like `@Time`, `@Frame`, `@P`, `@ixy` and `@res`.
+- `fragCoord / iResolution.xy` normalizes the position coordinate. This division simplifies to `@P`, which has `float2` type.
+- `iTime` must be replaced with `@Time`. This has `float` type.
+- `iFrame` must be replaced with `@Frame`. This has `float` type.
+- `iChannel0` must be replaced with `@src`
+- `texture(iChannel0, xy)` must be replaced with `@src.imageSample(xy)`
+- `textureLod(iChannel0, xy, 0)` doesn't exist. It must replaced with `@src.imageSample(xy)`
+- Any variables of type `sampler2D` must be replaced with `@src`
+- iMouse doesn't exist. It can be replaced with a `@mouse` binding:
+
+```cpp
+#bind parm mouse float3 val=0
+```
+
+### Buffer conversions
+
+- ShaderToy supports multiple buffers with feedback. This is equivalent to Block Begin and Block End nodes in Houdini.
+- Buffers in ShaderToy are equivalent to layers in OpenCL. You can bind layers using the following syntax:
+
+```cpp
+#bind layer &!a // bind buffer A as writeable only
+#bind layer &!b // bind buffer B as writeable only
+```
+
+The `#bind` syntax supports 3 name decorations:
+
+```cpp
+& = write
+? = optional
+! = no read
+```
+
+[Check the OpenCL documentation](https://www.sidefx.com/docs/houdini/vex/ocl.html) for more information.
+
+### Matrix conversions
+
+- Matrices can't be constructed using `mat3 m = (mat3)(x, y, z)`. You must use `mat3fromcols(x, y, z, m)`.
+- The following matrix functions are built-in, located in `matrix.h`. Use these where possible:
+
+```cpp
+static fpreal vec3sum(const fpreal3 v)
+static fpreal vec3prod(const fpreal3 v)
+static mat2 mat2fromcols(const fpreal2 c0, const fpreal2 c1)
+static mat2 transpose2(const mat2 a)
+static mat2 mat2mul(const mat2 a, const mat2 b)
+static fpreal2 mat2vecmul(const mat2 a, const fpreal2 b)
+static fpreal squaredNorm2(const mat2 a)
+static void mat3add(const mat3 a, const mat3 b, mat3 c)
+static void mat3sub(const mat3 a, const mat3 b, mat3 c)
+static void mat3zero(mat3 a)
+static void mat3identity(mat3 a)
+static void mat3copy(const mat3 a, mat3 b)
+static void mat3load(size_t idx, const global float *a, mat3 m)
+mat3store(mat3 in, int idx, global fpreal *data)
+static void mat3fromcols(const fpreal3 c0, const fpreal3 c1, const fpreal3 c2, mat3 m)
+static void transpose3(const mat3 a, mat3 b)
+static void mat3mul(const mat3 a, const mat3 b, mat3 c)
+static fpreal3 mat3vecmul(const mat3 a, const fpreal3 b)
+static fpreal3 mat3Tvecmul(const mat3 a, const fpreal3 b)
+static fpreal2 mat3vec2mul(const mat3 a, const fpreal3 b)
+static fpreal2 mat3Tvec2mul(const mat3 a, const fpreal3 b)
+static void outerprod3(const fpreal3 a, const fpreal3 b, mat3 c)
+static void mat3lcombine(const fpreal s, const mat3 a, const fpreal t, const mat3 b, mat3 c)
+static fpreal squaredNorm3(const mat3 a)
+static fpreal det3(const mat3 a)
+static fpreal3 diag3(const mat3 a)
+static void mat3diag(const fpreal3 diag, mat3 a)
+static fpreal trace3(const mat3 m)
+static void mat4identity(mat4 *a)
+static fpreal2 mat4vec2mul(const mat4 a, const fpreal2 b)
+static fpreal3 mat43vec3mul(const mat4 a, const fpreal3 b)
+static fpreal3 mat4vec3mul(const mat4 a, const fpreal3 b)
+static fpreal4 mat4vecmul(const mat4 a, const fpreal4 b)
+static int mat4invert(fpreal16 *m)
+static fpreal mat2det(const mat2 m)
+static fpreal mat2inv(const mat2 m, mat2 *minvout)
+static fpreal mat3inv(const mat3 m, mat3 minvout)
+static void mat3scale(mat3 mout, const mat3 m, fpreal scale)
+static void mat3lincomb2(mat3 mout, const mat3 m1, fpreal scale1, const mat3 m2, fpreal scale2)
+static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
+```
