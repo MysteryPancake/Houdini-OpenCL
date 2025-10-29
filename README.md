@@ -958,7 +958,7 @@ The total sum is stored in a `@Psum` attribute. It scales the amplitude in the f
 
 ## Converting ShaderToy (GLSL) to Copernicus (OpenCL)
 
-Most shaders in Copernicus are written in OpenCL. Sadly no one really uses OpenCL for graphics programming, since it's not designed for this.
+Most shaders in Copernicus are written in OpenCL. Sadly no one really uses OpenCL for graphics programming.
 
 Most shaders are written in GLSL, an OpenGL language found on popular shader websites such as [ShaderToy](https://www.shadertoy.com/).
 
@@ -989,7 +989,7 @@ The following rules are a starting point to convert GLSL shaders to the OpenCL e
 - `mainImage(...) { ... }` must be replaced with the OpenCL equivalent, `@KERNEL { ... }`
 - Functions must be defined above `@KERNEL`, never inside it
 
-Before:
+#### [GLSL version](https://www.shadertoy.com/new)
 
 ```cpp
 void mainImage( out vec4 fragColor, in vec2 fragCoord )
@@ -1005,7 +1005,9 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 }
 ```
 
-After:
+<img src="./images/cops/shadertoy_conversion2.png" width="700">
+
+#### [OpenCL version](./hips/shadertoy_examples.hiplc?raw=true)
 
 ```cpp
 #bind layer src? val=0
@@ -1023,6 +1025,11 @@ After:
     @dst.set((float4)(col, 1.0f));
 }
 ```
+
+<img src="./images/cops/shadertoy_conversion.png" width="700">
+
+| [Download the HIP file!](./hips/shadertoy_examples.hiplc?raw=true) |
+| --- |
 
 ### fragCoord conversions
 
