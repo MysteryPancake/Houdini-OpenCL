@@ -868,11 +868,11 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 
 ## Converting ShaderToy (GLSL) to Copernicus (OpenCL)
 
-Most shaders in Copernicus are written in OpenCL. Sadly no one really uses OpenCL for graphics programming.
+Copernicus mainly uses OpenCL, but sadly no one outside Houdini really uses it for graphics programming.
 
-Most shaders are written in GLSL, an OpenGL language found on popular shader websites such as [ShaderToy](https://www.shadertoy.com/).
+Shaders are commonly written in GLSL, an OpenGL language found on popular shader websites such as [ShaderToy](https://www.shadertoy.com/).
 
-The following rules are a starting point to convert GLSL shaders to the OpenCL equivalent.
+The following rules are a good starting point to convert GLSL shaders to the OpenCL equivalent.
 
 ### GLSL to OpenCL types
 
