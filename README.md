@@ -919,7 +919,8 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
 ```cpp
 #bind layer src? val=0
-#bind layer !&dst // equivalent to fragColor
+// @dst is the equivalent to fragColor
+#bind layer !&dst
 
 @KERNEL
 {
