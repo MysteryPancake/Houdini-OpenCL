@@ -874,6 +874,8 @@ Shaders are commonly written in GLSL, an OpenGL language found on popular websit
 
 These rules are a decent starting point to convert GLSL shaders to the OpenCL equivalent.
 
+[Check the OpenCL documentation](https://www.sidefx.com/docs/houdini/vex/ocl.html) for more information.
+
 ### GLSL to OpenCL types
 
 - `vec2` must be replaced with `float2`
@@ -915,7 +917,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
 <img src="./images/cops/shadertoy_conversion2.png" width="700">
 
-#### [OpenCL version](./hips/shadertoy_examples.hiplc?raw=true)
+#### [OpenCL version](./hips/cops/shadertoy_examples.hiplc?raw=true)
 
 ```cpp
 #bind layer src? val=0
@@ -937,7 +939,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
 <img src="./images/cops/shadertoy_conversion.png" width="700">
 
-| [Download the HIP file!](./hips/shadertoy_examples.hiplc?raw=true) |
+| [Download the HIP file!](./hips/cops/shadertoy_examples.hiplc?raw=true) |
 | --- |
 
 ### fragCoord in OpenCL
@@ -976,23 +978,25 @@ The `#bind` syntax supports 3 name decorations:
 
 - ShaderToy supports multiple buffers with feedback. Feedback is equivalent to using `Block Begin` and `Block End` nodes in Houdini.
 
+### ShaderToy channels in OpenCL
+
+- Channels on ShaderToy are also equivalent to layers in OpenCL.
+- `iChannel0` can be replaced with `@src`, or any other layer.
+- `texture(iChannel0, xy)` must be replaced with `@src.textureSample(xy)`
+- `textureLod(iChannel0, xy, 0)` doesn't exist. It must also be replaced with `@src.textureSample(xy)`
+- Any variables of type `sampler2D` are equivalent to reading a layer such as `@src`
+
 ### GLSL bindings in OpenCL
 
 - Binding is not required for built-in attributes like `@Time`, `@Frame`, `@P`, `@ixy` and `@res`
 - `fragCoord / iResolution.xy` normalizes the position coordinate. This division simplifies to `@P.texture`, which has `float2` type.
 - `iTime` must be replaced with `@Time`. This has `float` type.
 - `iFrame` must be replaced with `@Frame`. This has `float` type.
-- `iChannel0` must be replaced with `@src`
-- `texture(iChannel0, xy)` must be replaced with `@src.imageSample(xy)`
-- `textureLod(iChannel0, xy, 0)` doesn't exist. It must replaced with `@src.imageSample(xy)`
-- Any variables of type `sampler2D` must be replaced with `@src`
 - iMouse doesn't exist. It can be replaced with a `@mouse` binding:
 
 ```cpp
 #bind parm mouse float3 val=0
 ```
-
-[Check the OpenCL documentation](https://www.sidefx.com/docs/houdini/vex/ocl.html) for more information.
 
 ### Matrices in OpenCL
 
