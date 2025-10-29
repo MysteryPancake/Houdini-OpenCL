@@ -866,96 +866,6 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 | [Download the HIP file!](./hips/cops/radial_blur.hiplc?raw=true) |
 | --- |
 
-## SOP: Laplacian Filter (Advanced)
-
-The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) lets you break geometry into frequencies, similar to a fourier transform. You can exaggerate or reduce certain frequencies (eigenvectors) of the geometry for blurring and sharpening effects.
-
-This is based on [White Dog's Eigenspace Projection example](https://drive.google.com/drive/folders/1gFYlmsFgpeihmcqZLFITvYQIW5mpYyJd). It uses global sums in a feedback loop. Perfect candidate for OpenCL!
-
-<p align="left">
-  <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter.png" height="250">
-  <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter2.png" height="250">
-</p>
-
-| [Download the HDA!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/laplacian_filter.hiplc) |
-| --- | --- |
-
-You can do large math operations in parallel using [workgroup reduction](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/workGroupFunctions.html) in OpenCL.
-
-Since OpenCL runs in parallel, it's hard to calculate a global sum due to [parallel processing headaches](#parallel-processing-headaches).
-
-There's many workarounds, but I chose to use both workgroup reduction and atomic operations.
-
-1. Sum each local workgroup, often called a partial sum. I used `work_group_reduce_add3()` from `reduce.h`.
-2. After all the partial sums complete, the first workitem in each local workgroup uses `atomic_add()` to add onto the global sum.
-
-<img src="./images/workgroup_reduction.png">
-
-Atomic operations force OpenCL to run in a sequential way, ruining the benefits of parallel processing. Try to avoid them as much as possible.
-
-Sadly `atomic_add()` only works on `int` types, not `fpreal3`. I found a workaround in `$HH/ocl/deform/blendshape.cl` called `atomicAddFloatCAS()`.
-
-```cpp
-#include <reduce.h>
-
-// atomic_add() doesn't support floats. This is a workaround from $HH/ocl/deform/blendshape.cl
-#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
-inline void atomicAddFloatCAS(volatile __global float *addr, float v)
-{
-    union { float f; uint u; } oldVal, newVal;
-    do {
-        oldVal.f = *addr;
-        newVal.f = oldVal.f + v;
-    } while (atomic_cmpxchg(
-        (volatile __global uint *)addr,
-        oldVal.u, newVal.u) != oldVal.u);
-}
-#define ATOMIC_ADD_F(addr,val)  atomicAddFloatCAS((volatile __global float*)(addr), (float)(val))
-
-#bind point &rest fpreal3 name=__rest
-#bind point eigenvector fpreal[] input=1
-#bind detail &Psum fpreal3 name=__Psum
-
-@KERNEL
-{
-    if (@iteration >= @eigenvector.len) return;
-
-    // Each iteration is an eigenfrequency we need to add
-    fpreal x = @eigenvector.compAt(@iteration, @elemnum);
-    
-    // Sum within the current workgroup
-    fpreal3 P_group_sum = tofpreal3(work_group_reduce_add3(toaccum3(@rest * x)));
-    
-    // Sum all workgroups to get the global total
-    if (get_local_id(0) == 0)
-    {
-        ATOMIC_ADD_F(&@Psum.data[0], P_group_sum.x);
-        ATOMIC_ADD_F(&@Psum.data[1], P_group_sum.y);
-        ATOMIC_ADD_F(&@Psum.data[2], P_group_sum.z);
-    }
-}
-```
-
-The total sum is stored in a `@Psum` attribute. It scales the amplitude in the feedback loop below.
-
-```cpp
-#bind point &P fpreal3
-#bind point eigenvector fpreal[] input=1
-#bind detail &Psum fpreal3 name=__Psum
-
-@KERNEL
-{
-     // Feedback loop, this should only run over @eigenvector entries in total
-     if (@iteration >= @eigenvector.len) return;
-
-     fpreal x = @eigenvector.compAt(@iteration, @elemnum);
-     fpreal3 total = @Psum.getAt(0);
-     fpreal offset = (fpreal)@iteration / (@max_frequency - 1);
-     fpreal amplitude = @amplitude.getAt(offset);
-     @P.set(@P + total * x * amplitude);
-}
-```
-
 ## Converting ShaderToy (GLSL) to Copernicus (OpenCL)
 
 Most shaders in Copernicus are written in OpenCL. Sadly no one really uses OpenCL for graphics programming.
@@ -1129,4 +1039,94 @@ static fpreal mat3inv(const mat3 m, mat3 minvout)
 static void mat3scale(mat3 mout, const mat3 m, fpreal scale)
 static void mat3lincomb2(mat3 mout, const mat3 m1, fpreal scale1, const mat3 m2, fpreal scale2)
 static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
+```
+
+## SOP: Laplacian Filter (Advanced)
+
+The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) lets you break geometry into frequencies, similar to a fourier transform. You can exaggerate or reduce certain frequencies (eigenvectors) of the geometry for blurring and sharpening effects.
+
+This is based on [White Dog's Eigenspace Projection example](https://drive.google.com/drive/folders/1gFYlmsFgpeihmcqZLFITvYQIW5mpYyJd). It uses global sums in a feedback loop. Perfect candidate for OpenCL!
+
+<p align="left">
+  <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter.png" height="250">
+  <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter2.png" height="250">
+</p>
+
+| [Download the HDA!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/laplacian_filter.hiplc) |
+| --- | --- |
+
+You can do large math operations in parallel using [workgroup reduction](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/workGroupFunctions.html) in OpenCL.
+
+Since OpenCL runs in parallel, it's hard to calculate a global sum due to [parallel processing headaches](#parallel-processing-headaches).
+
+There's many workarounds, but I chose to use both workgroup reduction and atomic operations.
+
+1. Sum each local workgroup, often called a partial sum. I used `work_group_reduce_add3()` from `reduce.h`.
+2. After all the partial sums complete, the first workitem in each local workgroup uses `atomic_add()` to add onto the global sum.
+
+<img src="./images/workgroup_reduction.png">
+
+Atomic operations force OpenCL to run in a sequential way, ruining the benefits of parallel processing. Try to avoid them as much as possible.
+
+Sadly `atomic_add()` only works on `int` types, not `fpreal3`. I found a workaround in `$HH/ocl/deform/blendshape.cl` called `atomicAddFloatCAS()`.
+
+```cpp
+#include <reduce.h>
+
+// atomic_add() doesn't support floats. This is a workaround from $HH/ocl/deform/blendshape.cl
+#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
+inline void atomicAddFloatCAS(volatile __global float *addr, float v)
+{
+    union { float f; uint u; } oldVal, newVal;
+    do {
+        oldVal.f = *addr;
+        newVal.f = oldVal.f + v;
+    } while (atomic_cmpxchg(
+        (volatile __global uint *)addr,
+        oldVal.u, newVal.u) != oldVal.u);
+}
+#define ATOMIC_ADD_F(addr,val)  atomicAddFloatCAS((volatile __global float*)(addr), (float)(val))
+
+#bind point &rest fpreal3 name=__rest
+#bind point eigenvector fpreal[] input=1
+#bind detail &Psum fpreal3 name=__Psum
+
+@KERNEL
+{
+    if (@iteration >= @eigenvector.len) return;
+
+    // Each iteration is an eigenfrequency we need to add
+    fpreal x = @eigenvector.compAt(@iteration, @elemnum);
+    
+    // Sum within the current workgroup
+    fpreal3 P_group_sum = tofpreal3(work_group_reduce_add3(toaccum3(@rest * x)));
+    
+    // Sum all workgroups to get the global total
+    if (get_local_id(0) == 0)
+    {
+        ATOMIC_ADD_F(&@Psum.data[0], P_group_sum.x);
+        ATOMIC_ADD_F(&@Psum.data[1], P_group_sum.y);
+        ATOMIC_ADD_F(&@Psum.data[2], P_group_sum.z);
+    }
+}
+```
+
+The total sum is stored in a `@Psum` attribute. It scales the amplitude in the feedback loop below.
+
+```cpp
+#bind point &P fpreal3
+#bind point eigenvector fpreal[] input=1
+#bind detail &Psum fpreal3 name=__Psum
+
+@KERNEL
+{
+     // Feedback loop, this should only run over @eigenvector entries in total
+     if (@iteration >= @eigenvector.len) return;
+
+     fpreal x = @eigenvector.compAt(@iteration, @elemnum);
+     fpreal3 total = @Psum.getAt(0);
+     fpreal offset = (fpreal)@iteration / (@max_frequency - 1);
+     fpreal amplitude = @amplitude.getAt(offset);
+     @P.set(@P + total * x * amplitude);
+}
 ```
