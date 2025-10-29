@@ -883,7 +883,7 @@ These rules are a decent starting point to convert GLSL shaders to the OpenCL eq
 - `vec3(...)` must be replaced with `(float3)(...)`
 - `vec4(...)` must be replaced with `(float4)(...)`
 - `mat2`, `mat3` and `mat4` stay the same.
-- `fract(x)` must be replaced with `x - floor(x)`
+- `fract(x)` can be replaced with `x - floor(x)`
 
 ### OpenCL typecasting
 
