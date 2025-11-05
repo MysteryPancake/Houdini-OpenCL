@@ -141,7 +141,7 @@ This only affects the loop range, not data access. You can read/write totally di
 
 ## Parallel processing headaches
 
-OpenCL runs in parallel, so what happens if many workitems try to change the same memory address at the same time?
+OpenCL runs in parallel, so what happens if many workitems change the same address at the same time?
 
 The VEX equivalent is changing a specific item using `setattrib()`.
 
@@ -150,7 +150,7 @@ The VEX equivalent is changing a specific item using `setattrib()`.
 setpointattrib(0, "id", 0, i@ptnum);
 ```
 
-In VEX, this is handled for you. [All changes are queued and applied after the code is finished](https://www.sidefx.com/docs/houdini/vex/snippets#creating-geometry).<br>
+In VEX, this is handled for you. [Changes are queued and applied after the code is finished](https://www.sidefx.com/docs/houdini/vex/snippets#creating-geometry).<br>
 VEX uses a **Jacobian** updating style, meaning changes are applied later.
 
 In OpenCL, this causes a race condition. One workitem takes priority and god knows which it'll be.<br>
