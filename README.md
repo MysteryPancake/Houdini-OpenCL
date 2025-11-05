@@ -120,7 +120,7 @@ In VEX, you can run over Detail, Primitives, Points and Vertices.
 
 OpenCL doesn't care what you run it over, it just gives you the ID of the current element and hopes for the best.
 
-`get_global_id(0)` is the same as `@ptnum`, `@vtxnum`, and `@primnum` in VEX. Use `@elemnum` if using @-bindings.
+`get_global_id(0)` can represent `@ptnum`, `@vtxnum`, or `@primnum` in VEX. Use `@elemnum` if using @-bindings.
 
 But how does it decide which to use? It depends on the "Run Over" setting in the "Options" tab.
 
@@ -138,6 +138,29 @@ The @-binding equivalent is the first attribute marked with `&`.
 ```
 
 This only affects the loop range, not data access. You can read/write totally different attributes if you want.
+
+## Parallel processing headaches
+
+OpenCL runs in parallel, so what happens if many workitems try to change the same memory address at the same time?
+
+The VEX equivalent is changing a specific item using `setattrib()`.
+
+```cpp
+// All workitems change the ID of point 0. What's the final ID?
+setpointattrib(0, "id", 0, i@ptnum);
+```
+
+In VEX, this is handled for you. [All changes are queued and applied after the code is finished](https://www.sidefx.com/docs/houdini/vex/snippets#creating-geometry).<br>
+VEX uses a **Jacobian** updating style, meaning changes are applied later.
+
+In OpenCL, this causes a race condition. One workitem takes priority and god knows which it'll be.<br>
+OpenCL uses a **Gauss-Seidel** updating style, meaning changes are applied immediately.
+
+There are various solutions to this:
+
+1. Design your code to avoid this problem to begin with [(for example using worksets)](#worksets-in-opencl)
+2. [Use atomic operations](https://registry.khronos.org/OpenCL/extensions/ext/cl_ext_float_atomics.html)
+3. [Use memory fences (barriers)](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
 
 ## Translating from VEX to OpenCL
 
@@ -785,18 +808,6 @@ void rotfromaxis(fpreal3 axis, fpreal angle, mat3 m)
     @P.set(pos);
 }
 ```
-
-## Parallel processing headaches
-
-OpenCL runs in parallel, so what happens if multiple workitems try to change the same data at the same time?
-
-This causes a race condition. One workitem will take priority and god knows which it'll be.
-
-There are various solutions to this:
-
-1. Design your code to avoid this problem to begin with [(for example using worksets)](#worksets-in-opencl)
-2. [Use atomic operations](https://registry.khronos.org/OpenCL/extensions/ext/cl_ext_float_atomics.html)
-3. [Use memory fences (barriers)](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
 
 ## Worksets in OpenCL
 
