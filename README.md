@@ -19,8 +19,6 @@ I strongly recommend checking the Houdini files for more. The `houdini/ocl` fold
 
 There's also lots of embedded OpenCL code within solvers (such as the Ripple Solver) and Copernicus (such as Dilate Erode).
 
-I'm also working on [a solver written in OpenCL](https://github.com/MysteryPancake/Houdini-VBD). The code can be found in the `ocl` folder.
-
 ## What is OpenCL?
 
 OpenCL is a general purpose computing language similar to C. It's not specific to Houdini, so OpenCL code can be translated from other places.
@@ -1087,6 +1085,17 @@ static void mat3scale(mat3 mout, const mat3 m, fpreal scale)
 static void mat3lincomb2(mat3 mout, const mat3 m1, fpreal scale1, const mat3 m2, fpreal scale2)
 static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 ```
+
+## SOP: Vertex Block Descent (Advanced)
+
+[Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) is a solving technique similar to Vellum (XPBD). It's also used by Otis in Houdini 21.
+
+I rewrote it in OpenCL based on all official references. It uses jacobians and hessians for everything, so the math is more confusing than Vellum.
+
+If using this for reference, I recommend reading the VEX version at the bottom of the page first. It's much cleaner and easier to understand.
+
+| [Download the HIP file!](https://github.com/MysteryPancake/Houdini-VBD/releases/latest) | [OpenCL source](https://github.com/MysteryPancake/Houdini-VBD/tree/main/ocl) |
+| --- | --- |
 
 ## SOP: Laplacian Filter (Advanced)
 
