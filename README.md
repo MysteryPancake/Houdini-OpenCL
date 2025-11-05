@@ -1088,11 +1088,17 @@ static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 
 ## SOP: Vertex Block Descent (Advanced)
 
-[Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) is a solving technique similar to Vellum (XPBD). It's also used by Otis in Houdini 21.
+[Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) is a solving technique similar to Vellum (XPBD). I rewrote it in OpenCL based on all official references.
 
-I rewrote it in OpenCL based on all official references. It uses jacobians and hessians for everything, so the math is more confusing than Vellum.
+It uses jacobians and hessians for everything, so the math is confusing. If using this for reference, I recommend reading the VEX version at the bottom of the page first.
 
-If using this for reference, I recommend reading the VEX version at the bottom of the page first. It's much cleaner and easier to understand.
+<img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-VBD/main/images/demo.webp" width="25%"></img>
+<img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-VBD/main/images/demo2.webp" width="45%"></img>
+<img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-VBD/main/images/avbd_dual.webp" width="45%"></img>
+<img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-VBD/main/images/breaking.webp" width="45%"></img>
+<a href="https://youtu.be/VbLSCm5xQ4o">
+  <img src="https://img.youtube.com/vi/VbLSCm5xQ4o/mqdefault.jpg" width="45%">
+</a>
 
 | [Download the HIP file!](https://github.com/MysteryPancake/Houdini-VBD/releases/latest) | [OpenCL source](https://github.com/MysteryPancake/Houdini-VBD/tree/main/ocl) |
 | --- | --- |
