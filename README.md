@@ -802,7 +802,7 @@ There are various solutions to this:
 
 When reads and writes overlap, you can avoid race conditions by breaking the operation into sections of data that don't affect eachother.
 
-This happens with solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) and Otis.
+This happens with solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](#sop-vertex-block-descent-advanced) and Otis.
 
 Vellum runs over sections of prims, while VBD and Otis run over sections of points.
 
@@ -1092,15 +1092,12 @@ static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 
 It uses jacobians and hessians for everything, so the math is confusing. If using this for reference, I recommend reading the VEX version at the bottom of the page first.
 
-<img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-VBD/main/images/demo.webp" width="25%"></img>
-<img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-VBD/main/images/demo2.webp" width="45%"></img>
-<img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-VBD/main/images/avbd_dual.webp" width="45%"></img>
-<img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-VBD/main/images/breaking.webp" width="45%"></img>
-<a href="https://youtu.be/VbLSCm5xQ4o">
-  <img src="https://img.youtube.com/vi/VbLSCm5xQ4o/mqdefault.jpg" width="45%">
-</a>
+<p align="left">
+     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-VBD/main/images/demo.webp" height="250"></img>
+     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-VBD/main/images/demo2.webp" height="250"></img>
+</p>
 
-| [Download the HIP file!](https://github.com/MysteryPancake/Houdini-VBD/releases/latest) | [OpenCL source](https://github.com/MysteryPancake/Houdini-VBD/tree/main/ocl) |
+| [Download the HIP file!](https://github.com/MysteryPancake/Houdini-VBD/releases/latest) | [OpenCL code](https://github.com/MysteryPancake/Houdini-VBD/tree/main/ocl) |
 | --- | --- |
 
 ## SOP: Laplacian Filter (Advanced)
@@ -1110,8 +1107,8 @@ The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.ht
 This is based on [White Dog's Eigenspace Projection example](https://drive.google.com/drive/folders/1gFYlmsFgpeihmcqZLFITvYQIW5mpYyJd). It uses global sums in a feedback loop. Perfect candidate for OpenCL!
 
 <p align="left">
-  <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter.png" height="250">
-  <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter2.png" height="250">
+     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter.png" height="250">
+     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter2.png" height="250">
 </p>
 
 | [Download the HDA!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/laplacian_filter.hiplc) |
