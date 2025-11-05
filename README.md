@@ -143,11 +143,21 @@ This only affects the loop range, not data access. You can read/write totally di
 
 OpenCL runs in parallel, so what happens if many workitems change the same address at the same time?
 
-The VEX equivalent is changing a specific item using `setattrib()`.
+The VEX equivalent is targeting a specific attribute number using `setattrib()`.
 
 ```cpp
 // All workitems change the ID of point 0. What's the final ID?
 setpointattrib(0, "id", 0, i@ptnum);
+```
+
+The OpenCL equivalent is writing to the same memory address in the array.
+
+```cpp
+// Plain OpenCL version
+_bound_id[0] = get_global_id(0);
+
+// @-bindings version
+@id.setAt(0, @elemnum);
 ```
 
 In VEX, this is handled for you. [Changes are queued and applied after the code is finished](https://www.sidefx.com/docs/houdini/vex/snippets#creating-geometry).<br>
