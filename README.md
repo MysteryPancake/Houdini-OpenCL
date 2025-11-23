@@ -1230,7 +1230,7 @@ The total sum is stored in a `@Psum` attribute. It scales the amplitude in the f
 }
 ```
 
-### Copernicus: Sun Detection (Advanced)
+## Copernicus: Sun Detection (Advanced)
 
 As well as global accumulation, workgroup reduction is useful for global min and max operations, like Attribute Promote.
 
