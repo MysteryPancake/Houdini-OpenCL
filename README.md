@@ -112,6 +112,47 @@ int local_size = get_local_size(0);
 int num_groups = get_num_groups(0);
 ```
 
+You can even animate the data to visualize how it's arranged in each workgroup.
+
+<img src="./images/visualize_workgroups.webp" width="700">
+
+```cpp
+// To use VEXhsvtorgb() for colorization
+#include <color.h>
+
+#bind parm blend float
+
+#bind point &P float3
+#bind point &Cd float3
+
+@KERNEL
+{
+    int local_id = get_local_id(0);
+    int num_ids = get_local_size(0);
+    float local_ratio = (float)local_id / num_ids;
+    
+    int group_id = get_group_id(0);
+    int num_groups = get_num_groups(0);
+    float group_ratio = (float)group_id / num_groups;
+    
+    // Lerp between the old position and workgroup position
+    float3 old_pos = @P;
+    float3 new_pos = (float3)(local_ratio * 4, group_ratio * 2, 0);
+    @P.set(old_pos + (new_pos - old_pos) * @blend);
+    
+    // Lerp between the old color and workgroup color
+    float3 old_color = @Cd;
+    float3 new_color = VEXhsvtorgb((float3)(group_ratio, 1, 1));
+    @Cd.set(old_color + (new_color - old_color) * @blend);
+}
+
+```
+
+| [Download the HIP file!](./hips/visualize_workgroups.hiplc?raw=true) |
+| --- |
+
+## Changing the local workgroup size
+
 The local workgroup size `get_local_size(0)` is set automatically by OpenCL, and should be fine in most cases.
 
 If you really need to, you can override it using [optional attribute qualifiers](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/optionalAttributeQualifiers.html).
