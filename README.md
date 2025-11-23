@@ -1115,6 +1115,9 @@ Using OpenCL to multiply the density of one VDB by another, like VDB Combine set
 
 <img src="./images/Ls_OpenCLMaskVDB.png?raw=true" width="600">
 
+| [Download the HIP file!](./hips/Ls_OpenCLMaskVDB.hipnc?raw=true) |
+| --- |
+
 ```cpp
 @KERNEL
 {
@@ -1122,9 +1125,6 @@ Using OpenCL to multiply the density of one VDB by another, like VDB Combine set
     @density.set(@density * bias);
 }
 ```
-
-| [Download the HIP file!](./hips/Ls_OpenCLMaskVDB.hipnc?raw=true) |
-| --- |
 
 ## SOP: Vertex Block Descent (Advanced)
 
@@ -1244,6 +1244,9 @@ The process is the same as in the previous example:
 
 <img src="./images/cops/workgroup_max.png?raw=true" width="600">
 
+| [Download the HIP file!](./hips/cops/workgroup_max.hiplc?raw=true) |
+| --- |
+
 ```cpp
 #bind layer src float val=0
 #bind layer !&dst
@@ -1291,6 +1294,3 @@ void atomic_max_float(volatile __global float *source, const float operand) {
     }
 }
 ```
-
-| [Download the HIP file!](./hips/cops/workgroup_max.hiplc?raw=true) |
-| --- |
