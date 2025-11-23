@@ -148,7 +148,7 @@ You can even animate the data to visualize how it's arranged in each workgroup.
 
 ```
 
-| [Download the HIP file!](./hips/workgroup_visualization.hiplc?raw=true) |
+| [Download the HIP file!](./hips/visualize_workgroups.hiplc?raw=true) |
 | --- |
 
 ## Changing the local workgroup size
