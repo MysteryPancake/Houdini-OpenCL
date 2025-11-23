@@ -87,6 +87,17 @@ OpenCL runs in parallel, using chunks instead. If each chunk was 4 items long, i
 
 <img src="./images/opencl_workgroups.png">
 
+The workgroup diagram above is by [Martin Schreiber](https://www.researchgate.net/figure/Overview-of-OpenCL-work-group-and-work-items_fig2_275522832), and shows 1D workgroups.
+
+It's also possible for workgroups to be 2D, 3D or higher. You might see this with volumes or heightfields.
+
+```cpp
+// Volumes and heightfields may have multiple global IDs
+int idx = get_global_id(0);
+int idy = get_global_id(1);
+int idz = get_global_id(2);
+```
+
 Like you'd expect, you can access the [offset and sizes](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for these things.
 
 ```cpp
@@ -103,18 +114,7 @@ int num_groups = get_num_groups(0);
 
 [Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
 
-The workgroup diagram above is by [Martin Schreiber](https://www.researchgate.net/figure/Overview-of-OpenCL-work-group-and-work-items_fig2_275522832), and shows 1D workgroups.
-
-It's also possible for workgroups to be 2D, 3D or higher. You might see this with volumes or heightfields.
-
-```cpp
-// Volumes and heightfields may have multiple global IDs
-int idx = get_global_id(0);
-int idy = get_global_id(1);
-int idz = get_global_id(2);
-```
-
-The local workgroup size `get_local_size(0)` is determined automatically by OpenCL, and should be fine in most cases.
+The local workgroup size `get_local_size(0)` is set automatically by OpenCL, and should be fine in most cases.
 
 If you really need to, you can override it using [optional attribute qualifiers](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/optionalAttributeQualifiers.html).
 
