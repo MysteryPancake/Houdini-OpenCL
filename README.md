@@ -851,40 +851,6 @@ This can be fixed by setting the environment variable `HOUDINI_OCL_REPORT_BUILD_
 
 Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
 
-## Copernicus: Radial Blur
-
-Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses @ binding syntax.
-
-<img src="./images/cops/radial_blur.png?raw=true" width="600">
-
-```cpp
-#bind layer src? val=0
-#bind layer !&dst
-
-#bind parm quality int val=10
-#bind parm center float2 val=0
-#bind parm scale float val=0.2
-#bind parm rotation float val=0
-
-@KERNEL
-{
-     float2 offset = @P - @center;
-     float4 result = 0.;
-     float scale = 1;
-     
-     for (int i = 0; i <= @quality; ++i) {
-          result += @src.imageSample(offset * scale + @center) / (@quality + 1);
-          offset = rotate2D(offset, @rotation / @quality);
-          scale -= @scale / @quality;
-     }
-     
-     @dst.set(result);
-}
-```
-
-| [Download the HIP file!](./hips/cops/radial_blur.hiplc?raw=true) |
-| --- |
-
 ## Converting ShaderToy to Copernicus
 
 Copernicus mainly uses OpenCL. Sadly no one outside Houdini really uses OpenCL for graphics programming.
@@ -1106,6 +1072,59 @@ static void mat3scale(mat3 mout, const mat3 m, fpreal scale)
 static void mat3lincomb2(mat3 mout, const mat3 m1, fpreal scale1, const mat3 m2, fpreal scale2)
 static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 ```
+
+## Copernicus: Radial Blur
+
+Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses @ binding syntax.
+
+<img src="./images/cops/radial_blur.png?raw=true" width="600">
+
+```cpp
+#bind layer src? val=0
+#bind layer !&dst
+
+#bind parm quality int val=10
+#bind parm center float2 val=0
+#bind parm scale float val=0.2
+#bind parm rotation float val=0
+
+@KERNEL
+{
+     float2 offset = @P - @center;
+     float4 result = 0.;
+     float scale = 1;
+     
+     for (int i = 0; i <= @quality; ++i) {
+          result += @src.imageSample(offset * scale + @center) / (@quality + 1);
+          offset = rotate2D(offset, @rotation / @quality);
+          scale -= @scale / @quality;
+     }
+     
+     @dst.set(result);
+}
+```
+
+| [Download the HIP file!](./hips/cops/radial_blur.hiplc?raw=true) |
+| --- |
+
+## SOP: VDB Mask
+
+This file was made by [Lewis Saunders](https://github.com/lcrs/_.hips), reuploaded with permission.
+
+Using OpenCL to multiply the density of one VDB by another, like VDB Combine set to "Multiply".
+
+<img src="./images/Ls_OpenCLMaskVDB.png?raw=true" width="600">
+
+```cpp
+@KERNEL
+{
+    float bias = @mask.worldSample(@density.pos);
+    @density.set(@density * bias);
+}
+```
+
+| [Download the HIP file!](./hips/Ls_OpenCLMaskVDB.hipnc?raw=true) |
+| --- |
 
 ## SOP: Vertex Block Descent (Advanced)
 
