@@ -1162,7 +1162,7 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 | [Download the HIP file!](./hips/cops/radial_blur.hiplc?raw=true) |
 | --- |
 
-## SOP: VDB Mask
+## SOP: Volume Multiply
 
 This file was made by [Lewis Saunders](https://github.com/lcrs/_.hips), reuploaded with permission.
 
