@@ -1234,7 +1234,7 @@ The total sum is stored in a `@Psum` attribute. It scales the amplitude in the f
 
 As well as global accumulation, workgroup reduction is useful for global min and max operations. This helps find the darkest or brightest parts of an image, like the sun in a HDRI.
 
-It's like Attribute Promote except it runs in parallel on the GPU, so the performance can be better.
+This is like Attribute Promote except it runs in parallel on the GPU, so the performance may be better.
 
 The process is the same as in the previous example:
 
