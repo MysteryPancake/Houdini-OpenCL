@@ -112,8 +112,6 @@ int local_size = get_local_size(0);
 int num_groups = get_num_groups(0);
 ```
 
-[Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
-
 The local workgroup size `get_local_size(0)` is set automatically by OpenCL, and should be fine in most cases.
 
 If you really need to, you can override it using [optional attribute qualifiers](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/optionalAttributeQualifiers.html).
