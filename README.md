@@ -120,7 +120,7 @@ If you really need to, you can override it using [optional attribute qualifiers]
 
 ```cpp
 // Force the local workgroup size to 48
-__attribute__((reqd_work_group_size(32, 1, 1)))
+__attribute__((reqd_work_group_size(48, 1, 1)))
 @KERNEL
 {
      // This should print "Local size = 48"
