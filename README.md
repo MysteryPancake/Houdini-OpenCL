@@ -114,13 +114,27 @@ int idy = get_global_id(1);
 int idz = get_global_id(2);
 ```
 
+The local workgroup size `get_local_size(0)` is determined automatically by OpenCL, and should be fine in most cases.
+
+If you really need to, you can override it using [optional attribute qualifiers](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/optionalAttributeQualifiers.html).
+
+```cpp
+// Force the local workgroup size to 48
+__attribute__((reqd_work_group_size(32, 1, 1)))
+@KERNEL
+{
+     // This should print "Local size = 48"
+     printf("Local size = %d", get_local_size(0));
+}
+```
+
 ## How OpenCL decides what to run over
 
 In VEX, you can run over Detail, Primitives, Points and Vertices.
 
 OpenCL doesn't care what you run it over, it just gives you the ID of the current element and hopes for the best.
 
-`get_global_id(0)` can represent `@ptnum`, `@vtxnum`, or `@primnum` in VEX. Use `@elemnum` if using @-bindings.
+The workitem index `get_global_id(0)` can represent `@ptnum`, `@vtxnum`, or `@primnum` in VEX. Use `@elemnum` if using @-bindings.
 
 But how does it decide which to use? It depends on the "Run Over" setting in the "Options" tab.
 
