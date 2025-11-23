@@ -87,6 +87,17 @@ OpenCL runs in parallel, using chunks instead. If each chunk was 4 items long, i
 
 <img src="./images/opencl_workgroups.png">
 
+The workgroup diagram above is by [Martin Schreiber](https://www.researchgate.net/figure/Overview-of-OpenCL-work-group-and-work-items_fig2_275522832), and shows 1D workgroups.
+
+It's also possible for workgroups to be 2D, 3D or higher. You might see this with volumes or heightfields.
+
+```cpp
+// Volumes and heightfields may have multiple global IDs
+int idx = get_global_id(0);
+int idy = get_global_id(1);
+int idz = get_global_id(2);
+```
+
 Like you'd expect, you can access the [offset and sizes](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for these things.
 
 ```cpp
@@ -101,26 +112,29 @@ int local_size = get_local_size(0);
 int num_groups = get_num_groups(0);
 ```
 
-[Check the OpenCL documentation](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for more functions you can use.
+The local workgroup size `get_local_size(0)` is set automatically by OpenCL, and should be fine in most cases.
 
-The workgroup diagram above is by [Martin Schreiber](https://www.researchgate.net/figure/Overview-of-OpenCL-work-group-and-work-items_fig2_275522832), and shows 1D workgroups.
-
-It's also possible for workgroups to be 2D, 3D or higher. You might see this with volumes or heightfields.
+If you really need to, you can override it using [optional attribute qualifiers](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/optionalAttributeQualifiers.html).
 
 ```cpp
-// Volumes and heightfields may have multiple global IDs
-int idx = get_global_id(0);
-int idy = get_global_id(1);
-int idz = get_global_id(2);
+// Force the local workgroup size to 48
+__attribute__((reqd_work_group_size(48, 1, 1)))
+@KERNEL
+{
+     // This should print "Local size = 48"
+     printf("Local size = %d", get_local_size(0));
+}
 ```
 
 ## How OpenCL decides what to run over
 
 In VEX, you can run over Detail, Primitives, Points and Vertices.
 
-OpenCL doesn't care what you run it over, it just gives you the ID of the current element and hopes for the best.
+OpenCL doesn't care what you run it over, it just gives you the index of the current workitem and hopes for the best.
 
-`get_global_id(0)` can represent `@ptnum`, `@vtxnum`, or `@primnum` in VEX. Use `@elemnum` if using @-bindings.
+The workitem index `get_global_id(0)` can represent `@ptnum`, `@vtxnum`, or `@primnum` in VEX depending how you use it.
+
+If using @-bindings, it's better to use `@elemnum` instead of `get_global_id(0)` for consistency.
 
 But how does it decide which to use? It depends on the "Run Over" setting in the "Options" tab.
 
