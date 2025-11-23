@@ -1229,3 +1229,68 @@ The total sum is stored in a `@Psum` attribute. It scales the amplitude in the f
      @P.set(@P + total * x * amplitude);
 }
 ```
+
+### Copernicus: Sun Detection (Advanced)
+
+As well as global accumulation, workgroup reduction is useful for global min and max operations, like Attribute Promote.
+
+This helps find the brightest or darkest parts of an image, for example to detect the sun in a HDRI.
+
+The process is the same as in the previous example:
+
+1. Get the local max using workgroup reduction, this time using `work_group_reduce_max()` rather than `work_group_reduce_add3()`.
+2. Get the global max using atomics, this time using `atomic_max()` rather than `atomic_add()`.
+3. Move the point to the biggest value in the writeback kernel, assuming only one value is the largest.
+
+<img src="./images/cops/workgroup_max.png?raw=true" width="600">
+
+```cpp
+#bind layer src float val=0
+#bind layer !&dst
+#bind detail &geomax name=max port=geo float
+#bind point &pos name=P port=geo float3
+
+// atomic_max() only works on ints, floats need custom handling
+// From https://stackoverflow.com/questions/18950732
+void atomic_max_float(volatile __global float *source, const float operand) {
+    union {
+        unsigned int intVal;
+        float floatVal;
+    } newVal;
+    union {
+        unsigned int intVal;
+        float floatVal;
+    } prevVal;
+    do {
+        prevVal.floatVal = *source;
+        newVal.floatVal = max(prevVal.floatVal,operand);
+    } while (atomic_cmpxchg((volatile __global unsigned int *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal);
+}
+
+@KERNEL {
+    // Local workgroup max
+    float Cd = @src;
+    float max = work_group_reduce_max(Cd);
+    
+    // Global workgroup max
+    if (get_local_id(0) == 0) {
+        atomic_max_float(@geomax.data, max);
+    }
+}
+
+@WRITEBACK {
+    // Check if this pixel has the maximum value
+    // If there's multiple, you might need another workgroup reduction
+    int is_max = @src == @geomax;
+    @dst.set(is_max);
+    
+    // Move the point's position to this pixel
+    if (is_max) {
+        float3 pos = @src.imageToWorld(@P.image);
+        vstore3(pos, 0, @pos.data);
+    }
+}
+```
+
+| [Download the HIP file!](./hips/cops/workgroup_max.hiplc?raw=true) |
+| --- |
