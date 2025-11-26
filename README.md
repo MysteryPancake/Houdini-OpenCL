@@ -965,7 +965,6 @@ These rules are a decent starting point to convert GLSL shaders to the OpenCL eq
 - Typecasting is done by putting the type before the variable in brackets, for example `(int)x`
 - You can't cast vectors directly, for example `(int2)x` to `(float2)x`. You should use `convert_float2(x)`
 - OpenCL is strongly typed. All math operations require variables to have matching types.
-- Never add `@` before variable names in the input code, such as `int x = 1`. Keep the naming identical.
 
 ### mainImage() in OpenCL
 
