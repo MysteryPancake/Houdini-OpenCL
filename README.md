@@ -223,7 +223,7 @@ OpenCL uses a **Gauss-Seidel** updating style, meaning changes are applied immed
 
 There are various solutions to this:
 
-1. Design your code to avoid this problem to begin with [(for example using worksets)](#worksets-in-opencl)
+1. Design your code to avoid this problem to begin with [(for example using worksets)](#worksets)
 2. [Use atomic operations](https://registry.khronos.org/OpenCL/extensions/ext/cl_ext_float_atomics.html)
 3. [Use memory fences (barriers)](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
 
@@ -895,11 +895,25 @@ void rotfromaxis(fpreal3 axis, fpreal angle, mat3 m)
 }
 ```
 
-## Worksets in OpenCL
+## Worksets
 
-When reads and writes overlap, you can avoid race conditions by breaking the operation into sections of data that don't affect eachother.
+Worksets basically run the same kernel multiple times in a row in a random order. Each time the kernel is run, it passes in a different data length and offset.
 
-This happens with solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](#sop-vertex-block-descent-advanced) and Otis.
+Worksets are meant for running an operation over custom sections of data. To avoid race conditions when reads and writes overlap, you can break an operation into sections that don't affect eachother.
+
+These sections are typically sorted in memory, each with an offset and length. The offset is passed as another kernel argument, and should be added onto the global ID `get_global_id(0)` to get the actual global ID.
+
+I think of it like multiple global workgroups. This diagram isn't correct though, since it's really the same kernel each time.
+
+<img src="./images/multiple_global_workgroups2.png">
+
+Conceptually it's similar to local workgroups, except you have full control over the offset and length of each section. Local workgroups normally have a fixed length, like 256.
+
+The most significant difference is worksets synchronize differently to local workgroups. Local workgroups run in parallel, so memory isn't guaranteed to be synchronized until the kernel completes.
+
+In comparison, worksets always synchronize memory before running again. This means any memory you read next time the kernel gets run is always up to date, like a [jacobian update](#parallel-processing-headaches).
+
+Worksets are useful for solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](#sop-vertex-block-descent-advanced) and Otis.
 
 Vellum runs over sections of prims, while VBD and Otis run over sections of points.
 
@@ -907,17 +921,13 @@ Vellum runs over sections of prims, while VBD and Otis run over sections of poin
 
 Vellum, VBD and Otis use the Graph Color node to generate these sections. It computes the offset and size of each data section.
 
+Sections are sometimes called **colors**, like with the Graph Color node. The section offset is called `color_offset` in the code for Vellum.
+
 <img src="./images/graph_color.png" width="500">
 
-To run an operation over data sections, you can use the workset option on any OpenCL node.
+To use workgroups to run an operation in sections, you can use the workset option on any OpenCL node.
 
 <img src="./images/multiple_global_workgroups.png" width="500">
-
-This option runs the same kernel multiple times with different data sizes. It waits for the previous kernel to synchronize before going onto the next one. It passes the global index offset as another kernel argument.
-
-I think of it like multiple global workgroups. This diagram isn't correct though, since it's really the same kernel each time.
-
-<img src="./images/multiple_global_workgroups2.png">
 
 ## Fix "1 warning generated" errors
 
