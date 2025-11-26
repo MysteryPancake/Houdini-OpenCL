@@ -718,7 +718,7 @@ To include files in other directories, you can use `..` to move up relative to t
 #include "$HH/ocl/sim/vbd_energy.cl"
 ```
 
-## Matrices in OpenCL
+## Matrices
 
 OpenCL doesn't have good support for matrices. For this reason, SideFX wrote a `matrix.h` header that ships with Houdini.
 
