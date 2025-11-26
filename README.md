@@ -540,16 +540,18 @@ As mentioned before, the argument names don't matter. This means the code is ide
 
 ## Precision
 
-OpenCL offers 8, 16, 32 and 64 bit data types, similar to VEX.
+OpenCL includes 8, 16, 32 and 64 bit data types, similar to VEX.
 
 - `uchar, char` and their vector types like `char2, char3` use 8-bit precision.
 - `ushort, short, half` and their vector types like `half2, half3` use 16-bit precision.
-- `uint, int, float` and their vector types like `float2, float3` use 32-bit precision. This may not be enough for sensitive operations.
+- `uint, int, float` and their vector types like `float2, float3` use 32-bit precision.
 - `ulong, long, double` and their vector types like `double2, double3` use 64-bit precision.
 
-Since it's a pain to rewrite all the data types to get more or less precision, SideFX added varying precision types.
+Most operations work fine in 32-bit, but sometimes you need higher or lower precision depending what you're doing.
 
-Varying precision means you can change the precision of each input in the "Bindings" tab, and the code will automatically update.
+Since it's a pain to change precision by rewriting the types in the code, SideFX added varying precision types.
+
+Varying precision means you can change the precision of each input in the "Bindings" tab, and never have to rewrite the code.
 
 - `exint, fpreal` and their vector types like `fpreal2, fpreal3` are new varying precision types defined by SideFX.
 - `mat2, mat3, mat4` matrix types all have varying precision by default, so no changes are required.
