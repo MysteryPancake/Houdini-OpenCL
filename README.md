@@ -540,14 +540,18 @@ As mentioned before, the argument names don't matter. This means the code is ide
 
 ## Precision
 
-OpenCL supports varying precision for all data types, just like VEX.
+OpenCL offers 8, 16, 32 and 64 bit data types, similar to VEX.
 
-Data can be 16-bit (half), 32-bit (float) or 64-bit (double).
+- `uchar, char` and their vector types like `char2, char3` use 8-bit precision.
+- `ushort, short, half` and their vector types like `half2, half3` use 16-bit precision.
+- `uint, int, float` and their vector types like `float2, float3` use 32-bit precision. This may not be enough for sensitive operations.
+- `ulong, long, double` and their vector types like `double2, double3` use 64-bit precision.
 
-Varying precision requires rewriting your code to use different variable types.
+Since it's a pain to rewrite all the data types to get more or less precision, SideFX added varying precision types.
 
-- `int, float, float3, float4` all use 32-bit precision. This may not be enough for sensitive operations.
-- `exint, fpreal, fpreal3, fpreal4` are new types defined by SideFX with automatically varying precision.
+Varying precision means you can change the precision of each input in the "Bindings" tab, and the code will automatically update.
+
+- `exint, fpreal` and their vector types like `fpreal2, fpreal3` are new varying precision types defined by SideFX.
 - `mat2, mat3, mat4` matrix types all have varying precision by default, so no changes are required.
 
 To enable varying precision, all OpenCL nodes have a global precision setting in the "Options" tab:
@@ -558,7 +562,17 @@ You can then change the precision of each attribute in the "Bindings" tab:
 
 <img src="./images/precision2.png" width="400">
 
-I prefer to use varying precision types for everything, in case I want to move to 64-bit later.
+I prefer to use varying precision types for everything, in case I want to change them later.
+
+For debugging, you can force all `fpreal` and `exint` variables to a certain precision using `USE_DOUBLE` or `USE_LONG`.
+
+```cpp
+// Force variables to use double precision
+#define USE_DOUBLE
+
+// Force variables to use long precision
+#define USE_LONG
+```
 
 ## Binding attribute types
 
@@ -683,28 +697,35 @@ kernel void kernelName(
 }
 ```
 
-## Matrices in OpenCL
+## Including extra libraries
 
-OpenCL doesn't have good support for matrices. For this reason, SideFX wrote a `matrix.h` header that ships with Houdini.
-
-It helps to keep this file open while writing any code involving matrices, as there's barely any documentation for it.
-
-You need to include this file with `#include <matrix.h>` to use matrix operations in OpenCL.
-
-- Generic path: `$HH/ocl/include/matrix.h`
-- On Windows: `C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl/include/matrix.h`
-
-`#include` means to insert the code from a file into your file. You can do this for any OpenCL header in `houdini/ocl`.
+`#include` means to insert the code from a file into your file. You can do this for any OpenCL header in `houdini/ocl/include`.
 
 ```cpp
 // To include the matrix header located in "houdini/ocl/include"
 #include <matrix.h>
 ```
 
+To include files in other directories, you can use `..` to move up relative to the `include` folder, or `$HH` to use the base Houdini path.
+
 ```cpp
 // To include files in other directories
 #include "../sim/vbd_energy.cl"
+
+// Using $HH to get the same effect, may not be as reliable
+#include "$HH/ocl/sim/vbd_energy.cl"
 ```
+
+## Matrices in OpenCL
+
+OpenCL doesn't have good support for matrices. For this reason, SideFX wrote a `matrix.h` header that ships with Houdini.
+
+It helps to keep this file open while writing any code involving matrices, as there's barely any documentation for it.
+
+You can to include this file with `#include <matrix.h>` to use matrix operations in OpenCL.
+
+- Generic path: `$HH/ocl/include/matrix.h`
+- On Windows: `C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl/include/matrix.h`
 
 ### Creating a matrix
 
