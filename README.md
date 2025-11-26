@@ -173,11 +173,13 @@ In VEX, you can run over Detail, Primitives, Points and Vertices.
 
 OpenCL doesn't care what you run it over, it just gives you the index of the current workitem and hopes for the best.
 
-The workitem index `get_global_id(0)` can represent `@ptnum`, `@vtxnum`, or `@primnum` in VEX depending how you use it.
+A workitem is something that runs kernel code. The workitem index `get_global_id(0)` can represent whatever you need it to in the code.
+
+It can represent `@ptnum`, `@vtxnum`, or `@primnum` depending what data you read with it. It's just a number.
 
 If using @-bindings, it's better to use `@elemnum` instead of `get_global_id(0)` for consistency.
 
-But how does it decide which to use? It depends on the "Run Over" setting in the "Options" tab.
+But how does it decide the length to run over? It depends on the "Run Over" setting in the "Options" tab.
 
 <img src="./images/run_over.png" width="400">
 
