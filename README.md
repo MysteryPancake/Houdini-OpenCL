@@ -911,7 +911,7 @@ Conceptually it's similar to local workgroups, except you have full control over
 
 The most significant difference is worksets synchronize differently to local workgroups. Local workgroups run in parallel, so memory isn't guaranteed to be synchronized until the kernel completes.
 
-In comparison, worksets always synchronize memory before running again. This means any memory you read next time the kernel gets run is always up to date, like a [jacobian update](#parallel-processing-headaches).
+In comparison, worksets always synchronize memory before running again. Any memory you read next time the kernel gets run is always up to date, like a [jacobian update](#parallel-processing-headaches).
 
 Worksets are useful for solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](#sop-vertex-block-descent-advanced) and Otis.
 
