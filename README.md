@@ -61,6 +61,20 @@ It often requires writing tons of tedious boilerplate code, though this is impro
 
 It doesn't support dynamic sized arrays, most data must have a fixed size. However, arrays passed to OpenCL (like attributes) may have different sizes each time the kernel is run.
 
+## How Houdini passes data to OpenCL
+
+OpenCL is a general purpose language, it's not specific to Houdini. To use OpenCL with Houdini, SideFX made up conventions to pass data to and from OpenCL.
+
+As mentioned, OpenCL can run on the CPU, GPU or any other device supporting it.
+
+You can set the OpenCL device in `Edit > Preferences > Miscellaneous`. It defaults to a GPU device, and falls back to CPU.
+
+<img src="./images/opencl_device.png" width="400">
+
+Whenever you use OpenCL, it copies data between Houdini and the OpenCL device. Copying lots of data is slow and can overflow the memory of the device, causing errors like `CL_OUT_OF_RESOURCES`.
+
+OpenCL only copies the data you set on the Bindings and Options tabs, or using the `#bind` syntax. To get better performance, try to avoid binding unnecessary data.
+
 ## How OpenCL runs
 
 OpenCL is only faster than VEX when you write code that takes advantage of what it does well.
@@ -173,9 +187,9 @@ In VEX, you can run over Detail, Primitives, Points and Vertices.
 
 OpenCL doesn't care what you run it over, it just gives you the index of the current workitem and hopes for the best.
 
-A workitem is something that runs kernel code. The workitem index `get_global_id(0)` can represent whatever you need it to in the code.
+A workitem just runs kernel code. The workitem index `get_global_id(0)` can represent whatever you need it to in the kernel.
 
-It can represent `@ptnum`, `@vtxnum`, or `@primnum` depending what data you read with it. It's just a number.
+It can represent `@ptnum`, `@vtxnum`, or `@primnum`, depending what data you read with it. It's just a number.
 
 If using @-bindings, it's better to use `@elemnum` instead of `get_global_id(0)` for consistency.
 
