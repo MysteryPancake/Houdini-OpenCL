@@ -77,7 +77,7 @@ OpenCL only copies the data you set on the Bindings and Options tabs, or using t
 
 <img src="./images/execution_diagram.png" width="800">
 
-For reference, here's the kernel from the diagram above:
+For reference, here's the kernel in the diagram above in plain OpenCL:
 
 ```cpp
 kernel void kernelName(
@@ -99,6 +99,28 @@ kernel void kernelName(
 	// Point 2 XYZ = vload3(1, _bound_P)
 	// ... etc
     float3 second_P = vload3(1, _bound_P);
+    printf("Second point XYZ: (%f, %f, %f)\n", second_P.x, second_P.y, second_P.z);
+}
+```
+
+SideFX added @-binding syntax to make it easier to write kernels. Here's the @-binding equivalent:
+
+```cpp
+@KERNEL
+{
+    // Only print on the first workitem to prevent spam
+    if (@elemnum != 0) return;
+    
+    // Load a single coordinate
+	// Point 1 XYZ = @P.data[0], @P.data[1], @P.data[2]
+	// Point 2 XYZ = @P.data[3], @P.data[4], @P.data[5]
+    printf("First point X coordinate: %f\n", @P.data[0]);
+    
+    // Load 3 coordinates at once
+	// Point 1 XYZ = @P.getAt(0);
+	// Point 2 XYZ = @P.getAt(1);
+	// ... etc
+    float3 second_P = @P.getAt(1);
     printf("Second point XYZ: (%f, %f, %f)\n", second_P.x, second_P.y, second_P.z);
 }
 ```
