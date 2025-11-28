@@ -77,7 +77,7 @@ OpenCL only copies the data you set on the Bindings and Options tabs, or using t
 
 <img src="./images/execution_diagram.png" width="800">
 
-For reference, here's the kernel in the diagram above in plain OpenCL:
+Here's the kernel in the diagram above. It's written in plain OpenCL:
 
 ```cpp
 // Assumes P is bound as 32-bit float with read/write in the Bindings tab
@@ -104,7 +104,7 @@ kernel void kernelName(
 }
 ```
 
-SideFX added @-binding syntax to make it shorter to write kernels. Here's the @-binding equivalent:
+SideFX added a syntax called [@-bindings](#-bindings-version) to make it shorter to write kernels. Here's the @-binding equivalent:
 
 ```cpp
 // Bind P as 32-bit float with read/write, no need for Bindings tab
@@ -542,7 +542,7 @@ You can see how much more verbose it's become compared to the VEX version. What 
 
 @-bindings are an optional feature added by SideFX to save you from writing tedious boilerplate OpenCL code.
 
-I don't recommend using @-bindings until you learn plain OpenCL, because they add another layer of confusion.
+I don't recommend using @-bindings until you understand plain OpenCL, since they add another layer of confusion.
 
 They automatically do these things for you:
 
@@ -550,10 +550,11 @@ They automatically do these things for you:
 - Automatically add shortcuts for common read/write operations like `vload3()` and `vstore3()`
 - Automatically add kernel arguments to pass in the attribute/data
 - Automatically add `#define` directives to let you access the attribute/data with `@` syntax
+- Automatically add boilerplate code for `if (idx >= P_length) return;`
 
-They generate the exact same OpenCL code under the hood, but let you use a VEX-like syntax instead.
+They generate the same OpenCL code under the hood, but let you use a VEX-like syntax instead.
 
-Each @-binding begins with `#bind`, followed by the attribute's class, name and data type.
+@-bindings let you bind data with `#bind`, followed by the attribute's class, name and data type.
 
 ```cpp
 #bind point &P fpreal3
