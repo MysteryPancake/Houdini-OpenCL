@@ -297,7 +297,7 @@ There are various solutions to this:
 2. [Use atomic operations](https://registry.khronos.org/OpenCL/extensions/ext/cl_ext_float_atomics.html)
 3. [Use memory fences (barriers)](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
 
-## Translating from VEX to OpenCL
+## Example 1: Translating VEX to OpenCL
 
 Take a look at this incredible VEX code. I put my blood, sweat and tears into it.
 
@@ -312,13 +312,11 @@ v@P += v@N * f@noise;
 | [Download the HIP file!](./hips/demo1.hiplc?raw=true) |
 | --- |
 
-I know it looks overwhelming already, but it's about to get worse. We're going to translate it into OpenCL.
+I know it looks overwhelming already, but it's about to get worse. We're going to translate it into OpenCL!
 
 ### Plain OpenCL version
 
-Let's start by using plain OpenCL without @-bindings, since they add a layer of confusion.
-
-Add an OpenCL node and untick "Enable @-Binding".
+Let's start without using @-bindings, since they add a layer of confusion. Add an OpenCL node and untick "Enable @-Binding".
 
 <img src="./images/disable_at_binding.png" width="400">
 
