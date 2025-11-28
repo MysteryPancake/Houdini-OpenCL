@@ -316,7 +316,9 @@ I know it looks overwhelming already, but it's about to get worse. We're going t
 
 ### Plain OpenCL version
 
-Let's start without using @-bindings, since they add a layer of confusion. Add an OpenCL node and untick "Enable @-Binding".
+Let's start in plain OpenCL without using @-bindings, since they add a layer of confusion.
+
+Add an OpenCL node and untick "Enable @-Binding".
 
 <img src="./images/disable_at_binding.png" width="400">
 
