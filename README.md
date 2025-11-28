@@ -80,6 +80,7 @@ OpenCL only copies the data you set on the Bindings and Options tabs, or using t
 For reference, here's the kernel in the diagram above in plain OpenCL:
 
 ```cpp
+// Assumes P is bound as 32-bit float with read/write in the Bindings tab
 kernel void kernelName(
     int _bound_P_length,
     global float* _bound_P
@@ -103,9 +104,12 @@ kernel void kernelName(
 }
 ```
 
-SideFX added @-binding syntax to make it easier to write kernels. Here's the @-binding equivalent:
+SideFX added @-binding syntax to make it shorter to write kernels. Here's the @-binding equivalent:
 
 ```cpp
+// Bind P as 32-bit float with read/write, no need for Bindings tab
+#bind point &P float3
+
 @KERNEL
 {
     // Only print on the first workitem to prevent spam
