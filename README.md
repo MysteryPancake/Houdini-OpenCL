@@ -75,6 +75,34 @@ Whenever you use OpenCL, it copies data between Houdini and the OpenCL device. C
 
 OpenCL only copies the data you set on the Bindings and Options tabs, or using the `#bind` syntax. To get better performance, try to avoid binding unnecessary data.
 
+<img src="./images/execution_diagram.png" width="800">
+
+For reference, here's the kernel from the diagram above:
+
+```cpp
+kernel void kernelName(
+    int _bound_P_length,
+    global float* _bound_P
+)
+{
+    // Only print on the first workitem to prevent spam
+    if (get_global_id(0) != 0) return;
+    
+    // Load a single coordinate
+	// Point 1 XYZ = _bound_P[0], _bound_P[1], _bound_P[2]
+	// Point 2 XYZ = _bound_P[3], _bound_P[4], _bound_P[5]
+	// ... etc
+    printf("First point X coordinate: %f\n", _bound_P[0]);
+    
+    // Load 3 coordinates at once
+	// Point 1 XYZ = vload3(0, _bound_P)
+	// Point 2 XYZ = vload3(1, _bound_P)
+	// ... etc
+    float3 second_P = vload3(1, _bound_P);
+    printf("Second point XYZ: (%f, %f, %f)\n", second_P.x, second_P.y, second_P.z);
+}
+```
+
 ## How OpenCL runs
 
 OpenCL is only faster than VEX when you write code that takes advantage of what it does well.
