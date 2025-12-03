@@ -1027,7 +1027,7 @@ Worksets seem pretty similar to local workgroups, but there's two important diff
 
 Each time a workset completes, it globally synchronizes memory before moving to the next workset (running the kernel again). The memory is always up to date next time, [like a jacobian update](#parallel-processing-headaches).
 
-In comparison, local workgroups don't globally synchronize until the end. You can synchronize memory locally using [barriers](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html).
+In comparison, local workgroups don't globally synchronize until the end. You can only synchronize memory locally using [barriers](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html).
 
 #### 2. Offset and length
 
