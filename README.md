@@ -1066,7 +1066,7 @@ Running this on a pig head with `2886` points, you'd expect the result to be `10
 
 <img src="./images/actual_id.png" width="500">
 
-The problem is due to synchronization. Each workitem reads the value for `previous_id` without considering if other workitems changed it.
+The problem is due to memory synchronization. Each workitem reads the value for `previous_id` without considering if other workitems changed it.
 
 Imagine there's only 2 workitems. Ideally everything happens in order and the result is 20:
 
@@ -1074,10 +1074,10 @@ Imagine there's only 2 workitems. Ideally everything happens in order and the re
 | --- | --- | --- | --- |
 | `int previous_id = id[0]` | | 0 | 0 |
 | `id[0] = previous_id + 10` | | 10 | 0 |
-| Synchronize `id[0]` with workitem 1 | | 10 | 10 |
+| **Synchronize `id[0]` with workitem 1** | | 10 | **10** |
 | | `int previous_id = id[0]` | 10 | 10 |
 | | `id[0] = previous_id + 10` | 10 | 20 |
-| | Synchronize `id[0]` with workitem 0 | 20 | 20 |
+| | **Synchronize `id[0]` with workitem 0** | **20** | 20 |
 
 Poor synchronization causes incorrect results:
 
@@ -1087,8 +1087,8 @@ Poor synchronization causes incorrect results:
 | | `int previous_id = id[0]` | 0 | 0 |
 | `id[0] = previous_id + 10` | | 10 | 0 |
 | | `id[0] = previous_id + 10` | 10 | 10 |
-| Synchronize `id[0]` with workitem 1 | | 10 | 10 |
-| | Synchronize `id[0]` with workitem 0 | 10 | 10 |
+| **Synchronize `id[0]` with workitem 1** | | 10 | **10** |
+| | **Synchronize `id[0]` with workitem 0** | **10** | 10 |
 
 There's [many ways](#parallel-processing-headaches) to force operations to synchronize in a certain order. One way is using atomic operations.
 
