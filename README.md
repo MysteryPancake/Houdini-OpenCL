@@ -1102,9 +1102,9 @@ Poor synchronization causes incorrect results:
 | **Synchronize `id[0]` with workitem 1** | | 10 | **10** |
 | | **Synchronize `id[0]` with workitem 0** | **10** | 10 |
 
-There's [many ways](#parallel-processing-headaches) to force operations to run without overlaps. One approach is using atomics.
+There's [many ways](#parallel-processing-headaches) to fix synchronization issues. One way is using atomics.
 
-Atomic operations never overlap as seen above. They slow down OpenCL since it reduces parallelization, so try to avoid them if possible.
+Atomic operations prevent the overlaps seen above. They slow down OpenCL since it reduces parallelization, so try to avoid them if possible.
 
 One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add onto it.
 
