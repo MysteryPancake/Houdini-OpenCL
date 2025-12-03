@@ -1070,9 +1070,9 @@ The problem is due to the order memory is read and written. Each workitem reads 
 
 There's [many ways](#parallel-processing-headaches) to force operations to run in a certain order. One way is using atomic operations.
 
-Atomic operations run with respect to ordering. They slow down OpenCL as it reduces parallelization, so try to avoid using them.
+Atomic operations run as if no parallel processing was happening. They slow down OpenCL as it reduces parallelization, so try to avoid them if possible.
 
-One atomic operation is `atomic_add()`. It takes a point to a memory address, and an integer to add onto the address.
+One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add onto it.
 
 ### Plain OpenCL version
 
@@ -1103,11 +1103,11 @@ kernel void kernelName(
 }
 ```
 
-`atomic_add()` is very slow here as it prevents parallelization, but it produces the correct sum.
+`atomic_add()` is horribly slow here as it completely stops parallelization, but at least the sum is correct now.
 
 <img src="./images/actual_id2.png" width="500">
 
-For better performance, you can reduce the number of atomic operations used with [workgroup reduction](#workgroup-reduction).
+For better performance, you can reduce the number of atomic operations with [workgroup reduction](#workgroup-reduction).
 
 Atomic operations only work on integer types by default, not floating or vector types which is annoying.
 
