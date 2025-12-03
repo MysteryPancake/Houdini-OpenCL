@@ -1183,18 +1183,103 @@ Each workitem could output a different number for some operation:
 | --- | --- | --- | --- |
 | `global_sum += 104` | `global_sum += 129` | `global_sum += 167` | `global_sum += 110` |
 
-In code you could write it like this:
+In code it looks like this:
 
 ### Plain OpenCL version
 
 ```cpp
-// TODO: ADD THIS
+// Assumes id is bound as 32-bit int with read/write in the Bindings tab
+kernel void kernelName(
+    int _bound_id_length,
+    global int* _bound_id
+)
+{
+    // Skip invalid workitems
+    if (get_global_id(0) >= _bound_id_length) return;
+
+    // Some operation returning an integer
+    int operation = 10;
+    
+    // Accumulate within the current local workgroup (partial sum)
+    int local_sum = work_group_reduce_add(operation);
+
+    // Accumulate the partial sums to a global sum
+    if (get_local_id(0) == 0) {
+        atomic_add(&_bound_id[0], local_sum);
+    }
+}
 ```
 
 ### @-bindings version
 
 ```cpp
-// TODO: ADD THIS
+#bind point &id int
+
+@KERNEL
+{
+    // Some operation returning an integer
+    int operation = 10;
+    
+    // Accumulate within the current local workgroup (partial sum)
+    int local_sum = work_group_reduce_add(operation);
+
+    // Accumulate the partial sums to a global sum
+    if (get_local_id(0) == 0) {
+        atomic_add(&@id.data[0], local_sum);
+    }
+}
+```
+
+Both of these produce the same result as before, but with less atomic adds:
+
+<img src="./images/actual_id2.png" width="500">
+
+A more practical example would be summing all the IDs, like Attribute Promote set to Sum. This works for any integer attribute.
+
+### Plain OpenCL version
+
+```cpp
+// Assumes id is bound as 32-bit int with read/write in the Bindings tab
+kernel void kernelName(
+    int _bound_id_length,
+    global int* _bound_id
+)
+{
+    // Skip invalid workitems
+    int id = get_global_id(0);
+    if (id >= _bound_id_length) return;
+
+    // Some operation returning an integer
+    int operation = _bound_id[id];
+    
+    // Accumulate within the current local workgroup (partial sum)
+    int local_sum = work_group_reduce_add(operation);
+
+    // Accumulate the partial sums to a global sum
+    if (get_local_id(0) == 0) {
+        atomic_add(&_bound_id[0], local_sum);
+    }
+}
+```
+
+### @-bindings version
+
+```cpp
+#bind point &id int
+
+@KERNEL
+{
+    // Some operation returning an integer
+    int operation = @elemnum;
+    
+    // Accumulate within the current local workgroup (partial sum)
+    int local_sum = work_group_reduce_add(operation);
+
+    // Accumulate the partial sums to a global sum
+    if (get_local_id(0) == 0) {
+        atomic_add(&@id.data[0], local_sum);
+    }
+}
 ```
 
 ## Fix "1 warning generated" errors
@@ -1513,7 +1598,7 @@ Since OpenCL runs in parallel, it's hard to calculate a global sum due to [paral
 
 There's many workarounds, but I chose to use both workgroup reduction and atomic operations.
 
-1. Sum each local workgroup, often called a partial sum. I used `work_group_reduce_add3()` from `reduce.h`.
+1. Sum within each local workgroup, often called a partial sum. I used `work_group_reduce_add3()` from `reduce.h`.
 2. After all the partial sums complete, the first workitem in each local workgroup uses `atomic_add()` to add onto the global sum.
 
 <img src="./images/workgroup_reduction.png">
