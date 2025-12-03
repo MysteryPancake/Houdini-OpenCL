@@ -1070,7 +1070,7 @@ The problem is due to memory synchronization. Each workitem reads the value for 
 
 There's [many ways](#parallel-processing-headaches) to force operations to synchronize in a certain order. One way is using atomic operations.
 
-Atomic operations run as if no parallel processing was happening. They slow down OpenCL as it reduces parallelization, so try to avoid them if possible.
+Atomic operations force reads and writes to happen in order, as if no parallel processing was happening. They slow down OpenCL since it reduces parallelization, so try to avoid them.
 
 One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add onto it.
 
@@ -1119,7 +1119,9 @@ Remember how OpenCL has a structure of local and global workgroups?
 
 <img src="./images/opencl_workgroups.png">
 
-One benefit is shared memory within each local workgroup. You can share memory using the `__local` or `local` prefix.
+One benefit is shared memory within each local workgroup.
+
+You can share memory using the `__local` or `local` prefix:
 
 ```cpp
 // Memory shared between all workitems in the current local workgroup
@@ -1158,6 +1160,20 @@ Each workitem could output a different number for some operation:
 | Workgroup 0 | Workgroup 1 | Workgroup 2 | Workgroup 3 |
 | --- | --- | --- | --- |
 | `global_sum += 104` | `global_sum += 129` | `global_sum += 167` | `global_sum += 110` |
+
+In code you could write it like this:
+
+### Plain OpenCL version
+
+```cpp
+// TODO: ADD THIS
+```
+
+### @-bindings version
+
+```cpp
+// TODO: ADD THIS
+```
 
 ## Fix "1 warning generated" errors
 
