@@ -1025,9 +1025,9 @@ To use workgroups to run an operation in sections, you can use the workset optio
 
 ### Atomic operations
 
-Since OpenCL runs all workitems in parallel, you run into problems with operations that require ordering.
+Since OpenCL runs operations in parallel, you often run into issues when ordering is important.
 
-For example, see if you can spot the problem in the kernels below.
+For example, try to spot the problem in the kernels below.
 
 ### Plain OpenCL version
 
@@ -1060,15 +1060,15 @@ kernel void kernelName(
 }
 ```
 
-Assuming the original ID was 0 and the number of workitems equals the number of points, the final sum should be `10 * number of points`.
+Assuming the original ID was 0 and the number of workitems is the number of points, the sum should be `10 * number of points`.
 
 Running this on a pig head with `2886` points, you'd expect the result to be `10 * 2886 = 28860`. But it's completely wrong!
 
 <img src="./images/actual_id.png" width="500">
 
-The problem is due to the order memory is read and written. Each workitem reads the value for `previous_id` without considering if other workitems changed it.
+The problem is due to memory synchronization. Each workitem reads the value for `previous_id` without considering if other workitems changed it.
 
-There's [many ways](#parallel-processing-headaches) to force operations to run in a certain order. One way is using atomic operations.
+There's [many ways](#parallel-processing-headaches) to force operations to synchronize in a certain order. One way is using atomic operations.
 
 Atomic operations run as if no parallel processing was happening. They slow down OpenCL as it reduces parallelization, so try to avoid them if possible.
 
