@@ -1037,7 +1037,7 @@ In comparison, local workgroups give you less control. They have a constant leng
 
 ## Atomic operations
 
-Since OpenCL runs operations in parallel, you often run into issues when ordering is important.
+Since OpenCL runs operations in parallel, you often run into issues when operations overlap.
 
 For example, try to spot the problem in the kernels below.
 
@@ -1102,9 +1102,9 @@ Poor synchronization causes incorrect results:
 | **Synchronize `id[0]` with workitem 1** | | 10 | **10** |
 | | **Synchronize `id[0]` with workitem 0** | **10** | 10 |
 
-There's [many ways](#parallel-processing-headaches) to force operations to run in a certain order. One way is using atomic operations.
+There's [many ways](#parallel-processing-headaches) to force operations to run without overlaps. One approach is using atomics.
 
-Atomic operations prevent the overlaps seen above. They slow down OpenCL since it reduces parallelization, so try to avoid them if possible.
+Atomic operations never overlap as seen above. They slow down OpenCL since it reduces parallelization, so try to avoid them if possible.
 
 One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add onto it.
 
@@ -1137,7 +1137,7 @@ kernel void kernelName(
 }
 ```
 
-`atomic_add()` is horribly slow here as it completely stops parallelization, but at least the sum is correct now.
+`atomic_add()` is very slow for this as every workitem overlaps, but at least the sum is correct now.
 
 <img src="./images/actual_id2.png" width="500">
 
