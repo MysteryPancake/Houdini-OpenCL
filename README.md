@@ -1105,9 +1105,9 @@ kernel void kernelName(
 
 `atomic_add()` is very slow here as it prevents parallelization, but it produces the correct sum.
 
-For better performance, you can reduce the number of atomic operations used with [workgroup reduction](#workgroup_reduction).
-
 <img src="./images/actual_id2.png" width="500">
+
+For better performance, you can reduce the number of atomic operations used with [workgroup reduction](#workgroup_reduction).
 
 Atomic operations only work on integer types by default, not floating or vector types which is annoying.
 
