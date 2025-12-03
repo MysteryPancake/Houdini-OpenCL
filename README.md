@@ -1092,7 +1092,7 @@ Poor synchronization causes incorrect results:
 
 There's [many ways](#parallel-processing-headaches) to force operations to synchronize in a certain order. One way is using atomic operations.
 
-Atomic operations force operations to happen in order, like running in series. They slow down OpenCL since it reduces parallelization, so try to avoid them if possible.
+Atomic operations prevent operations overlapping. They slow down OpenCL since it reduces parallelization, so try to avoid them if possible.
 
 One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add onto it.
 
