@@ -991,21 +991,17 @@ There are various solutions to this:
 
 ## Worksets
 
-Worksets basically run the same kernel multiple times in a row in a random order. Each time the kernel is run, it passes in a different data length and offset.
+Worksets run the same kernel multiple times in a row in a random order.
 
-Worksets are meant for running an operation over custom sections of data. To avoid race conditions when reads and writes overlap, you can break an operation into sections that don't affect eachother.
+Each time the kernel is run, the data length and offset changes depending on the workset detail attributes you provide.
 
-These sections are typically sorted in memory, each with an offset and length. The offset is passed as another kernel argument, and should be added onto the global ID `get_global_id(0)` to get the actual global ID.
+It's useful when you have an operation that overlaps data (causing a race condition), but it can be broken into sections that don't overlap.
 
-I think of it like multiple global workgroups. This diagram isn't correct though, since it's really the same kernel each time.
+I think of worksets like multiple global workgroups. The diagram below is an illustration, since it's actually running the same kernel each time.
 
 <img src="./images/multiple_global_workgroups2.png">
 
-Conceptually it's similar to local workgroups, except you have full control over the offset and length of each section. Local workgroups normally have a fixed length, like 256.
-
-The most significant difference is worksets synchronize differently to local workgroups. Local workgroups run in parallel, so memory isn't guaranteed to be synchronized until the kernel completes.
-
-In comparison, worksets always synchronize memory before running again. Any memory you read next time the kernel gets run is always up to date, like a [jacobian update](#parallel-processing-headaches).
+The offset is passed as another kernel argument, and should be added onto the global ID `get_global_id(0)` to get the actual global ID.
 
 Worksets are useful for solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](#sop-vertex-block-descent-advanced) and Otis.
 
@@ -1023,7 +1019,23 @@ To use workgroups to run an operation in sections, you can use the workset optio
 
 <img src="./images/multiple_global_workgroups.png" width="500">
 
-### Atomic operations
+### Worksets vs local workgroups
+
+Worksets seem pretty similar to local workgroups, but there's two important differences.
+
+#### 1. Memory synchronization
+
+Each time a workset completes, it globally synchronizes memory before moving to the next workset (running the kernel again). The memory is always up to date next time, [like a jacobian update](#parallel-processing-headaches).
+
+In comparison, local workgroups don't globally synchronize until the end. You can synchronize memory locally using [barriers](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html).
+
+#### 2. Offset and length
+
+Worksets give you full control over the number of workitems per section, and the offset of each section.
+
+In comparison, local workgroups give you less control. They have a constant length like 256 workitems per workgroup, [though you can change the constant](#changing-the-local-workgroup-size).
+
+## Atomic operations
 
 Since OpenCL runs operations in parallel, you often run into issues when ordering is important.
 
@@ -1234,7 +1246,17 @@ Both of these produce the same result as before, but with less atomic adds:
 
 <img src="./images/actual_id2.png" width="500">
 
-A more practical example would be summing all the IDs, like Attribute Promote set to Sum. This works for any integer attribute.
+You might be wondering the purpose of `get_local_id(0) == 0`. This ensures it only changes the global total once after the local total is computed.
+
+In the diagram below, each blue dot is this workitem. Each workitem adds the local sum (blue) onto the global sum (red).
+
+<img src="./images/workgroup_reduction.png">
+
+Since atomic operations tend to be slow, you could [make the local workgroups larger](changing-the-local-workgroup-size) to make it even faster.
+
+Rather than simply adding 10 each time, a more practical example would be summing all the IDs, like Attribute Promote set to Sum.
+
+This approach works for any integer attribute, or any other operation you perform as long as it's synchronized correctly.
 
 ### Plain OpenCL version
 
