@@ -143,10 +143,9 @@ A regular for loop runs in series:
 
 OpenCL runs in parallel, using chunks instead. If each chunk was 4 items long, it might run in this order:
 
-```cpp
-// |    Chunk 0    |   Chunk 1   |     Chunk 2     |   Chunk 3  |
-     8, 9, 10, 11,   0, 1, 2, 3,   12, 13, 14, 15,   4, 5, 6, 7
-```
+| Chunk 0 | Chunk 1 | Chunk 2 | Chunk 3 |
+| --- | --- | --- | --- |
+| `8, 9, 10, 11` | `0, 1, 2, 3` | `12, 13, 14, 15` | `4, 5, 6, 7` |
 
 - Chunks are called **local workgroups**. `8, 9, 10, 11` is a **local workgroup** of size 4.
 - Each **local workgroup** is part of a **global workgroup**. All of these numbers could be in **global workgroup** `0`.
@@ -263,39 +262,6 @@ The @-binding equivalent is the first attribute marked with `&`.
 ```
 
 This only affects the loop range, not data access. You can read/write totally different attributes if you want.
-
-## Parallel processing headaches
-
-OpenCL runs in parallel, so what happens if many workitems change the same address at the same time?
-
-The VEX equivalent is targeting a specific attribute number using `setattrib()`.
-
-```cpp
-// All workitems change the ID of point 0. What's the final ID?
-setpointattrib(0, "id", 0, i@ptnum);
-```
-
-The OpenCL equivalent is writing to the same memory address in the array.
-
-```cpp
-// Plain OpenCL version
-_bound_id[0] = get_global_id(0);
-
-// @-bindings version
-@id.setAt(0, @elemnum);
-```
-
-In VEX, this is handled for you. [Changes are queued and applied after the code is finished](https://www.sidefx.com/docs/houdini/vex/snippets#creating-geometry).<br>
-VEX uses a **Jacobian** updating style, meaning changes are applied later.
-
-In OpenCL, this causes a race condition. One workitem takes priority and god knows which it'll be.<br>
-OpenCL uses a **Gauss-Seidel** updating style, meaning changes are applied immediately.
-
-There are various solutions to this:
-
-1. Design your code to avoid this problem to begin with [(for example using worksets)](#worksets)
-2. [Use atomic operations](https://registry.khronos.org/OpenCL/extensions/ext/cl_ext_float_atomics.html)
-3. [Use memory fences (barriers)](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
 
 ## Example 1: Translating VEX to OpenCL
 
@@ -968,6 +934,61 @@ void rotfromaxis(fpreal3 axis, fpreal angle, mat3 m)
 }
 ```
 
+## Parallel processing headaches
+
+OpenCL runs in parallel, so what happens if many workitems change the same memory address at the same time?
+
+The VEX equivalent is targeting a specific attribute number using `setattrib()`.
+
+```cpp
+// All workitems change the ID of point 0 to the current index. What's the final ID?
+setpointattrib(0, "id", 0, i@ptnum);
+```
+
+The OpenCL equivalent is writing to the same memory address in the array.
+
+### Plain OpenCL version
+
+```cpp
+// Assumes id is bound as 32-bit int with read/write in the Bindings tab
+kernel void kernelName(
+    int _bound_id_length,
+    global int* _bound_id
+)
+{
+    // Skip invalid workitems
+    int id = get_global_id(0);
+    if (id >= _bound_id_length) return;
+
+    // All workitems change the ID of point 0 to the current index. What's the final ID?
+    _bound_id[0] = id;
+}
+```
+
+### @-bindings version
+
+```cpp
+#bind point &id int
+
+@KERNEL
+{
+    // All workitems change the ID of point 0 to the current index. What's the final ID?
+    @id.setAt(0, @elemnum);
+}
+```
+
+In VEX, this is handled for you. [Changes are queued and applied after the code is finished](https://www.sidefx.com/docs/houdini/vex/snippets#creating-geometry).<br>
+VEX uses a **Jacobian** updating style, meaning changes are applied later.
+
+In OpenCL, this causes a race condition. One workitem takes priority and god knows which it'll be.<br>
+OpenCL uses a **Gauss-Seidel** updating style, meaning changes are applied immediately.
+
+There are various solutions to this:
+
+1. Design your code to avoid this problem to begin with [(for example using worksets)](#worksets)
+2. [Use atomic operations](#atomics)
+3. [Use memory fences (barriers)](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
+
 ## Worksets
 
 Worksets basically run the same kernel multiple times in a row in a random order. Each time the kernel is run, it passes in a different data length and offset.
@@ -1001,6 +1022,142 @@ Sections are sometimes called **colors**, like with the Graph Color node. The se
 To use workgroups to run an operation in sections, you can use the workset option on any OpenCL node.
 
 <img src="./images/multiple_global_workgroups.png" width="500">
+
+### Atomics
+
+Since OpenCL runs all workitems in parallel, you run into problems with operations that require ordering.
+
+For example, see if you can spot the problem in the kernels below.
+
+### Plain OpenCL version
+
+```cpp
+// Assumes id is bound as 32-bit int with read/write in the Bindings tab
+kernel void kernelName(
+    int _bound_id_length,
+    global int* _bound_id
+)
+{
+    // Skip invalid workitems
+    if (get_global_id(0) >= _bound_id_length) return;
+
+    // All workitems add 10 to the first point's ID
+    int previous_id = _bound_id[0];
+    _bound_id[0] = previous_id + 10;
+}
+```
+
+### @-bindings version
+
+```cpp
+#bind point &id int
+
+@KERNEL
+{
+    // All workitems add 10 to the first point's ID
+    int previous_id = @id.getAt(0);
+    @id.setAt(0, previous_id + 10);
+}
+```
+
+Assuming the original ID was 0 and the number of workitems equals the number of points, the final sum should be `10 * number of points`.
+
+Running this on a pig head with `2886` points, you'd expect the result to be `10 * 2886 = 28860`. But it's completely wrong!
+
+<img src="./images/actual_id.png" width="500">
+
+The problem is due to the order memory is read and written. Each workitem reads the value for `previous_id` without considering if other workitems changed it.
+
+There's [many ways](#parallel-processing-headaches) to force operations to run in a certain order. One way is using atomic operations.
+
+Atomic operations run with respect to ordering. They slow down OpenCL as it reduces parallelization, so try to avoid using them.
+
+One atomic operation is `atomic_add()`. It takes a point to a memory address, and an integer to add onto the address.
+
+### Plain OpenCL version
+
+```cpp
+// Assumes id is bound as 32-bit int with read/write in the Bindings tab
+kernel void kernelName(
+    int _bound_id_length,
+    global int* _bound_id
+)
+{
+    // Skip invalid workitems
+    if (get_global_id(0) >= _bound_id_length) return;
+
+    // All workitems add 10 to the first point's ID using atomics
+    atomic_add(&_bound_id[0], 10);
+}
+```
+
+### @-bindings version
+
+```cpp
+#bind point &id int
+
+@KERNEL
+{
+    // All workitems add 10 to the first point's ID using atomics
+    atomic_add(&@id.data[0], 10);
+}
+```
+
+`atomic_add()` is very slow here as it prevents parallelization, but it produces the correct sum.
+
+For better performance, you can reduce the number of atomic operations used with [workgroup reduction](#workgroup_reduction).
+
+<img src="./images/actual_id2.png" width="500">
+
+Atomic operations only work on integer types by default, not floating or vector types which is annoying.
+
+Non-integer types require special handling. as found in [later examples](#sop-laplacian-filter-advanced) and [on Stack Overflow](https://stackoverflow.com/questions/72044986).
+
+## Workgroup reduction
+
+Remember how OpenCL has a structure of local and global workgroups?
+
+<img src="./images/opencl_workgroups.png">
+
+One benefit is shared memory within each local workgroup. You can share memory using the `__local` or `local` prefix.
+
+```cpp
+// Memory shared between all workitems in the current local workgroup
+local int sum;
+
+// Equivalent to local
+__local int sum;
+```
+
+Local memory can be used for a similar purpose as atomics. The difference is local memory is shared within the current workgroup, whereas atomics are shared globally.
+
+OpenCL provides [workgroup reduction functions](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/workGroupFunctions.html) to use local memory for operations like addition, subtraction, min and max.
+
+One reduction function is `work_group_reduce_add()`. It takes any number as input, adds the inputs of all workitems in the current local workgroup, and returns the result.
+
+For example, say you have workitems grouped into local workgroups of size 4:
+
+| Workgroup 0 | Workgroup 1 | Workgroup 2 | Workgroup 3 |
+| --- | --- | --- | --- |
+| `8, 9, 10, 11` | `0, 1, 2, 3` | `12, 13, 14, 15` | `4, 5, 6, 7` |
+
+Each workitem could output a different number for some operation:
+
+| Workgroup 0 | Workgroup 1 | Workgroup 2 | Workgroup 3 |
+| --- | --- | --- | --- |
+| `2, 34, 56, 12` | `23, 4, 35, 67` | `34, 45, 87, 1` | `34, 6, 3, 67` |
+
+`work_group_reduce_add()` adds the numbers within each local workgroup:
+
+| Workgroup 0 | Workgroup 1 | Workgroup 2 | Workgroup 3 |
+| --- | --- | --- | --- |
+| `2 + 34 + 56 + 12`<br>`= 104` | `23 + 4 + 35 + 67`<br>`= 129` | `34 + 45 + 87 + 1`<br>`= 167` | `34 + 6 + 3 + 67`<br>`= 110` |
+
+`atomic_add()` can be used to add the local sums (often called partial sums) to a global sum:
+
+| Workgroup 0 | Workgroup 1 | Workgroup 2 | Workgroup 3 |
+| --- | --- | --- | --- |
+| `global_sum += 104` | `global_sum += 129` | `global_sum += 167` | `global_sum += 110` |
 
 ## Fix "1 warning generated" errors
 
@@ -1312,7 +1469,7 @@ This is based on [White Dog's Eigenspace Projection example](https://drive.googl
 | [Download the HDA!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/laplacian_filter.hiplc) |
 | --- | --- |
 
-You can do large math operations in parallel using [workgroup reduction](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/workGroupFunctions.html) in OpenCL.
+You can do large math operations in parallel using [workgroup reduction](#workgroup-reduction).
 
 Since OpenCL runs in parallel, it's hard to calculate a global sum due to [parallel processing headaches](#parallel-processing-headaches).
 
