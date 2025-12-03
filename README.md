@@ -1092,7 +1092,7 @@ Poor synchronization causes incorrect results:
 
 There's [many ways](#parallel-processing-headaches) to force operations to synchronize in a certain order. One way is using atomic operations.
 
-Atomic operations prevent operations overlapping. They slow down OpenCL since it reduces parallelization, so try to avoid them if possible.
+Atomic operations prevent overlapping operations as seen above. They slow down OpenCL since it reduces parallelization, so try to avoid them if possible.
 
 One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add onto it.
 
@@ -1153,7 +1153,7 @@ local int sum;
 __local int sum;
 ```
 
-Local memory can be used for a similar purpose as atomics. The difference is local memory is shared within the current workgroup, whereas atomics are shared globally.
+Local memory can be used for a similar purpose as atomics, but only within the current workgroup.
 
 OpenCL provides [workgroup reduction functions](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/workGroupFunctions.html) to use local memory for operations like addition, subtraction, min and max.
 
