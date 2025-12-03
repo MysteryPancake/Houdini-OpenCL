@@ -986,7 +986,7 @@ OpenCL uses a **Gauss-Seidel** updating style, meaning changes are applied immed
 There are various solutions to this:
 
 1. Design your code to avoid this problem to begin with [(for example using worksets)](#worksets)
-2. [Use atomic operations](#atomics)
+2. [Use atomic operations](#atomic-operations)
 3. [Use memory fences (barriers)](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/atomic_work_item_fence.html)
 
 ## Worksets
@@ -1023,7 +1023,7 @@ To use workgroups to run an operation in sections, you can use the workset optio
 
 <img src="./images/multiple_global_workgroups.png" width="500">
 
-### Atomics
+### Atomic operations
 
 Since OpenCL runs all workitems in parallel, you run into problems with operations that require ordering.
 
@@ -1107,7 +1107,7 @@ kernel void kernelName(
 
 <img src="./images/actual_id2.png" width="500">
 
-For better performance, you can reduce the number of atomic operations used with [workgroup reduction](#workgroup_reduction).
+For better performance, you can reduce the number of atomic operations used with [workgroup reduction](#workgroup-reduction).
 
 Atomic operations only work on integer types by default, not floating or vector types which is annoying.
 
