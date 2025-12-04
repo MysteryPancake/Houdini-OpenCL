@@ -1646,7 +1646,7 @@ Sadly `atomic_add()` only works on `int` types in OpenCL, not `float` or vector 
 
 In this case I was using `fpreal3`, so I needed a version of `atomic_add()` that worked on floating types.
 
-Below is `atomic_add_f()`, written by [VioletSpace](https://violetspace.github.io/blog/atomic-float-addition-in-opencl.html). It takes advantage of certain GPUs that offer hardware instructions for floats.
+Below is `atomic_add_f()`, [written by VioletSpace](https://violetspace.github.io/blog/atomic-float-addition-in-opencl.html). It takes advantage of devices that offer hardware instructions for floats.
 
 ```cpp
 #include <reduce.h>
