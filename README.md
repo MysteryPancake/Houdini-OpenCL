@@ -1164,7 +1164,7 @@ Non-integer types require special handling. as found in [later examples](#sop-la
 
 Note that unlike integers, floating types produce [different results depending on the order of operations](https://stackoverflow.com/a/10371890).
 
-This can cause issues for operations that need to be deterministic, like simulations. (Thanks Jake Rice for this tip!)
+This can vary operations that need to be deterministic, like simulations. Thanks to [Jake Rice](https://jakerice.design/) for this tip!
 
 ## Workgroup reduction
 
