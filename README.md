@@ -1734,14 +1734,7 @@ The process is the same as in the previous example:
 // atomic_max() only works on ints, floats need custom handling
 // From https://stackoverflow.com/questions/18950732
 void atomic_max_float(volatile __global float *source, const float operand) {
-    union {
-        unsigned int intVal;
-        float floatVal;
-    } newVal;
-    union {
-        unsigned int intVal;
-        float floatVal;
-    } prevVal;
+    union { unsigned int intVal; float floatVal; } prevVal, newVal;
     do {
         prevVal.floatVal = *source;
         newVal.floatVal = max(prevVal.floatVal,operand);
