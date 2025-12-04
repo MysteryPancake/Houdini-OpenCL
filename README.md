@@ -1633,37 +1633,36 @@ This is based on [White Dog's Eigenspace Projection example](https://drive.googl
 | [Download the HDA!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/laplacian_filter.hiplc) |
 | --- | --- |
 
-You can do large math operations in parallel using [workgroup reduction](#workgroup-reduction).
+Global sums are hard to compute in OpenCL due to [parallel processing headaches](#parallel-processing-headaches).
 
-Since OpenCL runs in parallel, it's hard to calculate a global sum due to [parallel processing headaches](#parallel-processing-headaches).
-
-There's many workarounds, but I chose to use both workgroup reduction and atomic operations.
+There's many workarounds, but I chose to use [workgroup reduction](#workgroup-reduction) and [atomic operations](#atomic-operations).
 
 1. Sum within each local workgroup, often called a partial sum. I used `work_group_reduce_add3()` from `reduce.h`.
 2. After all the partial sums complete, the first workitem in each local workgroup uses `atomic_add()` to add onto the global sum.
 
 <img src="./images/workgroup_reduction.png">
 
-Atomic operations force OpenCL to run in a sequential way, ruining the benefits of parallel processing. Try to avoid them as much as possible.
+Sadly `atomic_add()` only works on `int` types in OpenCL, not `float` or vector types.
 
-Sadly `atomic_add()` only works on `int` types, not `fpreal3`. I found a workaround in `$HH/ocl/deform/blendshape.cl` called `atomicAddFloatCAS()`.
+In this case I was using `fpreal3`, so I needed a version of `atomic_add()` that worked on floating types.
+
+Below is `atomic_add_f()`, written by [VioletSpace](https://violetspace.github.io/blog/atomic-float-addition-in-opencl.html). It takes advantage of certain GPUs that offer hardware instructions for floats.
 
 ```cpp
 #include <reduce.h>
 
-// atomic_add() doesn't support floats. This is a workaround from $HH/ocl/deform/blendshape.cl
-#pragma OPENCL EXTENSION cl_khr_global_int32_base_atomics : enable
-inline void atomicAddFloatCAS(volatile __global float *addr, float v)
-{
-    union { float f; uint u; } oldVal, newVal;
-    do {
-        oldVal.f = *addr;
-        newVal.f = oldVal.f + v;
-    } while (atomic_cmpxchg(
-        (volatile __global uint *)addr,
-        oldVal.u, newVal.u) != oldVal.u);
+// atomic_add() doesn't support floats, workaround from violetspace.github.io/blog/atomic-float-addition-in-opencl.html
+inline void atomic_add_f(volatile __global float* addr, const float val) {
+    #if defined(cl_nv_pragma_unroll)
+        float ret; asm volatile("atom.global.add.f32 %0,[%1],%2;":"=f"(ret):"l"(addr),"f"(val):"memory");
+    #elif defined(__opencl_c_ext_fp32_global_atomic_add)
+        atomic_fetch_add_explicit((volatile global atomic_float*)addr, val, memory_order_relaxed);
+    #elif __has_builtin(__builtin_amdgcn_global_atomic_fadd_f32)
+        __builtin_amdgcn_global_atomic_fadd_f32(addr, val);
+    #else
+        float old = val; while((old=atomic_xchg(addr, atomic_xchg(addr, 0.0f)+old))!=0.0f);
+    #endif
 }
-#define ATOMIC_ADD_F(addr,val)  atomicAddFloatCAS((volatile __global float*)(addr), (float)(val))
 
 #bind point &rest fpreal3 name=__rest
 #bind point eigenvector fpreal[] input=1
@@ -1682,9 +1681,9 @@ inline void atomicAddFloatCAS(volatile __global float *addr, float v)
     // Sum all workgroups to get the global total
     if (get_local_id(0) == 0)
     {
-        ATOMIC_ADD_F(&@Psum.data[0], P_group_sum.x);
-        ATOMIC_ADD_F(&@Psum.data[1], P_group_sum.y);
-        ATOMIC_ADD_F(&@Psum.data[2], P_group_sum.z);
+        atomic_add_f((global float*)&@Psum.data[0], (float)P_group_sum.x);
+        atomic_add_f((global float*)&@Psum.data[1], (float)P_group_sum.y);
+        atomic_add_f((global float*)&@Psum.data[2], (float)P_group_sum.z);
     }
 }
 ```
