@@ -1651,7 +1651,8 @@ Below is `atomic_add_f()`, [written by VioletSpace](https://violetspace.github.i
 ```cpp
 #include <reduce.h>
 
-// atomic_add() doesn't support floats, workaround from violetspace.github.io/blog/atomic-float-addition-in-opencl.html
+// atomic_add() only works on ints, floats need custom handling
+// From violetspace.github.io/blog/atomic-float-addition-in-opencl.html
 inline void atomic_add_f(volatile __global float* addr, const float val) {
     #if defined(cl_nv_pragma_unroll) // use hardware-supported atomic addition on Nvidia GPUs with inline PTX assembly
         float ret; asm volatile("atom.global.add.f32 %0,[%1],%2;":"=f"(ret):"l"(addr),"f"(val):"memory");
