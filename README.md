@@ -1091,7 +1091,7 @@ Imagine there's only 2 workitems. Ideally everything happens in order and the re
 | | `id[0] = previous_id + 10` | 10 | 20 |
 | | **Synchronize `id[0]` with workitem 0** | **20** | 20 |
 
-Poor synchronization causes incorrect results:
+Poor synchronization causes an incorrect result such as 10:
 
 | Workitem 0 | Workitem 1 | `id[0]` in workitem 0 | `id[0]` in workitem 1 |
 | --- | --- | --- | --- |
@@ -1102,11 +1102,26 @@ Poor synchronization causes incorrect results:
 | **Synchronize `id[0]` with workitem 1** | | 10 | **10** |
 | | **Synchronize `id[0]` with workitem 0** | **10** | 10 |
 
-There's [many ways](#parallel-processing-headaches) to fix synchronization issues. One way is using atomics.
+There's [many ways](#parallel-processing-headaches) to fix synchronization issues. One approach is using atomics.
 
-Atomic operations prevent the overlaps seen above. They slow down OpenCL since it reduces parallelization, so try to avoid them if possible.
+Atomic operations prevent the overlaps seen above. They can be slow since they reduce parallelization, so try to avoid them if possible.
 
-One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add onto it.
+One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add to it.
+
+`atomic_add()` basically combines `read -> write -> synchronize` into a single action, so nothing runs in between.
+
+To be clear, atomics don't force everything to run in order. They just prevent overlaps for a few actions at once.
+
+The rest still runs in parallel, for example if workitem 1 ran first:
+
+| Workitem 0 | Workitem 1 | `id[0]` in workitem 0 | `id[0]` in workitem 1 |
+| --- | --- | --- | --- |
+| | `int previous_id = id[0]` | 0 | 0 |
+| | `id[0] = previous_id + 10` | 0 | 10 |
+| | **Synchronize `id[0]` with workitem 0** | **10** | 10 |
+| `int previous_id = id[0]` | | 10 | 10 |
+| `id[0] = previous_id + 10` | | 20 | 10 |
+| **Synchronize `id[0]` with workitem 1** | | 20 | **20** |
 
 ### Plain OpenCL version
 
@@ -1137,7 +1152,7 @@ kernel void kernelName(
 }
 ```
 
-`atomic_add()` is very slow for this as every workitem overlaps, but at least the sum is correct now.
+`atomic_add()` is slow here as every workitem overlaps, but at least the sum is correct now.
 
 <img src="./images/actual_id2.png" width="500">
 
@@ -1146,6 +1161,8 @@ For better performance, you can reduce the number of atomic operations with [wor
 Atomic operations only work on integer types by default, not floating or vector types which is annoying.
 
 Non-integer types require special handling. as found in [later examples](#sop-laplacian-filter-advanced) and [on Stack Overflow](https://stackoverflow.com/questions/72044986).
+
+Note that unlike integers, floating types produce [different results depending on the order of operations](https://stackoverflow.com/a/10371890) due to precision issues.
 
 ## Workgroup reduction
 
