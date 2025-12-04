@@ -1162,7 +1162,9 @@ Atomic operations only work on integer types by default, not floating or vector 
 
 Non-integer types require special handling. as found in [later examples](#sop-laplacian-filter-advanced) and [on Stack Overflow](https://stackoverflow.com/questions/72044986).
 
-Note that unlike integers, floating types produce [different results depending on the order of operations](https://stackoverflow.com/a/10371890) due to precision issues.
+Note that unlike integers, floating types produce [different results depending on the order of operations](https://stackoverflow.com/a/10371890).
+
+This can cause issues for operations that need to be deterministic, like simulations. (Thanks Jake Rice for this tip!)
 
 ## Workgroup reduction
 
