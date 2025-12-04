@@ -1646,20 +1646,20 @@ Sadly `atomic_add()` only works on `int` types in OpenCL, not `float` or vector 
 
 In this case I was using `fpreal3`, so I needed a version of `atomic_add()` that worked on floating types.
 
-Below is `atomic_add_f()`, [written by VioletSpace](https://violetspace.github.io/blog/atomic-float-addition-in-opencl.html). It takes advantage of devices that offer hardware instructions for floats.
+Below is `atomic_add_f()`, [written by VioletSpace](https://violetspace.github.io/blog/atomic-float-addition-in-opencl.html). It takes advantage of GPUs that offer hardware instructions for floats.
 
 ```cpp
 #include <reduce.h>
 
 // atomic_add() doesn't support floats, workaround from violetspace.github.io/blog/atomic-float-addition-in-opencl.html
 inline void atomic_add_f(volatile __global float* addr, const float val) {
-    #if defined(cl_nv_pragma_unroll)
+    #if defined(cl_nv_pragma_unroll) // use hardware-supported atomic addition on Nvidia GPUs with inline PTX assembly
         float ret; asm volatile("atom.global.add.f32 %0,[%1],%2;":"=f"(ret):"l"(addr),"f"(val):"memory");
-    #elif defined(__opencl_c_ext_fp32_global_atomic_add)
+    #elif defined(__opencl_c_ext_fp32_global_atomic_add) // use hardware-supported atomic addition on some Intel GPUs
         atomic_fetch_add_explicit((volatile global atomic_float*)addr, val, memory_order_relaxed);
-    #elif __has_builtin(__builtin_amdgcn_global_atomic_fadd_f32)
+    #elif __has_builtin(__builtin_amdgcn_global_atomic_fadd_f32) // use hardware-supported atomic addition on some AMD GPUs
         __builtin_amdgcn_global_atomic_fadd_f32(addr, val);
-    #else
+    #else // fallback emulation: forums.developer.nvidia.com/t/atomicadd-float-float-atomicmul-float-float/14639/5
         float old = val; while((old=atomic_xchg(addr, atomic_xchg(addr, 0.0f)+old))!=0.0f);
     #endif
 }
