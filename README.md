@@ -947,7 +947,7 @@ setpointattrib(0, "id", 0, i@ptnum);
 
 The OpenCL equivalent is writing to the same memory address in the array.
 
-### Plain OpenCL version
+### Plain OpenCL
 
 ```cpp
 // Assumes id is bound as 32-bit int with read/write in the Bindings tab
@@ -965,7 +965,7 @@ kernel void kernelName(
 }
 ```
 
-### @-bindings version
+### @-bindings syntax
 
 ```cpp
 #bind point &id int
@@ -1041,7 +1041,7 @@ Since OpenCL runs operations in parallel, you often run into issues when operati
 
 For example, try to spot the problem in the kernels below.
 
-### Plain OpenCL version
+### Plain OpenCL
 
 ```cpp
 // Assumes id is bound as 32-bit int with read/write in the Bindings tab
@@ -1059,7 +1059,7 @@ kernel void kernelName(
 }
 ```
 
-### @-bindings version
+### @-bindings syntax
 
 ```cpp
 #bind point &id int
@@ -1108,11 +1108,11 @@ Atomic operations prevent the overlaps seen above. They can be slow since they r
 
 One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add to it.
 
-`atomic_add()` basically combines `read -> write -> synchronize` into a single action, so nothing runs in between.
+`atomic_add()` basically combines `read -> modify -> write -> synchronize` into a single action, so nothing runs in between.
 
-To be clear, atomics don't force everything to run in order. They just prevent overlaps for a few actions at once.
+To be clear, atomics don't force everything to run in order (like barriers). They just prevent overlaps for a few actions at once.
 
-The rest still runs in parallel, for example if workitem 1 ran first:
+The rest still runs in parallel. For example if workitem 1 ran first, the order may be reversed:
 
 | Workitem 0 | Workitem 1 | `id[0]` in workitem 0 | `id[0]` in workitem 1 |
 | --- | --- | --- | --- |
@@ -1123,7 +1123,9 @@ The rest still runs in parallel, for example if workitem 1 ran first:
 | `id[0] = previous_id + 10` | | 20 | 10 |
 | **Synchronize `id[0]` with workitem 1** | | 20 | **20** |
 
-### Plain OpenCL version
+Atomics produce the correct result for the previous example:
+
+### Plain OpenCL
 
 ```cpp
 // Assumes id is bound as 32-bit int with read/write in the Bindings tab
@@ -1140,7 +1142,7 @@ kernel void kernelName(
 }
 ```
 
-### @-bindings version
+### @-bindings syntax
 
 ```cpp
 #bind point &id int
@@ -1216,7 +1218,7 @@ Each workitem could output a different number for some operation:
 
 In code it looks like this:
 
-### Plain OpenCL version
+### Plain OpenCL
 
 ```cpp
 // Assumes id is bound as 32-bit int with read/write in the Bindings tab
@@ -1241,7 +1243,7 @@ kernel void kernelName(
 }
 ```
 
-### @-bindings version
+### @-bindings syntax
 
 ```cpp
 #bind point &id int
@@ -1277,7 +1279,7 @@ Rather than simply adding 10 each time, a more practical example would be summin
 
 This approach works for any integer attribute, or any other operation you perform as long as it's synchronized correctly.
 
-### Plain OpenCL version
+### Plain OpenCL
 
 ```cpp
 // Assumes id is bound as 32-bit int with read/write in the Bindings tab
@@ -1303,7 +1305,7 @@ kernel void kernelName(
 }
 ```
 
-### @-bindings version
+### @-bindings syntax
 
 ```cpp
 #bind point &id int
