@@ -77,7 +77,9 @@ OpenCL only copies the data you set on the Bindings and Options tabs, or using t
 
 <img src="./images/execution_diagram.png" width="800">
 
-Here's the kernel in the diagram above. It's written in plain OpenCL:
+Here's the kernel in the diagram above, written in plain OpenCL.
+
+### Plain OpenCL version
 
 ```cpp
 // Assumes P is bound as 32-bit float with read/write in the Bindings tab
@@ -104,7 +106,9 @@ kernel void kernelName(
 }
 ```
 
-SideFX added a syntax called [@-bindings](#-bindings-version) to make it shorter to write kernels. Here's the @-binding equivalent:
+SideFX added a syntax called [@-bindings](#-bindings-version) to make it shorter and easier to write kernels. The generated code is the same.
+
+### @-bindings version
 
 ```cpp
 // Bind P as 32-bit float with read/write, no need for Bindings tab
@@ -625,7 +629,7 @@ Houdini binds most attributes as arrays. Array attributes are also bound as arra
 
 Floating types add 2 arguments to the kernel: the length of the array, and the array itself.
 
-#### @-binding syntax
+#### @-bindings version
 
 ```cpp
 #bind point attr float   // if float
@@ -640,7 +644,7 @@ Floating types add 2 arguments to the kernel: the length of the array, and the a
 }
 ```
 
-#### Plain OpenCL
+#### Plain OpenCL version
 
 ```cpp
 kernel void kernelName(
@@ -657,7 +661,7 @@ kernel void kernelName(
 
 Integer types add 2 arguments to the kernel: the length of the array, and the array itself.
 
-#### @-binding syntax
+#### @-bindings version
 
 ```cpp
 #bind point attr int
@@ -667,7 +671,7 @@ Integer types add 2 arguments to the kernel: the length of the array, and the ar
 }
 ```
 
-#### Plain OpenCL
+#### Plain OpenCL version
 
 ```cpp
 kernel void kernelName(
@@ -684,7 +688,7 @@ kernel void kernelName(
 
 Floating array types add 3 arguments to the kernel: the length of the array, the start of each subarray, and the array of subarrays.
 
-#### @-binding syntax
+#### @-bindings version
 
 ```cpp
 #bind point attr float[]
@@ -694,7 +698,7 @@ Floating array types add 3 arguments to the kernel: the length of the array, the
 }
 ```
 
-#### Plain OpenCL
+#### Plain OpenCL version
 
 ```cpp
 kernel void kernelName(
@@ -712,7 +716,7 @@ kernel void kernelName(
 
 Integer array types add 3 arguments to the kernel: the length of the array, the start of each subarray, and the array of subarrays.
 
-#### @-binding syntax
+#### @-bindings version
 
 ```cpp
 #bind point attr int[]
@@ -722,7 +726,7 @@ Integer array types add 3 arguments to the kernel: the length of the array, the 
 }
 ```
 
-#### Plain OpenCL
+#### Plain OpenCL version
 
 ```cpp
 kernel void kernelName(
@@ -947,7 +951,7 @@ setpointattrib(0, "id", 0, i@ptnum);
 
 The OpenCL equivalent is writing to the same memory address in the array.
 
-### Plain OpenCL
+### Plain OpenCL version
 
 ```cpp
 // Assumes id is bound as 32-bit int with read/write in the Bindings tab
@@ -965,7 +969,7 @@ kernel void kernelName(
 }
 ```
 
-### @-bindings syntax
+### @-bindings version
 
 ```cpp
 #bind point &id int
@@ -1041,7 +1045,7 @@ Since OpenCL runs operations in parallel, you often run into issues when operati
 
 For example, try to spot the problem in the kernels below.
 
-### Plain OpenCL
+### Plain OpenCL version
 
 ```cpp
 // Assumes id is bound as 32-bit int with read/write in the Bindings tab
@@ -1059,7 +1063,7 @@ kernel void kernelName(
 }
 ```
 
-### @-bindings syntax
+### @-bindings version
 
 ```cpp
 #bind point &id int
@@ -1082,25 +1086,21 @@ The problem is due to synchronization. Each workitem reads the value for `previo
 
 Imagine there's only 2 workitems. Ideally everything happens in order and the result is 20:
 
-| Workitem 0 | Workitem 1 | `id[0]` in workitem 0 | `id[0]` in workitem 1 |
-| --- | --- | --- | --- |
-| `int previous_id = id[0]` | | 0 | 0 |
-| `id[0] = previous_id + 10` | | 10 | 0 |
-| **Synchronize `id[0]` with workitem 1** | | 10 | **10** |
-| | `int previous_id = id[0]` | 10 | 10 |
-| | `id[0] = previous_id + 10` | 10 | 20 |
-| | **Synchronize `id[0]` with workitem 0** | **20** | 20 |
+| `id[0]` | Workitem 0 | `prev_id` | Workitem 1 | `prev_id` |
+| --- | --- | --- | --- | --- |
+| 0 | `int prev_id = id[0]` | 0 | | |
+| 10 | `id[0] = prev_id + 10` | 0 | | |
+| 10 | | 0 | `int prev_id = id[0]` | 10 |
+| **20** | | 0 | `id[0] = prev_id + 10` | 10 |
 
 Poor synchronization causes an incorrect result such as 10:
 
-| Workitem 0 | Workitem 1 | `id[0]` in workitem 0 | `id[0]` in workitem 1 |
-| --- | --- | --- | --- |
-| `int previous_id = id[0]` | | 0 | 0 |
-| | `int previous_id = id[0]` | 0 | 0 |
-| `id[0] = previous_id + 10` | | 10 | 0 |
-| | `id[0] = previous_id + 10` | 10 | 10 |
-| **Synchronize `id[0]` with workitem 1** | | 10 | **10** |
-| | **Synchronize `id[0]` with workitem 0** | **10** | 10 |
+| `id[0]` | Workitem 0 | `prev_id` | Workitem 1 | `prev_id` |
+| --- | --- | --- | --- | --- |
+| 0 | `int prev_id = id[0]` | 0 | | |
+| 0 | | 0 | `int prev_id = id[0]` | 0 |
+| 10 | `id[0] = prev_id + 10` | 0 | | 0 |
+| **10** | | 0 | `id[0] = prev_id + 10` | 0 |
 
 There's [many ways](#parallel-processing-headaches) to fix synchronization issues. One approach is using atomics.
 
@@ -1108,24 +1108,29 @@ Atomic operations prevent the overlaps seen above. They can be slow since they r
 
 One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add to it.
 
-`atomic_add()` basically combines `read -> modify -> write -> synchronize` into a single action, so nothing runs in between.
+`atomic_add()` combines `read -> modify -> write` into a single action, so nothing runs in between.
 
 To be clear, atomics don't force everything to run in order (like barriers). They just prevent overlaps for a few actions at once.
 
-The rest still runs in parallel. For example if workitem 1 ran first, the order may be reversed:
+The rest still runs in parallel, so both of the orders below are possible:
 
-| Workitem 0 | Workitem 1 | `id[0]` in workitem 0 | `id[0]` in workitem 1 |
-| --- | --- | --- | --- |
-| | `int previous_id = id[0]` | 0 | 0 |
-| | `id[0] = previous_id + 10` | 0 | 10 |
-| | **Synchronize `id[0]` with workitem 0** | **10** | 10 |
-| `int previous_id = id[0]` | | 10 | 10 |
-| `id[0] = previous_id + 10` | | 20 | 10 |
-| **Synchronize `id[0]` with workitem 1** | | 20 | **20** |
+#### Order 1
 
-Atomics produce the correct result for the previous example:
+| `id[0]` | Workitem 0 | Workitem 1 |
+| --- | --- | --- |
+| 0 | | |
+| 10 | | `atomic_add(&id[0], 10)` |
+| **20** | `atomic_add(&id[0], 10)` | |
 
-### Plain OpenCL
+#### Order 2
+
+| `id[0]` | Workitem 0 | Workitem 1 |
+| --- | --- | --- |
+| 0 | | |
+| 10 | `atomic_add(&id[0], 10)` | |
+| **20** | | `atomic_add(&id[0], 10)` |
+
+### Plain OpenCL version
 
 ```cpp
 // Assumes id is bound as 32-bit int with read/write in the Bindings tab
@@ -1142,7 +1147,7 @@ kernel void kernelName(
 }
 ```
 
-### @-bindings syntax
+### @-bindings version
 
 ```cpp
 #bind point &id int
@@ -1218,7 +1223,7 @@ Each workitem could output a different number for some operation:
 
 In code it looks like this:
 
-### Plain OpenCL
+### Plain OpenCL version
 
 ```cpp
 // Assumes id is bound as 32-bit int with read/write in the Bindings tab
@@ -1243,7 +1248,7 @@ kernel void kernelName(
 }
 ```
 
-### @-bindings syntax
+### @-bindings version
 
 ```cpp
 #bind point &id int
@@ -1279,7 +1284,7 @@ Rather than simply adding 10 each time, a more practical example would be summin
 
 This approach works for any integer attribute, or any other operation you perform as long as it's synchronized correctly.
 
-### Plain OpenCL
+### Plain OpenCL version
 
 ```cpp
 // Assumes id is bound as 32-bit int with read/write in the Bindings tab
@@ -1305,7 +1310,7 @@ kernel void kernelName(
 }
 ```
 
-### @-bindings syntax
+### @-bindings version
 
 ```cpp
 #bind point &id int
