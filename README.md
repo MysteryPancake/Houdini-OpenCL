@@ -1104,7 +1104,7 @@ Poor synchronization causes an incorrect result such as 10:
 
 There's [many ways](#parallel-processing-headaches) to fix synchronization issues. One approach is using atomics.
 
-Atomic operations prevent the overlaps seen above. They can be slow since they reduce parallelization, so try to avoid them if possible.
+Atomic operations prevent the overlaps seen above. They're slower since they reduce parallelization, so try to avoid them if possible.
 
 One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add to it.
 
