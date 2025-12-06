@@ -1633,8 +1633,8 @@ The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.ht
 This is based on [White Dog's Eigenspace Projection example](https://drive.google.com/drive/folders/1gFYlmsFgpeihmcqZLFITvYQIW5mpYyJd). It uses global sums in a feedback loop. Perfect candidate for OpenCL!
 
 <p align="left">
-     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter.png" height="250">
-     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter2.png" height="250">
+     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter.png" width="45%">
+     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter2.png" width="45%">
 </p>
 
 | [Download the HDA!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/laplacian_filter.hiplc) |
