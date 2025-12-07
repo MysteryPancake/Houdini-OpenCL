@@ -1330,6 +1330,39 @@ kernel void kernelName(
 }
 ```
 
+## Changing the OpenCL version
+
+By default Houdini compiles OpenCL code with the highest version available.
+
+You can check the version with the `__OPENCL_VERSION__` and `__OPENCL_C_VERSION__` macros.
+
+```js
+#bind point &P float3 // Dummy bind
+
+@KERNEL
+{
+    if (@elemnum != 0) return; // Only print on first workitem
+
+    printf("OPENCL_VERSION: %d\n", __OPENCL_VERSION__); // 300 for me
+    printf("OPENCL_C_VERSION: %d\n", __OPENCL_C_VERSION__); // 300 for me
+}
+```
+
+<img src="./images/opencl_version.png" width="500">
+
+To set the OpenCL version, use the compiler flag `-cl-std`. Vellum sets it to version 2 using `-cl-std=CL2.0`.
+
+```js
+-cl-std=CL3.0 // Version 300
+-cl-std=CL2.0 // Version 200
+-cl-std=CL1.2 // Version 120
+```
+
+<img src="./images/opencl_version2.png" width="500">
+
+| [Download the HIP file!](./hips/set_opencl_version.hiplc?raw=true) |
+| --- |
+
 ## Fix "1 warning generated" errors
 
 Sometimes OpenCL spams the message "1 warning generated", but doesn't spam the actual warning.
