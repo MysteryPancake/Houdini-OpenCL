@@ -1276,7 +1276,7 @@ You might be wondering the purpose of `get_local_id(0) == 0`. This ensures it on
 
 In the diagram below, each blue dot is this workitem. Each workitem adds the local sum (blue) onto the global sum (red).
 
-<img src="./images/workgroup_reduction.png">
+<img src="./images/workgroup_reduction2.png">
 
 Since atomic operations tend to be slow, you could [make the local workgroups larger](changing-the-local-workgroup-size) to make it even faster.
 
