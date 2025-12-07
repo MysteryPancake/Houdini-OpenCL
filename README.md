@@ -1332,7 +1332,7 @@ kernel void kernelName(
 
 ## Changing the OpenCL version
 
-By default Houdini compiles OpenCL code with the highest version available.
+Houdini compiles OpenCL code with the highest version available by default.
 
 You can check the version with the `__OPENCL_VERSION__` and `__OPENCL_C_VERSION__` macros.
 
@@ -1350,7 +1350,7 @@ You can check the version with the `__OPENCL_VERSION__` and `__OPENCL_C_VERSION_
 
 <img src="./images/opencl_version.png" width="500">
 
-To set the OpenCL version, use the compiler flag `-cl-std`. Vellum sets it to version 2 using `-cl-std=CL2.0`.
+To set the OpenCL version, use the compiler flag `-cl-std`. Vellum sets it to version 2.0 using `-cl-std=CL2.0`.
 
 ```js
 -cl-std=CL3.0 // Version 300
@@ -1359,6 +1359,14 @@ To set the OpenCL version, use the compiler flag `-cl-std`. Vellum sets it to ve
 ```
 
 <img src="./images/opencl_version2.png" width="500">
+
+Note if the version is too high or low, it causes an error and fails to compile!
+
+Vellum gets around this by using a switch to check if functionality from version 2.0 is available before trying to compile:
+
+```js
+ocldeviceinfo("CL_DEVICE_TYPE")==4 && ocldeviceinfo("CL_DEVICE_DEVICE_ENQUEUE_SUPPORT") && ocldeviceinfo("CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT")
+```
 
 | [Download the HIP file!](./hips/set_opencl_version.hiplc?raw=true) |
 | --- |
