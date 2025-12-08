@@ -71,9 +71,15 @@ You can set the OpenCL device in `Edit > Preferences > Miscellaneous`. It defaul
 
 <img src="./images/opencl_device.png" width="400">
 
-Whenever you use OpenCL, it copies data between Houdini and the OpenCL device. Copying lots of data is slow and can overflow the memory of the device, causing errors like `CL_OUT_OF_RESOURCES`.
+Whenever you use OpenCL, it copies data from the host (the CPU running Houdini) to the OpenCL device.
 
-OpenCL only copies the data you set on the Bindings and Options tabs, or using the `#bind` syntax. To get better performance, try to avoid binding unnecessary data.
+Once all OpenCL operations are complete, it copies data back to the host again.
+
+Copying lots of data is slow and can overflow the device's memory, causing errors like `CL_OUT_OF_RESOURCES`.
+
+To prevent this, don't bind unnecessary data. Houdini only copies data you set on the Bindings and Options tabs, or using the `#bind` syntax.
+
+It also helps to chain OpenCL nodes in a compiled block. This reduces the number of copies back and forth.
 
 <img src="./images/execution_diagram.png" width="800">
 
