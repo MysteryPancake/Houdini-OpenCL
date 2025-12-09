@@ -293,7 +293,7 @@ You can check the version with the `__OPENCL_VERSION__` and `__OPENCL_C_VERSION_
 
 <img src="./images/opencl_version.png" width="500">
 
-To set the OpenCL version, use the compiler flag `-cl-std`. Vellum sets it to version 2.0 using `-cl-std=CL2.0`.
+To set the OpenCL version, use the kernel option `-cl-std`. Vellum sets it to version 2.0 using `-cl-std=CL2.0`.
 
 ```js
 -cl-std=CL3.0 // Version 300
