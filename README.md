@@ -1001,7 +1001,7 @@ There are various solutions to this:
 
 ## Worksets
 
-Worksets run the same kernel multiple times in a row in a random order.
+Worksets basically run the same kernel multiple times in a row.
 
 Each time the kernel is run, the data length and offset changes depending on the workset detail attributes you provide.
 
