@@ -1092,21 +1092,42 @@ The problem is due to synchronization. Each workitem reads the value for `previo
 
 Imagine there's only 2 workitems. Ideally everything happens in order and the result is 20:
 
-| `id[0]` | Workitem 0 | `prev_id` | Workitem 1 | `prev_id` |
-| --- | --- | --- | --- | --- |
-| 0 | `int prev_id = id[0]` | 0 | | |
-| 10 | `id[0] = prev_id + 10` | 0 | | |
-| 10 | | 0 | `int prev_id = id[0]` | 10 |
-| **20** | | 0 | `id[0] = prev_id + 10` | 10 |
+| Workitem 0 | Workitem 0 `id[0]` | Workitem 1 | Workitem 1 `id[0]` |
+| --- | --- | --- | --- |
+| `int prev_id = id[0] // 0` | 0 | | 0 |
+| `id[0] = prev_id + 10` | 10 | | 0 |
+| **Make changes visible** | **10** | | **10** |
+| | 10 | `int prev_id = id[0] // 10` | 10 |
+| | 10 | `id[0] = prev_id + 10` | 20 |
+| | **20** | **Make changes visible** | **20** |
 
-Poor synchronization causes an incorrect result such as 10:
+This is very unlikely, because there's 2 different synchronization problems.
 
-| `id[0]` | Workitem 0 | `prev_id` | Workitem 1 | `prev_id` |
-| --- | --- | --- | --- | --- |
-| 0 | `int prev_id = id[0]` | 0 | | |
-| 0 | | 0 | `int prev_id = id[0]` | 0 |
-| 10 | `id[0] = prev_id + 10` | 0 | | 0 |
-| **10** | | 0 | `id[0] = prev_id + 10` | 0 |
+#### 1. Incorrect read/write order
+
+Reads and writes run in parallel, so they may overlap. This causes an incorrect result like 10:
+
+| Workitem 0 | Workitem 0 `id[0]` | Workitem 1 | Workitem 1 `id[0]` |
+| --- | --- | --- | --- |
+| `int prev_id = id[0] // 0` | 0 | | 0 |
+| | 0 | `int prev_id = id[0] // 0` | 0 |
+| `id[0] = prev_id + 10` | 10 | | 0 |
+| **Make changes visible** | **10** | | **10** |
+| | 10 | `id[0] = prev_id + 10` | 10 |
+| | **10** | **Make changes visible** | **10** |
+
+#### 2. Incorrect visibility
+
+Workitems don't share changes immediately with eachother. This also causes an incorrect result like 10:
+
+| Workitem 0 | Workitem 0 `id[0]` | Workitem 1 | Workitem 1 `id[0]` |
+| --- | --- | --- | --- |
+| `int prev_id = id[0] // 0` | 0 | | 0 |
+| `id[0] = prev_id + 10` | 10 | | 0 |
+| | 10 | `int prev_id = id[0] // 0` | 0 |
+| **Make changes visible** | **10** | | **10** |
+| | 10 | `id[0] = prev_id + 10` | 10 |
+| | **10** | **Make changes visible** | **10** |
 
 There's [many ways](#parallel-processing-headaches) to fix synchronization issues. One approach is using atomics.
 
@@ -1114,7 +1135,7 @@ Atomic operations prevent the overlaps seen above. They're slower since they red
 
 One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add to it.
 
-`atomic_add()` combines `read -> modify -> write` into a single action, so nothing runs in between.
+`atomic_add()` combines `read -> modify -> write -> make visible` into a single action, so nothing runs in between.
 
 To be clear, atomics don't force everything to run in order (like barriers). They just prevent overlaps for a few actions at once.
 
