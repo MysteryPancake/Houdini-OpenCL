@@ -1101,7 +1101,7 @@ Imagine there's only 2 workitems. Ideally everything happens in order and the re
 | | 10 | `id[0] = prev_id + 10` | 20 |
 | | **20** | **Make changes visible** | **20** |
 
-This is very unlikely, because there's 2 different synchronization problems.
+This is very unlikely, because there's 2 different synchronization issues.
 
 #### 1. Incorrect read/write order
 
@@ -1118,7 +1118,7 @@ Reads and writes run in parallel, so they may overlap. This causes an incorrect 
 
 #### 2. Incorrect visibility
 
-Workitems don't share changes immediately with eachother. This also causes an incorrect result like 10:
+Workitems don't share changes immediately. This also causes an incorrect result like 10:
 
 | Workitem 0 | Workitem 0 `id[0]` | Workitem 1 | Workitem 1 `id[0]` |
 | --- | --- | --- | --- |
@@ -1133,6 +1133,8 @@ There's [many ways](#parallel-processing-headaches) to fix synchronization issue
 
 Atomic operations prevent the overlaps seen above. They're slower since they reduce parallelization, so try to avoid them if possible.
 
+#### Atomic add
+
 One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add to it.
 
 `atomic_add()` combines `read -> modify -> write -> make visible` into a single action, so nothing runs in between.
@@ -1143,19 +1145,19 @@ The rest still runs in parallel, so both of the orders below are possible:
 
 #### Order 1
 
-| `id[0]` | Workitem 0 | Workitem 1 |
-| --- | --- | --- |
-| 0 | | |
-| 10 | | `atomic_add(&id[0], 10)` |
-| **20** | `atomic_add(&id[0], 10)` | |
+| Workitem 0 | Workitem 0 `id[0]` | Workitem 1 | Workitem 1 `id[0]` |
+| --- | --- | --- | --- |
+| | 0 | | 0 |
+| `atomic_add(&id[0], 10)` | 10 | | 10 |
+| | 20 | `atomic_add(&id[0], 10)` | 20 |
 
 #### Order 2
 
-| `id[0]` | Workitem 0 | Workitem 1 |
-| --- | --- | --- |
-| 0 | | |
-| 10 | `atomic_add(&id[0], 10)` | |
-| **20** | | `atomic_add(&id[0], 10)` |
+| Workitem 0 | Workitem 0 `id[0]` | Workitem 1 | Workitem 1 `id[0]` |
+| --- | --- | --- | --- |
+| | 0 | | 0 |
+| | 10 | `atomic_add(&id[0], 10)` | 10 |
+| `atomic_add(&id[0], 10)` | 20 | | 20 |
 
 ### Plain OpenCL version
 
@@ -1192,13 +1194,31 @@ kernel void kernelName(
 
 For better performance, you can reduce the number of atomic operations with [workgroup reduction](#workgroup-reduction).
 
-Atomic operations only work on integer types by default, not floating or vector types which is annoying.
+### Atomics on non-integer types
 
-Non-integer types require special handling. as found in [later examples](#sop-laplacian-filter-advanced) and [on Stack Overflow](https://stackoverflow.com/questions/72044986).
+Sadly atomics only work on integer types by default, not floats or vector types. These require special handling.
 
-Note that unlike integers, floating types produce [different results depending on the order of operations](https://stackoverflow.com/a/10371890).
+Below is `atomic_add_f()`, [written by VioletSpace](https://violetspace.github.io/blog/atomic-float-addition-in-opencl.html). It takes advantage of GPUs that offer hardware instructions for floats.
 
-This can vary operations that need to be deterministic, like simulations. Thanks to [Jake Rice](https://jakerice.design/) for this tip!
+```cpp
+// atomic_add() only works on ints, floats need custom handling
+// From violetspace.github.io/blog/atomic-float-addition-in-opencl.html
+inline void atomic_add_f(volatile __global float* addr, const float val) {
+    #if defined(cl_nv_pragma_unroll) // use hardware-supported atomic addition on Nvidia GPUs with inline PTX assembly
+        float ret; asm volatile("atom.global.add.f32 %0,[%1],%2;":"=f"(ret):"l"(addr),"f"(val):"memory");
+    #elif defined(__opencl_c_ext_fp32_global_atomic_add) // use hardware-supported atomic addition on some Intel GPUs
+        atomic_fetch_add_explicit((volatile global atomic_float*)addr, val, memory_order_relaxed);
+    #elif __has_builtin(__builtin_amdgcn_global_atomic_fadd_f32) // use hardware-supported atomic addition on some AMD GPUs
+        __builtin_amdgcn_global_atomic_fadd_f32(addr, val);
+    #else // fallback emulation: forums.developer.nvidia.com/t/atomicadd-float-float-atomicmul-float-float/14639/5
+        float old = val; while((old=atomic_xchg(addr, atomic_xchg(addr, 0.0f)+old))!=0.0f);
+    #endif
+}
+```
+
+Note floating types produce [different results depending on the order of operations](https://stackoverflow.com/a/10371890), unlike integers.
+
+This affects operations that need to be deterministic, like simulations. Thanks to [Jake Rice](https://jakerice.design/) for this tip!
 
 ## Workgroup reduction
 
@@ -1719,9 +1739,7 @@ There's many workarounds, but I chose to use [workgroup reduction](#workgroup-re
 
 Sadly `atomic_add()` only works on `int` types in OpenCL, not `float` or vector types.
 
-In this case I was using `fpreal3`, so I needed a version of `atomic_add()` that worked on floating types.
-
-Below is `atomic_add_f()`, [written by VioletSpace](https://violetspace.github.io/blog/atomic-float-addition-in-opencl.html). It takes advantage of GPUs that offer hardware instructions for floats.
+In this case I had `fpreal3`, so I used [VioletSpace's](https://violetspace.github.io/blog/atomic-float-addition-in-opencl.html) `atomic_add_f()` which works on floating types.
 
 ```cpp
 #include <reduce.h>
