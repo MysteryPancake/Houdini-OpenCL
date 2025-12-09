@@ -273,6 +273,55 @@ The @-binding equivalent is the first attribute marked with `&`.
 
 This only affects the loop range, not data access. You can read/write totally different attributes if you want.
 
+## Changing the OpenCL version
+
+Houdini compiles OpenCL code with the highest version available by default.
+
+You can check the version with the `__OPENCL_VERSION__` and `__OPENCL_C_VERSION__` macros.
+
+```js
+#bind point &P float3 // Dummy bind
+
+@KERNEL
+{
+    if (@elemnum != 0) return; // Only print on first workitem
+
+    printf("OPENCL_VERSION: %d\n", __OPENCL_VERSION__); // 300 for me
+    printf("OPENCL_C_VERSION: %d\n", __OPENCL_C_VERSION__); // 300 for me
+}
+```
+
+<img src="./images/opencl_version.png" width="500">
+
+To set the OpenCL version, use the compiler flag `-cl-std`. Vellum sets it to version 2.0 using `-cl-std=CL2.0`.
+
+```js
+-cl-std=CL3.0 // Version 300
+-cl-std=CL2.0 // Version 200
+-cl-std=CL1.2 // Version 120
+```
+
+<img src="./images/opencl_version2.png" width="500">
+
+Note if the version is too high or low, it causes an error and fails to compile!
+
+Vellum gets around this by using a switch to check if functionality from version 2.0 is available before trying to compile:
+
+```js
+ocldeviceinfo("CL_DEVICE_TYPE")==4 && ocldeviceinfo("CL_DEVICE_DEVICE_ENQUEUE_SUPPORT") && ocldeviceinfo("CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT")
+```
+
+| [Download the HIP file!](./hips/set_opencl_version.hiplc?raw=true) |
+| --- |
+
+## Display "1 warning generated" errors
+
+Sometimes OpenCL spams the message "1 warning generated", but doesn't spam the actual warning.
+
+This can be fixed by setting the environment variable `HOUDINI_OCL_REPORT_BUILD_LOGS` to `1` before starting Houdini.
+
+Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
+
 ## Example 1: Translating VEX to OpenCL
 
 Take a look at this incredible VEX code. I put my blood, sweat and tears into it.
@@ -1376,55 +1425,6 @@ kernel void kernelName(
     }
 }
 ```
-
-## Changing the OpenCL version
-
-Houdini compiles OpenCL code with the highest version available by default.
-
-You can check the version with the `__OPENCL_VERSION__` and `__OPENCL_C_VERSION__` macros.
-
-```js
-#bind point &P float3 // Dummy bind
-
-@KERNEL
-{
-    if (@elemnum != 0) return; // Only print on first workitem
-
-    printf("OPENCL_VERSION: %d\n", __OPENCL_VERSION__); // 300 for me
-    printf("OPENCL_C_VERSION: %d\n", __OPENCL_C_VERSION__); // 300 for me
-}
-```
-
-<img src="./images/opencl_version.png" width="500">
-
-To set the OpenCL version, use the compiler flag `-cl-std`. Vellum sets it to version 2.0 using `-cl-std=CL2.0`.
-
-```js
--cl-std=CL3.0 // Version 300
--cl-std=CL2.0 // Version 200
--cl-std=CL1.2 // Version 120
-```
-
-<img src="./images/opencl_version2.png" width="500">
-
-Note if the version is too high or low, it causes an error and fails to compile!
-
-Vellum gets around this by using a switch to check if functionality from version 2.0 is available before trying to compile:
-
-```js
-ocldeviceinfo("CL_DEVICE_TYPE")==4 && ocldeviceinfo("CL_DEVICE_DEVICE_ENQUEUE_SUPPORT") && ocldeviceinfo("CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT")
-```
-
-| [Download the HIP file!](./hips/set_opencl_version.hiplc?raw=true) |
-| --- |
-
-## Fix "1 warning generated" errors
-
-Sometimes OpenCL spams the message "1 warning generated", but doesn't spam the actual warning.
-
-This can be fixed by setting the environment variable `HOUDINI_OCL_REPORT_BUILD_LOGS` to `1` before starting Houdini.
-
-Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
 
 ## Converting ShaderToy to Copernicus
 
