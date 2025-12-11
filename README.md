@@ -157,6 +157,12 @@ OpenCL runs in parallel, using chunks instead. If each chunk was 4 items long, i
 | --- | --- | --- | --- |
 | `8, 9, 10, 11` | `0, 1, 2, 3` | `12, 13, 14, 15` | `4, 5, 6, 7` |
 
+Ordering is [hard to control](#parallel-processing-headaches), especially since items overlap in time. But the structure remains:
+
+| Chunk 0 | Chunk 1 | Chunk 2 | Chunk 3 |
+| --- | --- | --- | --- |
+| `15, 14, 12, 13` | `9, 8, 11, 10` | `2, 1, 0, 3` |  `6, 5, 4, 7` |
+
 - Chunks are called **local workgroups**. `8, 9, 10, 11` is a **local workgroup** of size 4.
 - Each **local workgroup** is part of a **global workgroup**. All of these numbers could be in **global workgroup** `0`.
 - Each number is called a **workitem**. `0` is a workitem.
