@@ -221,12 +221,12 @@ You can even animate the data to visualize how it's arranged in each workgroup.
     // Lerp between the old position and workgroup position
     float3 old_pos = @P;
     float3 new_pos = (float3)(local_ratio * 4, group_ratio * 2, 0);
-    @P.set(old_pos + (new_pos - old_pos) * @blend);
+    @P.set(mix(old_pos, new_pos, @blend));
     
     // Lerp between the old color and workgroup color
     float3 old_color = @Cd;
     float3 new_color = VEXhsvtorgb((float3)(group_ratio, 1, 1));
-    @Cd.set(old_color + (new_color - old_color) * @blend);
+    @Cd.set(mix(old_color, new_color, @blend));
 }
 
 ```
