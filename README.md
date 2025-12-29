@@ -642,19 +642,22 @@ As mentioned before, the argument names don't matter. This means the code is ide
 
 ## Example 2: Remaking Attribute Blur
 
-<img src="./images/blurred_pig.webp" width="300">
-
 Blurring is a great task for OpenCL, since it involves running the same operation many times in a row.
 
-In VEX you'd need a feedback loop, which is notoriously slow. In OpenCL you can use the "Iterations" slider instead. This is much faster, since the data stays on the OpenCL device until all iterations are completed.
+<img src="./images/blurred_pig.webp" width="300">
+
+In VEX you'd use a feedback loop, which is notoriously slow. In OpenCL you can use the "Iterations" slider instead. This is much faster, since the data stays on the OpenCL device until all iterations finish.
+
+<img src="./images/iterations_opencl.png" width="500">
 
 Blurring is basically moving each point to the average of its neighbours. Below the red point moves to the average of its green neighbours.
 
 <img src="./images/average_point.webp" width="300">
 
-In VEX you can use `neighbours()` to get an array of points connected to another point, then average them in a for loop.
+To get the neighbours in VEX, you can use the `neighbours()` function. It returns an array of points connected to another point.
 
 ```cpp
+// Get the neighbours of the current point
 int neighbours[] = neighbours(0, i@ptnum);
 int numNeighbours = len(neighbours);
 vector blurredP = 0;
@@ -678,6 +681,7 @@ Both passes include a step size, which mixes between the original and blurred po
 To match Attribute Blur, add `lerp()` to the last line of code and chain the wrangle twice in a row.
 
 ```cpp
+// Get the neighbours of the current point
 int neighbours[] = neighbours(0, i@ptnum);
 int numNeighbours = len(neighbours);
 vector blurredP = 0;
