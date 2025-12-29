@@ -678,7 +678,7 @@ Both passes include a step size, which mixes between the original and blurred po
 
 <img src="./images/blur_step_size.png" width="400">
 
-To match Attribute Blur, add `lerp()` to the last line of code and chain the wrangle twice in a row.
+To match Attribute Blur, add `lerp()` to the last line of code and copy paste the wrangle twice.
 
 ```cpp
 // Get the neighbours of the current point
