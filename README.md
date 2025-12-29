@@ -47,7 +47,7 @@ OpenCL is simple and can be the fastest language when used correctly. It's simil
 
 While VEX only runs on the CPU, OpenCL can run on the GPU, CPU and any other devices that support it. 
 
-OpenCL is much faster than VEX at certain tasks, like feedback loops (Attribute Blur) and anything involving neighbours (Vellum). It's commonly found in solvers and used for image processing in Copernicus.
+OpenCL is much faster than VEX at certain tasks, like feedback loops ([Attribute Blur](#example-2-remaking-attribute-blur)) and anything involving neighbours (Vellum). It's commonly found in solvers and used for image processing in Copernicus.
 
 <img src="./images/opencl_speed.png" width="400">
 
@@ -340,7 +340,7 @@ v@P += v@N * f@noise;
 
 <img src="./images/peak1.png" width="400">
 
-| [Download the HIP file!](./hips/demo1.hiplc?raw=true) |
+| [Download the HIP file!](./hips/example1_basics.hiplc?raw=true) |
 | --- |
 
 I know it looks overwhelming already, but it's about to get worse. We're going to translate it into OpenCL!
@@ -564,7 +564,7 @@ kernel void kernelName(
 
 <img src="./images/opencl_equivalent_vex.png" width="600">
 
-| [Download the HIP file!](./hips/demo1.hiplc?raw=true) |
+| [Download the HIP file!](./hips/example1_basics.hiplc?raw=true) |
 | --- |
 
 You can see how much more verbose it's become compared to the VEX version. What can we do to fix this?
@@ -600,7 +600,7 @@ They generate the same OpenCL code under the hood, but let you use a VEX-like sy
 
 <img src="./images/at_bindings_equivalent_vex.png" width="600">
 
-| [Download the HIP file!](./hips/demo1.hiplc?raw=true) |
+| [Download the HIP file!](./hips/example1_basics.hiplc?raw=true) |
 | --- |
 
 Look at how much shorter it is for the same result! But what's it really doing under the hood?
@@ -639,6 +639,64 @@ float noise = noise_array[idx];
 The only difference is naming. `noise_array` is called `_bound_noise`, and `idx` is called `_bound_idx`.
 
 As mentioned before, the argument names don't matter. This means the code is identical.
+
+## Example 2: Remaking Attribute Blur
+
+<img src="./images/blurred_pig.webp" width="300">
+
+Blurring is a great task for OpenCL, since it involves running the same operation many times in a row.
+
+In VEX you'd need a feedback loop, which is notoriously slow. In OpenCL you can use the "Iterations" slider instead. This is much faster, since the data stays on the OpenCL device until all iterations are completed.
+
+Blurring is basically moving each point to the average of its neighbours. Below the red point moves to the average of its green neighbours.
+
+<img src="./images/average_point.webp" width="300">
+
+In VEX you can use `neighbours()` to get an array of points connected to another point, then average them in a for loop.
+
+```cpp
+int neighbours[] = neighbours(0, i@ptnum);
+int numNeighbours = len(neighbours);
+vector blurredP = 0;
+
+// Average all neighbouring positions together
+for (int i = 0; i < numNeighbours; i++) {
+    int pt = neighbours[i];
+    vector P = point(0, "P", pt);
+    blurredP += P / numNeighbours;
+}
+
+v@P = blurredP;
+```
+
+Attribute Blur works just like this, except it runs twice each iteration (odd and even passes).
+
+Both passes include a step size, which mixes between the original and blurred position.
+
+<img src="./images/blur_step_size.png" width="400">
+
+To match Attribute Blur, add `lerp()` to the last line of code and chain the wrangle twice in a row.
+
+```cpp
+int neighbours[] = neighbours(0, i@ptnum);
+int numNeighbours = len(neighbours);
+vector blurredP = 0;
+
+// Average all neighbouring positions together
+for (int i = 0; i < numNeighbours; i++) {
+    int pt = neighbours[i];
+    vector P = point(0, "P", pt);
+    blurredP += P / numNeighbours;
+}
+
+// Mix between the original and blurred position
+v@P = lerp(v@P, blurredP, chf("step_size"));
+```
+
+<img src="./images/odd_even_steps.png" width="700">
+
+| [Download the HIP file!](./hips/example2_neighbours.hiplc?raw=true) |
+| --- |
 
 ## Precision
 
