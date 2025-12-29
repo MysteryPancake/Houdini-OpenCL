@@ -663,8 +663,7 @@ int numNeighbours = len(neighbours);
 vector blurredP = 0;
 
 // Average all neighbouring positions together
-for (int i = 0; i < numNeighbours; i++) {
-    int pt = neighbours[i];
+foreach (int pt; neighbours) {
     vector P = point(0, "P", pt);
     blurredP += P / numNeighbours;
 }
@@ -687,8 +686,7 @@ int numNeighbours = len(neighbours);
 vector blurredP = 0;
 
 // Average all neighbouring positions together
-for (int i = 0; i < numNeighbours; i++) {
-    int pt = neighbours[i];
+foreach (int pt; neighbours) {
     vector P = point(0, "P", pt);
     blurredP += P / numNeighbours;
 }
