@@ -47,7 +47,7 @@ OpenCL is simple and can be the fastest language when used correctly. It's simil
 
 While VEX only runs on the CPU, OpenCL can run on the GPU, CPU and any other devices that support it. 
 
-OpenCL is much faster than VEX at certain tasks, like feedback loops (Attribute Blur) and anything involving neighbours (Vellum). It's commonly found in solvers and used for image processing in Copernicus.
+OpenCL is much faster than VEX at certain tasks, like feedback loops ([Attribute Blur](#example-2-remaking-attribute-blur)) and anything involving neighbours (Vellum). It's commonly found in solvers and used for image processing in Copernicus.
 
 <img src="./images/opencl_speed.png" width="400">
 
