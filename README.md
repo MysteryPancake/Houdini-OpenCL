@@ -705,7 +705,7 @@ v@P = lerp(v@P, blurredP, chf("step_size") * f@weight);
 | [Download the HIP file!](./hips/example2_neighbours.hiplc?raw=true) |
 | --- |
 
-Now the VEX is ready, how does this translate to OpenCL?
+Now the VEX is complete enough, how does it translate to OpenCL?
 
 The first question is how the neighbours are passed to OpenCL, since it's an array type.
 
