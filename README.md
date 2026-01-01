@@ -673,11 +673,11 @@ v@P = blurredP;
 
 Attribute Blur works just like this, except it runs twice each iteration (odd and even passes).
 
-Both passes include a step size, which mixes between the original and blurred position.
+Both passes include a step size control, which mixes between the original and blurred position.
 
 <img src="./images/blur_step_size.png" width="400">
 
-To match Attribute Blur, add `lerp()` to the last line of VEX and copy paste the wrangle twice.
+To add step size and weight control, just use `lerp()` on the last line and copy paste the wrangle twice.
 
 ```cpp
 // Get the neighbours of the current point
@@ -691,8 +691,11 @@ foreach (int pt; neighbours) {
     blurredP += P / numNeighbours;
 }
 
+// Default weight to 1 if no weight attribute exists
+float @weight = 1;
+
 // Mix between the original and blurred position
-v@P = lerp(v@P, blurredP, chf("step_size"));
+v@P = lerp(v@P, blurredP, chf("step_size") * f@weight);
 ```
 
 <img src="./images/odd_even_steps.png" width="700">
