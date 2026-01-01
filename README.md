@@ -858,9 +858,9 @@ Now we can translate the main kernel to OpenCL. Two useful functions are `entrie
 }
 ```
 
-We can make this code even better by taking advantage of OpenCL.
+We can make this code even better by taking advantage of special features in OpenCL.
 
-Remember how in VEX we had to use two wrangles for the odd and even steps? In OpenCL we can do it all at once!
+In VEX we had to use two wrangles for the odd and even passes. In OpenCL we can do it all at once!
 
 ### Writeback kernels
 
