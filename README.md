@@ -812,7 +812,7 @@ With @-bindings, you don't even need to create the attribute in VEX with `neighb
 }
 ```
 
-Now we can translate the main part from VEX to OpenCL. Two useful functions are `entriesAt()` and `compAt()`.
+Now we can translate the main kernel to OpenCL. Two useful functions are `entriesAt()` and `compAt()`.
 
 `entries` and `entriesAt()` get the number of entries in an array, like `len()` in VEX:
 
@@ -855,6 +855,140 @@ Now we can translate the main part from VEX to OpenCL. Two useful functions are 
     @P.set(mix(@P, blurredP, @step_size * @weight));
 }
 ```
+
+We can make this code even better by taking advantage of OpenCL.
+
+Remember how in VEX we had to use two wrangles for the odd and even steps? In OpenCL we can do it all at once!
+
+### Writeback kernels
+
+A writeback kernel is another kernel that runs immediately after the main kernel finishes.
+
+It's basically identical to chaining two OpenCL nodes in a row, except faster.
+
+In the writeback kernel, all memory changes from the main kernel are synchronized. You don't need to worry about [parallel processing headaches](#parallel-processing-headaches).
+
+You can use the same code from the main kernel in the writeback kernel, but with a different variable for the step size.
+
+Note there's a subtle bug in the code below. Can you spot it?
+
+```cpp
+#bind parm odd_step float
+#bind parm even_step float
+
+#bind point &P fpreal3
+
+// topo:neighbours gives the same output as i[]@neighbours = neighbours(0, i@ptnum) in VEX
+#bind point neighbours name=topo:neighbours int[]
+
+#bind point ?pin name=group:pin int value=0
+#bind point ?weight fpreal value=1
+
+@KERNEL
+{
+    // Skip pinned points
+    if (@pin) return;
+    
+    int numNeighbours = @neighbours.entries; // Same as @neighbours.entriesAt(@elemnum)
+    fpreal3 blurredP = (fpreal3)(0.0f);
+    
+    // Average all neighbouring positions together
+    for (int i = 0; i < numNeighbours; i++)
+    {
+        int pt = @neighbours.comp(i); // Same as @neighbours.compAt(@elemnum, i);
+        fpreal3 P = @P.getAt(pt); // Wrong, since @P may have been updated already
+        blurredP += P / numNeighbours;
+    }
+    
+    // Mix between the original and blurred position
+    @P.set(mix(@P, blurredP, @odd_step * @weight));
+}
+
+@WRITEBACK
+{
+    // Skip pinned points
+    if (@pin) return;
+
+    int numNeighbours = @neighbours.entriesAt(@elemnum);
+    fpreal3 blurredP = (fpreal3)(0.0f);
+    
+    // Average all neighbouring positions together
+    for (int i = 0; i < numNeighbours; i++)
+    {
+        int pt = @neighbours.comp(i); // Same as @neighbours.compAt(@elemnum, i);
+        fpreal3 P = @P.getAt(pt); // Wrong, since @P may have been updated already
+        blurredP += P / numNeighbours;
+    }
+    
+    // Mix between the original and blurred position
+    @P.set(mix(@P, blurredP, @even_step * @weight));
+}
+```
+
+The bug is because each workitem reads and writes to `@P` at the same time.
+
+When each point averages its neighbours, the neighbours may have been updated already. This means it'd blur around 2x more if all the neighbours happened to update first.
+
+One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy to read values and the other to write values.
+
+```cpp
+#bind parm odd_step float
+#bind parm even_step float
+
+#bind point &P fpreal3
+#bind point &tmpP fpreal3
+
+// topo:neighbours gives the same output as i[]@neighbours = neighbours(0, i@ptnum) in VEX
+#bind point neighbours name=topo:neighbours int[]
+
+#bind point ?pin name=group:pin int value=0
+#bind point ?weight fpreal value=1
+
+@KERNEL
+{
+    // Skip pinned points
+    if (@pin) return;
+    
+    int numNeighbours = @neighbours.entries; // Same as @neighbours.entriesAt(@elemnum)
+    fpreal3 blurredP = (fpreal3)(0.0f);
+    
+    // Average all neighbouring positions together
+    for (int i = 0; i < numNeighbours; i++)
+    {
+        int pt = @neighbours.comp(i); // Same as @neighbours.compAt(@elemnum, i);
+        fpreal3 P = @P.getAt(pt); // Correct, since we update @tmpP below
+        blurredP += P / numNeighbours;
+    }
+    
+    // Mix between the original and blurred position
+    @tmpP.set(mix(@P, blurredP, @odd_step * @weight));
+}
+
+@WRITEBACK
+{
+    // Skip pinned points
+    if (@pin) return;
+
+    int numNeighbours = @neighbours.entriesAt(@elemnum);
+    fpreal3 blurredP = (fpreal3)(0.0f);
+    
+    // Average all neighbouring positions together
+    for (int i = 0; i < numNeighbours; i++)
+    {
+        int pt = @neighbours.comp(i); // Same as @neighbours.compAt(@elemnum, i);
+        fpreal3 P = @tmpP.getAt(pt); // Correct, since we update @P below
+        blurredP += P / numNeighbours;
+    }
+    
+    // Mix between the original and blurred position
+    @P.set(mix(@tmpP, blurredP, @even_step * @weight));
+}
+```
+
+<img src="./images/blur_opencl_correct.png" width="800">
+
+| [Download the HIP file!](./hips/example1_basics.hiplc?raw=true) |
+| --- |
 
 ## Precision
 
