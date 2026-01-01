@@ -588,9 +588,9 @@ They generate the same OpenCL code under the hood, but let you use a VEX-like sy
 @-bindings let you bind data with `#bind`, followed by the attribute's class, name and data type.
 
 ```cpp
-#bind point &P fpreal3
-#bind point N fpreal3
-#bind point noise fpreal
+#bind point &P float3
+#bind point N float3
+#bind point noise float
 
 @KERNEL
 {
@@ -794,7 +794,7 @@ While I could write the code in plain OpenCL, it's much less tedious to use @-bi
 #### @-bindings version
 
 ```cpp
-#bind point &P fpreal3
+#bind point &P float3
 #bind point neighbours int[]
 
 @KERNEL
@@ -806,7 +806,7 @@ While I could write the code in plain OpenCL, it's much less tedious to use @-bi
 With @-bindings, you don't even need to create the attribute in VEX with `neighbours()`. You can use a shortcut called `topo:neighbours`.
 
 ```cpp
-#bind point &P fpreal3
+#bind point &P float3
 // topo:neighbours gives the same output as i[]@neighbours = neighbours(0, i@ptnum) in VEX
 #bind point neighbours name=topo:neighbours int[]
 
@@ -831,13 +831,13 @@ Now we can translate the main kernel to OpenCL. Two useful functions are `entrie
 ```cpp
 #bind parm step_size float
 
-#bind point &P fpreal3
+#bind point &P float3
 
 // topo:neighbours gives the same output as i[]@neighbours = neighbours(0, i@ptnum) in VEX
 #bind point neighbours name=topo:neighbours int[]
 
 #bind point ?pin name=group:pin int value=0
-#bind point ?weight fpreal value=1
+#bind point ?weight float value=1
 
 @KERNEL
 {
@@ -845,13 +845,13 @@ Now we can translate the main kernel to OpenCL. Two useful functions are `entrie
     if (@pin) return;
     
     int numNeighbours = @neighbours.entries; // Same as @neighbours.entriesAt(@elemnum)
-    fpreal3 blurredP = (fpreal3)(0.0f);
+    float3 blurredP = (float3)(0.0f);
     
     // Average all neighbouring positions together
     for (int i = 0; i < numNeighbours; i++)
     {
         int pt = @neighbours.comp(i); // Same as @neighbours.compAt(@elemnum, i);
-        fpreal3 P = @P.getAt(pt); // Wrong, since @P may have been updated already
+        float3 P = @P.getAt(pt); // Wrong, since @P may have been updated already
         blurredP += P / numNeighbours;
     }
     
@@ -910,13 +910,13 @@ For blurring, the code from the main kernel can be reused in the writeback kerne
 #bind parm odd_step float
 #bind parm even_step float
 
-#bind point &P fpreal3
+#bind point &P float3
 
 // topo:neighbours gives the same output as i[]@neighbours = neighbours(0, i@ptnum) in VEX
 #bind point neighbours name=topo:neighbours int[]
 
 #bind point ?pin name=group:pin int value=0
-#bind point ?weight fpreal value=1
+#bind point ?weight float value=1
 
 // Odd step blur
 @KERNEL
@@ -925,13 +925,13 @@ For blurring, the code from the main kernel can be reused in the writeback kerne
     if (@pin) return;
     
     int numNeighbours = @neighbours.entries; // Same as @neighbours.entriesAt(@elemnum)
-    fpreal3 blurredP = (fpreal3)(0.0f);
+    float3 blurredP = (float3)(0.0f);
     
     // Average all neighbouring positions together
     for (int i = 0; i < numNeighbours; i++)
     {
         int pt = @neighbours.comp(i); // Same as @neighbours.compAt(@elemnum, i);
-        fpreal3 P = @P.getAt(pt); // Wrong, since @P may have been updated already
+        float3 P = @P.getAt(pt); // Wrong, since @P may have been updated already
         blurredP += P / numNeighbours;
     }
     
@@ -946,13 +946,13 @@ For blurring, the code from the main kernel can be reused in the writeback kerne
     if (@pin) return;
 
     int numNeighbours = @neighbours.entriesAt(@elemnum);
-    fpreal3 blurredP = (fpreal3)(0.0f);
+    float3 blurredP = (float3)(0.0f);
     
     // Average all neighbouring positions together
     for (int i = 0; i < numNeighbours; i++)
     {
         int pt = @neighbours.comp(i); // Same as @neighbours.compAt(@elemnum, i);
-        fpreal3 P = @P.getAt(pt); // Wrong, since @P may have been updated already
+        float3 P = @P.getAt(pt); // Wrong, since @P may have been updated already
         blurredP += P / numNeighbours;
     }
     
@@ -971,14 +971,14 @@ One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy
 #bind parm odd_step float
 #bind parm even_step float
 
-#bind point &P fpreal3
-#bind point &tmpP fpreal3
+#bind point &P float3
+#bind point &tmpP float3
 
 // topo:neighbours gives the same output as i[]@neighbours = neighbours(0, i@ptnum) in VEX
 #bind point neighbours name=topo:neighbours int[]
 
 #bind point ?pin name=group:pin int value=0
-#bind point ?weight fpreal value=1
+#bind point ?weight float value=1
 
 // Odd step blur
 @KERNEL
@@ -987,13 +987,13 @@ One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy
     if (@pin) return;
     
     int numNeighbours = @neighbours.entries; // Same as @neighbours.entriesAt(@elemnum)
-    fpreal3 blurredP = (fpreal3)(0.0f);
+    float3 blurredP = (float3)(0.0f);
     
     // Average all neighbouring positions together
     for (int i = 0; i < numNeighbours; i++)
     {
         int pt = @neighbours.comp(i); // Same as @neighbours.compAt(@elemnum, i);
-        fpreal3 P = @P.getAt(pt); // Correct, since we update @tmpP below
+        float3 P = @P.getAt(pt); // Correct, since we update @tmpP below
         blurredP += P / numNeighbours;
     }
     
@@ -1008,13 +1008,13 @@ One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy
     if (@pin) return;
 
     int numNeighbours = @neighbours.entriesAt(@elemnum);
-    fpreal3 blurredP = (fpreal3)(0.0f);
+    float3 blurredP = (float3)(0.0f);
     
     // Average all neighbouring positions together
     for (int i = 0; i < numNeighbours; i++)
     {
         int pt = @neighbours.comp(i); // Same as @neighbours.compAt(@elemnum, i);
-        fpreal3 P = @tmpP.getAt(pt); // Correct, since we update @P below
+        float3 P = @tmpP.getAt(pt); // Correct, since we update @P below
         blurredP += P / numNeighbours;
     }
     
