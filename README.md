@@ -884,6 +884,7 @@ Note there's a subtle bug in the code below. Can you spot it?
 #bind point ?pin name=group:pin int value=0
 #bind point ?weight fpreal value=1
 
+// Odd step blur
 @KERNEL
 {
     // Skip pinned points
@@ -904,6 +905,7 @@ Note there's a subtle bug in the code below. Can you spot it?
     @P.set(mix(@P, blurredP, @odd_step * @weight));
 }
 
+// Even step blur
 @WRITEBACK
 {
     // Skip pinned points
@@ -944,6 +946,7 @@ One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy
 #bind point ?pin name=group:pin int value=0
 #bind point ?weight fpreal value=1
 
+// Odd step blur
 @KERNEL
 {
     // Skip pinned points
@@ -964,6 +967,7 @@ One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy
     @tmpP.set(mix(@P, blurredP, @odd_step * @weight));
 }
 
+// Even step blur
 @WRITEBACK
 {
     // Skip pinned points
