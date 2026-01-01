@@ -797,7 +797,8 @@ While I could write the code in plain OpenCL, it's much less tedious to use @-bi
 #bind point &P fpreal3
 #bind point neighbours int[]
 
-@KERNEL {
+@KERNEL
+{
     // ...
 }
 ```
@@ -809,7 +810,8 @@ With @-bindings, you don't even need to create the attribute in VEX with `neighb
 // topo:neighbours gives the same output as i[]@neighbours = neighbours(0, i@ptnum) in VEX
 #bind point neighbours name=topo:neighbours int[]
 
-@KERNEL {
+@KERNEL
+{
     // ...
 }
 ```
@@ -864,15 +866,45 @@ In VEX we had to use two wrangles for the odd and even passes. In OpenCL we can 
 
 ### Writeback kernels
 
-A writeback kernel is another kernel that runs immediately after the main kernel finishes.
-
-It's basically identical to chaining two OpenCL nodes in a row, except faster.
+A writeback kernel is another kernel that runs immediately after the main kernel finishes. It's basically identical to two OpenCL nodes in a row, except faster.
 
 In the writeback kernel, all memory changes from the main kernel are synchronized. You don't need to worry about [parallel processing headaches](#parallel-processing-headaches).
 
-You can use the same code from the main kernel in the writeback kernel, but with a different variable for the step size.
+Writeback kernels are disabled by default. They can be enabled on the OpenCL node.
 
-Note there's a subtle bug in the code below. Can you spot it?
+<img src="./images/enable_writeback.png" width="400">
+
+For writeback kernels, the syntax and arguments are the same as the main kernel.
+
+#### Plain OpenCL version
+
+```cpp
+kernel void kernelName(...)
+{
+	// ...
+}
+
+kernel void writeBack(...)
+{
+	// ...
+}
+```
+
+#### @-bindings version
+
+```cpp
+@KERNEL
+{
+	// ...
+}
+
+@WRITEBACK
+{
+	// ...
+}
+```
+
+For blurring, the code from the main kernel can be reused in the writeback kernel. Note there's a subtle bug below. Can you spot it?
 
 ```cpp
 #bind parm odd_step float
