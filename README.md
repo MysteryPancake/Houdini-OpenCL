@@ -65,7 +65,7 @@ It doesn't support dynamic sized arrays, most data must have a fixed size. Howev
 
 OpenCL is a general purpose language, it's not specific to Houdini. To use OpenCL with Houdini, SideFX made up conventions to pass data to and from OpenCL.
 
-As mentioned, OpenCL can run on the CPU, GPU or any other device supporting it.
+[As mentioned before](#what-is-opencl), OpenCL can run on the CPU, GPU or any other device supporting it.
 
 You can set the OpenCL device in `Edit > Preferences > Miscellaneous`. It defaults to a GPU device, and falls back to CPU.
 
@@ -638,7 +638,7 @@ float noise = noise_array[idx];
 
 The only difference is naming. `noise_array` is called `_bound_noise`, and `idx` is called `_bound_idx`.
 
-As mentioned before, the argument names don't matter. This means the code is identical.
+[As mentioned before](#kernel-arguments), the argument names don't matter. This means the code is identical.
 
 ## Example 2: Remaking Attribute Blur
 
@@ -702,6 +702,159 @@ v@P = lerp(v@P, blurredP, chf("step_size") * f@weight);
 
 | [Download the HIP file!](./hips/example2_neighbours.hiplc?raw=true) |
 | --- |
+
+Now the VEX is ready, how does this translate to OpenCL?
+
+The first question is how the neighbours are passed to OpenCL, since it's an array type.
+
+```cpp
+// Create the neighbours array in VEX
+i[]@neighbours = neighbours(0, i@ptnum);
+```
+
+<img src="./images/neighbours_array.png" width="500">
+
+### Binding arrays
+
+[As mentioned before](#how-houdini-passes-data-to-opencl), most attributes are passed to OpenCL as arrays:
+
+```cpp
+// Position (vector) is passed as X, Y, Z coordinates in a flat 1D array
+float P[] = {
+	-0.55125,	0.0920141,	-0.144961,
+	-0.500997,	0.0961226,	-0.138846,
+	-0.439175,	0.0729749,	-0.111565,
+	...
+};
+```
+
+If the attribute is already an array, you might think it'd be passed as subarrays (arrays inside arrays):
+
+```cpp
+// Neighbours (int array) potentially passed as a subarray?
+int neighbours[][] = {
+	{589, 29, 1, 590},
+	{2, 482, 0, 425},
+	{3, 483, 1, 386},
+	...
+};
+```
+
+Luckily it's simpler than this, it gets split into two arrays instead:
+
+- The **indices** array contains the starting indices of each subarray.
+- The **values** array contains the attribute values, flattened in index order.
+
+```cpp
+// Neighbours array indices (starting index of each subarray)
+int neighbours_index[] = {
+	0, // 1st array starting index (0-3 range)
+	4, // 2nd array starting index (4-7 range)
+	8, // 3rd array starting index (8-11 range)
+	...
+}
+
+// Neighbours array values (attribute values flattened)
+int neighbours[] = {
+	589, 29, 1, 590,
+	2, 482, 0, 425,
+	3, 483, 1, 386,
+	...
+};
+```
+
+You can bind the neighbours attribute as an "Integer Array" in the Bindings tab.
+
+Even though it's an array, the size is 1 because it refers to the tuple size. For example a vector has a tuple size of 3.
+
+<img src="./images/binding_subarray.png" width="400">
+
+#### Plain OpenCL version
+
+```cpp
+kernel void kernelName(
+     // v@P attribute
+     int P_length, // number of values for the P attribute, same as the number of points
+     global float* P_array, // float array of each P attribute value, ordered by point index
+
+	// i[]@neighbours attribute
+    int neighbours_length, // length (number of entries) of the int attribute
+    global int* neighbours_index, // array of the starting indices of each subarray
+    global int* neighbours, // array of int attribute values, flattened in index order
+)
+{
+    // ...
+}
+```
+
+While I could write the code in plain OpenCL, it's much less tedious to use @-bindings.
+
+#### @-bindings version
+
+```cpp
+#bind point &P fpreal3
+#bind point neighbours int[]
+
+@KERNEL {
+    // ...
+}
+```
+
+With @-bindings, you don't even need to create the attribute in VEX with `neighbours()`. You can use a shortcut called `topo:neighbours`.
+
+```cpp
+#bind point &P fpreal3
+// topo:neighbours gives the same output as i[]@neighbours = neighbours(0, i@ptnum) in VEX
+#bind point neighbours name=topo:neighbours int[]
+
+@KERNEL {
+    // ...
+}
+```
+
+Now we can translate the main part from VEX to OpenCL. Two useful functions are `entriesAt()` and `compAt()`.
+
+`entries` and `entriesAt()` get the number of entries in an array, like `len()` in VEX:
+
+- `@neighbours.entriesAt(i)` gets the length of the array at index `i`.
+- `@neighbours.entries` is equivalent to `@neighbours.entriesAt(@elemnum)`.
+
+`comp(j)` and `compAt(i, j)` get a value in the array:
+
+- `@neighbours.compAt(i, j)` gets the `j`-th value within array `i`.
+- `@neighbours.comp(j)` is equivalent to `@neighbours.compAt(@elemnum, j)`.
+
+```cpp
+#bind parm step_size float
+
+#bind point &P fpreal3
+
+// topo:neighbours gives the same output as i[]@neighbours = neighbours(0, i@ptnum) in VEX
+#bind point neighbours name=topo:neighbours int[]
+
+#bind point ?pin name=group:pin int value=0
+#bind point ?weight fpreal value=1
+
+@KERNEL
+{
+    // Skip pinned points
+    if (@pin) return;
+    
+    int numNeighbours = @neighbours.entries; // Same as @neighbours.entriesAt(@elemnum)
+    fpreal3 blurredP = (fpreal3)(0.0f);
+    
+    // Average all neighbouring positions together
+    for (int i = 0; i < numNeighbours; i++)
+    {
+        int pt = @neighbours.comp(i); // Same as @neighbours.compAt(@elemnum, i);
+        fpreal3 P = @P.getAt(pt); // Wrong, since @P may have been updated already
+        blurredP += P / numNeighbours;
+    }
+    
+    // Mix between the original and blurred position
+    @P.set(mix(@P, blurredP, @step_size * @weight));
+}
+```
 
 ## Precision
 
