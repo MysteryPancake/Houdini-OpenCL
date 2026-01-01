@@ -679,7 +679,7 @@ Both passes include a step size control, which mixes between the original and bl
 
 <img src="./images/blur_step_size.png" width="400">
 
-To add step size and weight control, just use `lerp()` on the last line and copy paste the wrangle twice.
+To match Attribute Blur, you can use `lerp()` to mix the positions, and copy paste the wrangle for each pass.
 
 ```cpp
 // Get the neighbours of the current point
