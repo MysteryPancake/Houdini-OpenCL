@@ -656,6 +656,8 @@ Blurring is basically moving each point to the average of its neighbours. Below 
 
 To get the neighbours in VEX, you can use the `neighbours()` function. It returns an array of points connected to another point.
 
+By looping through the neighbour positions and averaging them, it creates a blurred version of the position.
+
 ```cpp
 // Get the neighbours of the current point
 int neighbours[] = neighbours(0, i@ptnum);
