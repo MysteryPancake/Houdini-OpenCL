@@ -2098,6 +2098,61 @@ Using OpenCL to multiply the density of one VDB by another, like VDB Combine set
 
 ```
 
+## SOP: Volume Curve Subtraction
+
+Friedrich on Discord wanted to find the fastest way to subtract a curve from an SDF.
+
+<img src="./images/sdf_subtract_curve.png?raw=true" width="600">
+
+While VDB Combine is fast, it's even faster to do the SDF subtraction in OpenCL.
+
+<img src="./images/sdf_subtract_speed.png?raw=true" width="600">
+
+```cpp
+#bind vdb &surface float
+#bind vdb surface2 name=surface input=1 float
+
+// From https://iquilezles.org/articles/distfunctions/
+float opSubtraction(float d1, float d2)
+{
+    return max(-d1, d2);
+}
+
+@KERNEL
+{
+    float dist = @surface;
+    float dist2 = @surface2;
+    @surface.set(opSubtraction(dist2, dist));
+}
+```
+
+This is equivalent to using `volumesample()` in VEX:
+
+```cpp
+// From https://iquilezles.org/articles/distfunctions/
+float opSubtraction( float d1; float d2 ) {
+    return max(-d1,d2);
+}
+
+float dist = volumesample(1, 0, v@P);
+f@surface = opSubtraction(dist, f@surface);
+```
+
+Another way is using `xyzdist()` in VEX, but this is slower:
+
+```js
+// From https://iquilezles.org/articles/distfunctions/
+float opSubtraction( float d1; float d2 ) {
+    return max(-d1,d2);
+}
+
+float dist = xyzdist(1, v@P) - chf("thickness");
+f@surface = opSubtraction(dist, f@surface);
+```
+
+| [Download the HIP file!](./hips/sdf_subtract_curve.hiplc?raw=true) |
+| --- |
+
 ## SOP: Vertex Block Descent
 
 [Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) is a solving technique similar to Vellum (XPBD). I rewrote it in OpenCL based on all official references.
