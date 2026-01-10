@@ -2100,7 +2100,7 @@ Using OpenCL to multiply the density of one VDB by another, like VDB Combine set
 
 ## SOP: Volume Curve Subtraction
 
-Friedrich on Discord wanted to find the fastest way to subtract a curve from an SDF.
+Friedrich on Discord wanted to find a fast way to subtract a curve from an SDF.
 
 <img src="./images/sdf_subtract_curve.png?raw=true" width="600">
 
@@ -2151,6 +2151,72 @@ f@surface = opSubtraction(dist, f@surface);
 ```
 
 | [Download the HIP file!](./hips/sdf_subtract_curve.hiplc?raw=true) |
+| --- |
+
+## SOP: Volume Smooth Subtract
+
+Friedrich on Discord also asked about smooth subtraction. This combines [SDF smooth min](https://github.com/MysteryPancake/Houdini-Fun?tab=readme-ov-file#smooth-min) with [SDF subtraction](https://github.com/MysteryPancake/Houdini-Fun?tab=readme-ov-file#boolean-operations).
+
+<img src="./images/sdf_smooth_subtract.png?raw=true" width="600">
+
+```js
+#bind parm k float
+
+#bind vdb &surface float
+#bind vdb surface2 name=surface input=1 float
+
+// Quadratic polynomial version, from https://iquilezles.org/articles/smin
+// a and b are two distances you want to blend, k is the smoothing factor
+float smin(float a, float b, float k)
+{
+    k *= 4.0f;
+    float h = max(k-fabs(a-b), 0.0f)/k;
+    return min(a,b) - h*h*k*(1.0f/4.0f);
+}
+
+// From https://iquilezles.org/articles/distfunctions
+float opSubtraction(float d1, float d2)
+{
+    return max(-d1,d2);
+}
+
+@KERNEL
+{
+    // k is the blending factor controlling the smoothing
+    float dist = @surface;
+    float dist2 = @surface2;
+    float sdf = opSubtraction(dist2, smin(dist, dist2, @k));
+    @surface.set(sdf);
+}
+```
+
+Here's the VEX equivalent for reference:
+
+```js
+// Quadratic polynomial version, from https://iquilezles.org/articles/smin
+// a and b are two distances you want to blend, k is the smoothing factor
+float smin(float a; float b; float k) {
+    k *= 4.0;
+    float h = max( k-abs(a-b), 0.0 )/k;
+   return min(a,b) - h*h*k*(1.0/4.0);
+}
+
+// From https://iquilezles.org/articles/distfunctions
+float opSubtraction( float d1; float d2 ) {
+    return max(-d1,d2);
+}
+
+// Any two distances stored in a level set volume
+float dist = f@surface;
+float dist2 = volumesample(1, 0, v@P);
+
+// k is the blending factor controlling the smoothing
+float k = chf("k");
+f@surface = smin(dist, dist2, k);
+f@surface = opSubtraction(dist2, f@surface);
+```
+
+| [Download the HIP file!](./hips/sdf_smooth_subtract.hiplc?raw=true) |
 | --- |
 
 ## SOP: Vertex Block Descent
