@@ -114,7 +114,7 @@ kernel void kernelName(
 
 SideFX added a syntax called [@-bindings](#-bindings-version) to make it shorter and easier to write kernels.
 
-The actual code that gets run (found in the "Generate Kernel" tab) is the same as the plain version.
+The actual code that gets run (found in the "Generated Code" tab) is the same in both cases.
 
 ### @-bindings version
 
