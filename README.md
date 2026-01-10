@@ -1768,7 +1768,7 @@ In the diagram below, each blue dot is this workitem. Each workitem adds the loc
 
 <img src="./images/workgroup_reduction2.png">
 
-Since atomic operations tend to be slow, you could [make the local workgroups larger](changing-the-local-workgroup-size) to make it even faster.
+Since atomic operations tend to be slow, you could [make the local workgroups larger](#changing-the-local-workgroup-size) to make it even faster.
 
 Rather than simply adding 10 each time, a more practical example would be summing all the IDs, like Attribute Promote set to Sum.
 
