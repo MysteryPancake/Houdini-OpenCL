@@ -1456,7 +1456,7 @@ I think of worksets like multiple global workgroups. The diagram below is an ill
 
 The offset is passed as another kernel argument, and should be added onto the global ID `get_global_id(0)` to get the actual global ID.
 
-Worksets are useful for solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](#sop-vertex-block-descent-advanced) and Otis.
+Worksets are useful for solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](#sop-vertex-block-descent) and Otis.
 
 Vellum runs over sections of prims, while VBD and Otis run over sections of points.
 
@@ -2087,14 +2087,18 @@ Using OpenCL to multiply the density of one VDB by another, like VDB Combine set
 | --- |
 
 ```cpp
+#bind vdb &density float
+#bind vdb mask input=1 float
+
 @KERNEL
 {
     float bias = @mask.worldSample(@density.pos);
     @density.set(@density * bias);
 }
+
 ```
 
-## SOP: Vertex Block Descent (Advanced)
+## SOP: Vertex Block Descent
 
 [Vertex Block Descent (VBD)](https://github.com/MysteryPancake/Houdini-VBD) is a solving technique similar to Vellum (XPBD). I rewrote it in OpenCL based on all official references.
 
@@ -2108,7 +2112,7 @@ It uses jacobians and hessians for everything, so the math is confusing. If usin
 | [Download the HIP file!](https://github.com/MysteryPancake/Houdini-VBD/releases/latest) | [OpenCL code](https://github.com/MysteryPancake/Houdini-VBD/tree/main/ocl) |
 | --- | --- |
 
-## SOP: Laplacian Filter (Advanced)
+## SOP: Laplacian Filter
 
 The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) lets you break geometry into frequencies, similar to a fourier transform. You can exaggerate or reduce certain frequencies (eigenvectors) of the geometry for blurring and sharpening effects.
 
@@ -2196,7 +2200,7 @@ The total sum is stored in a `@Psum` attribute. It scales the amplitude in the f
 }
 ```
 
-## Copernicus: Sun Detection (Advanced)
+## Copernicus: Sun Detection
 
 As well as global accumulation, workgroup reduction is useful for global min and max operations. This helps find the darkest or brightest parts of an image, like the sun in a HDRI.
 
