@@ -2047,7 +2047,7 @@ static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 
 Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses @ binding syntax.
 
-<img src="./images/cops/radial_blur.png?raw=true" width="600">
+<img src="./images/cops/radial_blur.png?raw=true" width="700">
 
 ```cpp
 #bind layer src? val=0
@@ -2077,13 +2077,50 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 | [Download the HIP file!](./hips/cops/radial_blur.hiplc?raw=true) |
 | --- |
 
+## Copernicus: 4x4 Bayer Dithering
+
+Copernicus doesn't have many good dithering options, so I translated [4x4 Bayer Dithering by kbjwes77](https://www.shadertoy.com/view/WstXR8) to OpenCL.
+
+I removed the gamma correction since Houdini already has color management.
+
+<img src="./images/cops/bayer_dithering.png?raw=true" width="700">
+
+```cpp
+#bind parm scale int val=1
+#bind layer src? val=0
+#bind layer !&dst
+
+const float16 bayerIndex = (float16)(
+    00.0/16.0, 12.0/16.0, 03.0/16.0, 15.0/16.0,
+    08.0/16.0, 04.0/16.0, 11.0/16.0, 07.0/16.0,
+    02.0/16.0, 14.0/16.0, 01.0/16.0, 13.0/16.0,
+    10.0/16.0, 06.0/16.0, 09.0/16.0, 05.0/16.0
+);
+
+@KERNEL
+{
+    // Sample the texture
+    int2 uv = @ixy / @scale;
+    float4 color = @src;
+    
+    // Find bayer matrix entry based on fragment position
+    float bayerValue = bayerIndex[4 * (uv.x % 4) + (uv.y % 4)];
+    
+    // Output
+    @dst.set((float4)(step(bayerValue, color.rgb - (float3)0.001), color.a));
+}
+```
+
+| [Download the HIP file!](./hips/cops/bayer_dithering.hiplc?raw=true) |
+| --- |
+
 ## SOP: Volume Multiply
 
 This file was made by [Lewis Saunders](https://github.com/lcrs/_.hips), reuploaded with permission.
 
 Using OpenCL to multiply the density of one VDB by another, like VDB Combine set to "Multiply".
 
-<img src="./images/Ls_OpenCLMaskVDB.png?raw=true" width="600">
+<img src="./images/Ls_OpenCLMaskVDB.png?raw=true" width="700">
 
 | [Download the HIP file!](./hips/Ls_OpenCLMaskVDB.hipnc?raw=true) |
 | --- |
@@ -2104,11 +2141,11 @@ Using OpenCL to multiply the density of one VDB by another, like VDB Combine set
 
 Friedrich on Discord wanted to find a fast way to subtract a curve from an SDF.
 
-<img src="./images/sdf_subtract_curve.png?raw=true" width="600">
+<img src="./images/sdf_subtract_curve.png?raw=true" width="700">
 
 While VDB Combine is fast, it's even faster to do the SDF subtraction in OpenCL.
 
-<img src="./images/sdf_subtract_speed.png?raw=true" width="600">
+<img src="./images/sdf_subtract_speed.png?raw=true" width="700">
 
 ```cpp
 #bind vdb &surface float
@@ -2159,7 +2196,7 @@ f@surface = opSubtraction(dist, f@surface);
 
 Friedrich on Discord also asked about smooth subtraction. This combines [SDF smooth min](https://github.com/MysteryPancake/Houdini-Fun?tab=readme-ov-file#smooth-min) with [SDF subtraction](https://github.com/MysteryPancake/Houdini-Fun?tab=readme-ov-file#boolean-operations).
 
-<img src="./images/sdf_smooth_subtract.png?raw=true" width="600">
+<img src="./images/sdf_smooth_subtract.png?raw=true" width="700">
 
 ```js
 #bind parm k float
