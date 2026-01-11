@@ -2047,7 +2047,7 @@ static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 
 Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses @ binding syntax.
 
-<img src="./images/cops/radial_blur.png?raw=true" width="700">
+<img src="./images/cops/radial_blur.png?raw=true" width="600">
 
 ```cpp
 #bind layer src? val=0
@@ -2120,7 +2120,7 @@ This file was made by [Lewis Saunders](https://github.com/lcrs/_.hips), reupload
 
 Using OpenCL to multiply the density of one VDB by another, like VDB Combine set to "Multiply".
 
-<img src="./images/Ls_OpenCLMaskVDB.png?raw=true" width="700">
+<img src="./images/Ls_OpenCLMaskVDB.png?raw=true" width="600">
 
 | [Download the HIP file!](./hips/Ls_OpenCLMaskVDB.hipnc?raw=true) |
 | --- |
@@ -2141,11 +2141,11 @@ Using OpenCL to multiply the density of one VDB by another, like VDB Combine set
 
 Friedrich on Discord wanted to find a fast way to subtract a curve from an SDF.
 
-<img src="./images/sdf_subtract_curve.png?raw=true" width="700">
+<img src="./images/sdf_subtract_curve.png?raw=true" width="600">
 
 While VDB Combine is fast, it's even faster to do the SDF subtraction in OpenCL.
 
-<img src="./images/sdf_subtract_speed.png?raw=true" width="700">
+<img src="./images/sdf_subtract_speed.png?raw=true" width="600">
 
 ```cpp
 #bind vdb &surface float
@@ -2196,7 +2196,7 @@ f@surface = opSubtraction(dist, f@surface);
 
 Friedrich on Discord also asked about smooth subtraction. This combines [SDF smooth min](https://github.com/MysteryPancake/Houdini-Fun?tab=readme-ov-file#smooth-min) with [SDF subtraction](https://github.com/MysteryPancake/Houdini-Fun?tab=readme-ov-file#boolean-operations).
 
-<img src="./images/sdf_smooth_subtract.png?raw=true" width="700">
+<img src="./images/sdf_smooth_subtract.png?raw=true" width="600">
 
 ```js
 #bind parm k float
