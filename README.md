@@ -287,7 +287,7 @@ Houdini compiles OpenCL code with the highest version available by default.
 
 You can check the version with the `__OPENCL_VERSION__` and `__OPENCL_C_VERSION__` macros.
 
-```js
+```cpp
 #bind point &P float3 // Dummy bind
 
 @KERNEL
@@ -303,7 +303,7 @@ You can check the version with the `__OPENCL_VERSION__` and `__OPENCL_C_VERSION_
 
 To set the OpenCL version, use the kernel option `-cl-std`. Vellum sets it to version 2.0 using `-cl-std=CL2.0`.
 
-```js
+```cpp
 -cl-std=CL3.0 // Version 300
 -cl-std=CL2.0 // Version 200
 -cl-std=CL1.2 // Version 120
@@ -315,7 +315,7 @@ Note if the version is too high or low, it causes an error and fails to compile!
 
 Vellum gets around this by using a switch to check if functionality from version 2.0 is available before trying to compile:
 
-```js
+```cpp
 ocldeviceinfo("CL_DEVICE_TYPE")==4 && ocldeviceinfo("CL_DEVICE_DEVICE_ENQUEUE_SUPPORT") && ocldeviceinfo("CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT")
 ```
 
@@ -336,7 +336,7 @@ Take a look at this incredible VEX code. I put my blood, sweat and tears into it
 
 It moves each point along the normal based on noise, much like the Peak node.
 
-```js
+```cpp
 v@P += v@N * f@noise;
 ```
 
@@ -359,7 +359,7 @@ Add an OpenCL node and untick "Enable @-Binding".
 
 As a reminder, here's the VEX from before:
 
-```js
+```cpp
 v@P += v@N * f@noise;
 ```
 
@@ -480,13 +480,13 @@ kernel void kernelName(
 
 Now everything is safe from memory leaks, we can finally translate the VEX code.
 
-```js
+```cpp
 v@P += v@N * f@noise;
 ```
 
 This uses 3 read operations and 1 write operation. It's worth thinking about the number of reads and write operations to maximize performance.
 
-```js
+```cpp
 // Read operations
 vector P = v@P;
 vector N = v@N;
@@ -2179,7 +2179,7 @@ f@surface = opSubtraction(dist, f@surface);
 
 Another way is using `xyzdist()` in VEX, but this is slower:
 
-```js
+```cpp
 // From https://iquilezles.org/articles/distfunctions/
 float opSubtraction( float d1; float d2 ) {
     return max(-d1,d2);
@@ -2198,7 +2198,7 @@ Friedrich on Discord also asked about smooth subtraction. This combines [SDF smo
 
 <img src="./images/sdf_smooth_subtract.png?raw=true" width="600">
 
-```js
+```cpp
 #bind parm k float
 
 #bind vdb &surface float
@@ -2231,7 +2231,7 @@ float opSubtraction(float d1, float d2)
 
 Here's the VEX equivalent for reference:
 
-```js
+```cpp
 // Quadratic polynomial version, from https://iquilezles.org/articles/smin
 // a and b are two distances you want to blend, k is the smoothing factor
 float smin(float a; float b; float k) {
@@ -2418,11 +2418,230 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 }
 ```
 
-## Copernicus: Faster Statistics and Equalize
+## Copernicus: Fast Prefix Sum
 
-The Statistics and Equalize nodes are very slow since they use Prefix Sum. It uses for loops rather than parallel code.
+The Prefix Sum node is slow because it uses series for loops rather than parallel code.
 
-As expected, workgroup reduction makes them both orders of magnitude faster!
+Sadly it can't use workgroup reduction, because it has to run in horizontal and vertical strips.
+
+I thought it would be faster to do an iterative binary approach, inspired by workgroup reduction.
+
+Each iteration it takes 2 pixels next to eachother, performs the operation and writes the result in a ping-pong way, [like Attribute Blur](#example-2-remaking-attribute-blur).
+
+The number of iterations required is `log2(res) / 2`, divided by 2 since it does an extra pass in the writeback kernel.
+
+The tricky part is masking. Luckily I found it gives the same result to apply the mask beforehand.
+
+| [Download the HIP file!](./hips/cops/cops_fast_prefixsum.hiplc?raw=true) |
+| --- |
+
+### Applying the mask
+
+```cpp
+#bind parm scale int
+#bind layer &src val=0
+#bind layer ?active val=1 float
+
+@KERNEL {
+    float scale = 1.0f;
+    switch (@scale)
+    {
+        case 0: // None
+            break;
+        case 1: // Pixel
+            scale = @dPdx.pixel.x;
+            break;
+        case 2: // Texture
+            scale = @dPdx.texture.x;
+            break;
+        case 3: // Image
+            scale = @dPdx.image.x;
+            break;
+    }
+    @src.set(@src * scale);
+
+    bool active = @active > 0.5f;
+#ifdef OP_COUNT
+    @src.set((float4)(active * scale));
+#else
+    if (active) return;
+    #ifdef OP_MIN
+        @src.set((float4)(MAXFLOAT));
+    #elif defined(OP_MAX)
+        @src.set((float4)(-MAXFLOAT));
+    #elif defined(OP_ADD)
+        @src.set((float4)(0.0f));
+    #endif
+#endif
+}
+```
+
+### Horizontal sweep
+
+```cpp
+#bind layer &src val=0
+#bind layer &dst val=0
+
+@KERNEL {
+    // Stride for odd iterations (1,4,16,64...)
+    int2 stride = (int2)(1 << (2 * @Iteration), 0);
+    int2 offset = @ixy;
+#ifdef REVERSE
+    offset += stride;
+#else
+    offset -= stride;
+#endif
+    if (offset.x >= @res.x || offset.x < 0) {
+        @dst.set(@src);
+        return;
+    }
+    
+#if defined(OP_ADD) || defined(OP_COUNT)
+    @dst.set(@src + @src.bufferIndex(offset));
+#elif defined(OP_MIN)
+    @dst.set(min(@src, @src.bufferIndex(offset)));
+#elif defined(OP_MAX)
+    @dst.set(max(@src, @src.bufferIndex(offset)));
+#endif
+}
+
+@WRITEBACK {
+    // Stride for even iterations (2,8,32,128...)
+    int2 stride = (int2)(2 << (2 * @Iteration), 0);
+    int2 offset = @ixy;
+#ifdef REVERSE
+    offset += stride;
+#else
+    offset -= stride;
+#endif
+    if (offset.x >= @res.x || offset.x < 0) {
+        @src.set(@dst);
+        return;
+    }
+    
+#if defined(OP_ADD) || defined(OP_COUNT)
+    @src.set(@dst + @dst.bufferIndex(offset));
+#elif defined(OP_MIN)
+    @src.set(min(@dst, @dst.bufferIndex(offset)));
+#elif defined(OP_MAX)
+    @src.set(max(@dst, @dst.bufferIndex(offset)));
+#endif
+}
+```
+
+### Vertical sweep
+
+```cpp
+#bind layer &src val=0
+#bind layer &dst val=0
+
+@KERNEL {
+    // Stride for odd iterations (1,4,16,64...)
+    int2 stride = (int2)(0, 1 << (2 * @Iteration));
+    int2 offset = @ixy;
+#ifdef REVERSE
+    offset += stride;
+#else
+    offset -= stride;
+#endif
+    if (offset.y >= @res.y || offset.y < 0) {
+        @dst.set(@src);
+        return;
+    }
+    
+#if defined(OP_ADD) || defined(OP_COUNT)
+    @dst.set(@src + @src.bufferIndex(offset));
+#elif defined(OP_MIN)
+    @dst.set(min(@src, @src.bufferIndex(offset)));
+#elif defined(OP_MAX)
+    @dst.set(max(@src, @src.bufferIndex(offset)));
+#endif
+}
+
+@WRITEBACK {
+    // Stride for even iterations (2,8,32,128...)
+    int2 stride = (int2)(0, 2 << (2 * @Iteration));
+    int2 offset = @ixy;
+#ifdef REVERSE
+    offset += stride;
+#else
+    offset -= stride;
+#endif
+    if (offset.y >= @res.y || offset.y < 0) {
+        @src.set(@dst);
+        return;
+    }
+    
+#if defined(OP_ADD) || defined(OP_COUNT)
+    @src.set(@dst + @dst.bufferIndex(offset));
+#elif defined(OP_MIN)
+    @src.set(min(@dst, @dst.bufferIndex(offset)));
+#elif defined(OP_MAX)
+    @src.set(max(@dst, @dst.bufferIndex(offset)));
+#endif
+}
+```
+
+### Linear sweep
+
+```cpp
+#bind layer &src val=0
+#bind layer &dst val=0
+
+@KERNEL {
+    // Stride for odd iterations (1,4,16,64...)
+    int2 stride = (int2)(0, 1 << (2 * @Iteration));
+    int2 offset = @ixy;
+#ifdef REVERSE
+    offset += stride;
+#else
+    offset -= stride;
+#endif
+    if (offset.y >= @res.y || offset.y < 0) {
+        @dst.set(@src);
+        return;
+    }
+    offset.x = @xres - 1;
+    
+#if defined(OP_ADD) || defined(OP_COUNT)
+    @dst.set(@src + @src.bufferIndex(offset));
+#elif defined(OP_MIN)
+    @dst.set(min(@src, @src.bufferIndex(offset)));
+#elif defined(OP_MAX)
+    @dst.set(max(@src, @src.bufferIndex(offset)));
+#endif
+}
+
+@WRITEBACK {
+    // Stride for even iterations (2,8,32,128...)
+    int2 stride = (int2)(0, 2 << (2 * @Iteration));
+    int2 offset = @ixy;
+#ifdef REVERSE
+    offset += stride;
+#else
+    offset -= stride;
+#endif
+    if (offset.y >= @res.y || offset.y < 0) {
+        @src.set(@dst);
+        return;
+    }
+    offset.x = @xres - 1;
+    
+#if defined(OP_ADD) || defined(OP_COUNT)
+    @src.set(@dst + @dst.bufferIndex(offset));
+#elif defined(OP_MIN)
+    @src.set(min(@dst, @dst.bufferIndex(offset)));
+#elif defined(OP_MAX)
+    @src.set(max(@dst, @dst.bufferIndex(offset)));
+#endif
+}
+```
+
+## Copernicus: Fast Statistics and Equalize
+
+The Statistics and Equalize nodes are very slow since they use Prefix Sum.
+
+Although I optimized Prefix Sum above, it's orders of magnitude faster to use workgroup reduction!
 
 <img src="./images/cops/fast_statistics.png?raw=true" width="600">
 
