@@ -2430,7 +2430,7 @@ Instead I tried iterative binary reduction, inspired by workgroup reduction. Thi
 
 Each iteration takes 2 pixels next to eachother, performs the operation and writes the result in a ping-pong way, [like Attribute Blur](#example-2-remaking-attribute-blur).
 
-The number of iterations given the resolution is `log2(res) / 2`, divided by 2 since it does an extra pass in the writeback kernel.
+The number of iterations required along each dimension is `log2(res) / 2`. The division by 2 comes from the extra pass in the writeback kernel.
 
 <img src="./images/cops/prefixsum_animate.webp?raw=true" width="400">
 
