@@ -2426,7 +2426,7 @@ Sadly it can't use workgroup reduction since it has to run horizontally and vert
 
 Instead I tried iterative binary reduction, inspired by workgroup reduction. This massively improves the performance!
 
-<img src="./images/cops/fast_prefixsum.png?raw=true">
+<img src="./images/cops/fast_prefixsum.png?raw=true" width="800">
 
 Each iteration takes 2 pixels next to eachother, performs the operation and writes the result in a ping-pong way, [like Attribute Blur](#example-2-remaking-attribute-blur).
 
@@ -2645,9 +2645,9 @@ The Statistics and Equalize nodes are very slow since they use Prefix Sum.
 
 Although I optimized Prefix Sum above, it's orders of magnitude faster to use workgroup reduction!
 
-<img src="./images/cops/fast_statistics.png?raw=true" width="600">
+<img src="./images/cops/fast_statistics.png?raw=true" width="800">
 
-<img src="./images/cops/fast_equalize.png?raw=true" width="600">
+<img src="./images/cops/fast_equalize.png?raw=true" width="800">
 
 | [Download the HIP file!](./hips/cops/cops_fast_statistics.hiplc?raw=true) |
 | --- |
