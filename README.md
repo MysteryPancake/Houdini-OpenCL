@@ -2422,15 +2422,17 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 
 The Prefix Sum node is slow because it uses series for loops rather than parallel code.
 
-Sadly it can't use workgroup reduction, because it has to run in horizontal and vertical strips.
+Sadly it can't use workgroup reduction since it has to run horizontally and vertically. Workgroups aren't aligned to a spatial dimension.
 
-I thought it would be faster to do an iterative binary approach, inspired by workgroup reduction.
+Instead I tried an iterative binary approach inspired by workgroup reduction. This massively improves the performance!
 
-Each iteration it takes 2 pixels next to eachother, performs the operation and writes the result in a ping-pong way, [like Attribute Blur](#example-2-remaking-attribute-blur).
+<img src="./images/cops/fast_prefixsum.png?raw=true">
+
+Each iteration takes 2 pixels next to eachother, performs the operation and writes the result in a ping-pong way, [like Attribute Blur](#example-2-remaking-attribute-blur).
 
 The number of iterations required is `log2(res) / 2`, divided by 2 since it does an extra pass in the writeback kernel.
 
-The tricky part is masking. Luckily I found it gives the same result to apply the mask beforehand.
+The tricky part is masking. I found the mask can be applied beforehand to get the same result.
 
 | [Download the HIP file!](./hips/cops/cops_fast_prefixsum.hiplc?raw=true) |
 | --- |
