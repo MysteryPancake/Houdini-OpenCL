@@ -2424,7 +2424,7 @@ The Prefix Sum node is slow because it uses series for loops rather than paralle
 
 Sadly it can't use workgroup reduction since it has to run horizontally and vertically. Workgroups aren't aligned to a spatial dimension.
 
-Instead I tried an iterative binary approach inspired by workgroup reduction. This massively improves the performance!
+Instead I tried iterative binary reduction, inspired by workgroup reduction. This massively improves the performance!
 
 <img src="./images/cops/fast_prefixsum.png?raw=true">
 
