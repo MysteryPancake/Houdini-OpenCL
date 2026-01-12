@@ -2432,7 +2432,7 @@ This makes the performance orders of magnitude faster!
 
 <img src="./images/cops/fast_prefixsum.png?raw=true" width="800">
 
-The number of iterations required along each dimension is `log2(res) / 2`. The division by 2 comes from the extra pass in the writeback kernel.
+The number of iterations required for each dimension is `log2(res) / 2`. The division by 2 comes from the extra pass in the writeback kernel. You can animate the iterations to get interesting effects.
 
 <img src="./images/cops/prefixsum_animate.webp?raw=true" width="400">
 
