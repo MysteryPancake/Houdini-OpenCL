@@ -2424,13 +2424,13 @@ The Prefix Sum node is slow because it uses for loops rather than fully parallel
 
 Sadly it can't use workgroup reduction since it has to run horizontally and vertically. Workgroups aren't aligned to a spatial dimension.
 
-Instead I tried iterative binary reduction, inspired by workgroup reduction. This massively improves the performance!
-
-<img src="./images/cops/fast_prefixsum.png?raw=true" width="800">
-
-Each iteration takes 2 pixels next to eachother, performs the operation and writes the result in a ping-pong way, [like Attribute Blur](#example-2-remaking-attribute-blur).
+Instead I tried iterative binary reduction, inspired by workgroup reduction. Each iteration takes 2 pixels next to eachother, performs the operation and writes the result in a ping-pong way, [like Attribute Blur](#example-2-remaking-attribute-blur).
 
 <img src="./images/cops/prefixsum_max.png?raw=true">
+
+This makes the performance orders of magnitude faster!
+
+<img src="./images/cops/fast_prefixsum.png?raw=true" width="800">
 
 The number of iterations required along each dimension is `log2(res) / 2`. The division by 2 comes from the extra pass in the writeback kernel.
 
