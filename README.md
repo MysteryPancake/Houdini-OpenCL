@@ -2417,3 +2417,147 @@ void atomic_max_float(volatile __global float *source, const float operand) {
     }
 }
 ```
+
+## Copernicus: Faster Statistics and Equalize
+
+The Statistics and Equalize nodes are very slow since they use Prefix Sum. It uses for loops rather than parallel code.
+
+As expected, workgroup reduction makes them both orders of magnitude faster!
+
+<img src="./images/cops/fast_statistics.png?raw=true" width="600">
+
+<img src="./images/cops/fast_equalize.png?raw=true" width="600">
+
+| [Download the HIP file!](./hips/cops/cops_fast_statistics.hiplc?raw=true) |
+| --- |
+
+### Average
+
+```cpp
+#bind layer &src val=0
+#bind detail &sum port=geo float4
+#bind detail &total port=geo int
+#bind layer ?active float val=1
+
+// atomic_add() only works on ints, floats need custom handling
+// From violetspace.github.io/blog/atomic-float-addition-in-opencl.html
+inline void atomic_add_f(volatile __global float* addr, const float val) {
+    #if defined(cl_nv_pragma_unroll) // use hardware-supported atomic addition on Nvidia GPUs with inline PTX assembly
+        float ret; asm volatile("atom.global.add.f32 %0,[%1],%2;":"=f"(ret):"l"(addr),"f"(val):"memory");
+    #elif defined(__opencl_c_ext_fp32_global_atomic_add) // use hardware-supported atomic addition on some Intel GPUs
+        atomic_fetch_add_explicit((volatile global atomic_float*)addr, val, memory_order_relaxed);
+    #elif __has_builtin(__builtin_amdgcn_global_atomic_fadd_f32) // use hardware-supported atomic addition on some AMD GPUs
+        __builtin_amdgcn_global_atomic_fadd_f32(addr, val);
+    #else // fallback emulation: forums.developer.nvidia.com/t/atomicadd-float-float-atomicmul-float-float/14639/5
+        float old = val; while((old=atomic_xchg(addr, atomic_xchg(addr, 0.0f)+old))!=0.0f);
+    #endif
+}
+
+@KERNEL {
+    // Local workgroup accumulation
+    bool active = @active > 0.5f;
+    float4 src = active ? @src : (float4)(0.0f);
+    
+    float4 sum = (float4)(
+        work_group_reduce_add(src.r),
+        work_group_reduce_add(src.g),
+        work_group_reduce_add(src.b),
+        work_group_reduce_add(src.a)
+    );
+    int total = work_group_reduce_add(active);
+
+    // Global workgroup accumulation
+    if (get_local_id(0) == 0) {
+        atomic_add_f((global float*)&@sum.data[0], (float)sum.r);
+        atomic_add_f((global float*)&@sum.data[1], (float)sum.g);
+        atomic_add_f((global float*)&@sum.data[2], (float)sum.b);
+        atomic_add_f((global float*)&@sum.data[3], (float)sum.a);
+        atomic_add(&@total.data[0], total);
+    }
+}
+
+@WRITEBACK {
+    @src.set(@sum / @total);
+}
+```
+
+### Minimum
+
+```cpp
+#bind layer &src val=0
+#bind detail &result port=geo float4
+#bind layer ?active float val=1
+
+// atomic_min() only works on ints, floats need custom handling
+void atomic_min_float(volatile __global float *source, const float operand) {
+    union { unsigned int intVal; float floatVal; } prevVal, newVal;
+    do {
+        prevVal.floatVal = *source;
+        newVal.floatVal = min(prevVal.floatVal, operand);
+    } while (atomic_cmpxchg((volatile __global unsigned int *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal);
+}
+
+@KERNEL {
+    // Local workgroup accumulation
+    float4 src = @active > 0.5f ? @src : (float4)(FLT_MAX);
+    float4 min = (float4)(
+        work_group_reduce_min(src.r),
+        work_group_reduce_min(src.g),
+        work_group_reduce_min(src.b),
+        work_group_reduce_min(src.a)
+    );
+
+    // Global workgroup accumulation
+    if (get_local_id(0) == 0) {
+        atomic_min_float(&@result.data[0], min.r);
+        atomic_min_float(&@result.data[1], min.g);
+        atomic_min_float(&@result.data[2], min.b);
+        atomic_min_float(&@result.data[3], min.a);
+    }
+}
+
+@WRITEBACK {
+    @src.set(@result);
+}
+```
+
+### Maximum
+
+```cpp
+#bind layer &src val=0
+#bind detail &result port=geo float4
+#bind layer ?active float val=1
+
+// atomic_max() only works on ints, floats need custom handling
+// From https://stackoverflow.com/questions/18950732
+void atomic_max_float(volatile __global float *source, const float operand) {
+    union { unsigned int intVal; float floatVal; } prevVal, newVal;
+    do {
+        prevVal.floatVal = *source;
+        newVal.floatVal = max(prevVal.floatVal,operand);
+    } while (atomic_cmpxchg((volatile __global unsigned int *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal);
+}
+
+@KERNEL {
+    // Local workgroup accumulation
+    float4 src = @active > 0.5f ? @src : (float4)(0.0f);
+    float4 max = (float4)(
+        work_group_reduce_max(src.r),
+        work_group_reduce_max(src.g),
+        work_group_reduce_max(src.b),
+        work_group_reduce_max(src.a)
+    );
+
+    // Global workgroup accumulation
+    if (get_local_id(0) == 0) {
+        atomic_max_float(&@result.data[0], max.r);
+        atomic_max_float(&@result.data[1], max.g);
+        atomic_max_float(&@result.data[2], max.b);
+        atomic_max_float(&@result.data[3], max.a);
+    }
+}
+
+@WRITEBACK {
+    @src.set(@result);
+}
+```
