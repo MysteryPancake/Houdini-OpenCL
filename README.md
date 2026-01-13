@@ -2658,7 +2658,7 @@ Although I optimized Prefix Sum above, it's orders of magnitude faster to use wo
 
 ### Average
 
-The average is nondeterministic because it uses `atomic_add_f()`. It changes slightly due to floating point error depending on the order.
+The average is nondeterministic because it uses `atomic_add_f()`. This changes slightly depending on the order due to floating point error.
 
 If you need deterministic results, use the fast version of Prefix Sum inside the Statistics and Equalize nodes instead.
 
