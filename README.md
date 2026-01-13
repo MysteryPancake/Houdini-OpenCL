@@ -2658,6 +2658,10 @@ Although I optimized Prefix Sum above, it's orders of magnitude faster to use wo
 
 ### Average
 
+The average is nondeterministic because it uses `atomic_add_f()`. Due to floating point error, this changes slightly depending on the order.
+
+If you need deterministic results, you can use the fast version of Prefix Sum inside the Statistics and Equalize nodes instead.
+
 ```cpp
 #bind layer &src val=0
 #bind detail &sum port=geo float4
