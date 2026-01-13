@@ -2420,7 +2420,7 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 
 ## Copernicus: Fast Prefix Sum
 
-The Prefix Sum node is quite slow, because it uses for loops rather than fully parallel code.
+The Prefix Sum node is quite slow because it uses for loops rather than fully parallel code.
 
 Sadly it can't use workgroup reduction since it has to run horizontally and vertically. Workgroups aren't aligned to a spatial dimension.
 
