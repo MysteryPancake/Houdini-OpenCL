@@ -201,6 +201,9 @@ You can even animate the data to visualize how it's arranged in each workgroup.
 
 <img src="./images/visualize_workgroups.webp" width="700">
 
+| [Download the HIP file!](./hips/visualize_workgroups.hiplc?raw=true) |
+| --- |
+
 ```cpp
 // To use VEXhsvtorgb() for colorization
 #include <color.h>
@@ -232,9 +235,6 @@ You can even animate the data to visualize how it's arranged in each workgroup.
 }
 
 ```
-
-| [Download the HIP file!](./hips/visualize_workgroups.hiplc?raw=true) |
-| --- |
 
 ## Changing the local workgroup size
 
@@ -2051,6 +2051,9 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 
 <img src="./images/cops/radial_blur.png?raw=true" width="600">
 
+| [Download the HIP file!](./hips/cops/radial_blur.hiplc?raw=true) |
+| --- |
+
 ```cpp
 #bind parm quality int val=10
 #bind parm center float2 val=0
@@ -2085,9 +2088,6 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 }
 ```
 
-| [Download the HIP file!](./hips/cops/radial_blur.hiplc?raw=true) |
-| --- |
-
 ## Copernicus: 4x4 Bayer Dithering
 
 Copernicus doesn't have many good dithering options, so I translated [4x4 Bayer Dithering by kbjwes77](https://www.shadertoy.com/view/WstXR8) to OpenCL.
@@ -2095,6 +2095,9 @@ Copernicus doesn't have many good dithering options, so I translated [4x4 Bayer 
 I removed the gamma correction since Houdini already has color management.
 
 <img src="./images/cops/bayer_dithering.png?raw=true" width="700">
+
+| [Download the HIP file!](./hips/cops/bayer_dithering.hiplc?raw=true) |
+| --- |
 
 ```cpp
 #bind parm scale int val=1
@@ -2122,14 +2125,18 @@ const float16 bayerIndex = (float16)(
 }
 ```
 
-| [Download the HIP file!](./hips/cops/bayer_dithering.hiplc?raw=true) |
-| --- |
-
 ## Copernicus: Brute Force Voronoi
 
 Customizable voronoi based on points with different metrics (euclidean, manhattan, chebyshev and minkowski)
 
 I used brute force to find the nearest point. For better performance, use [jump flooding](https://www.shadertoy.com/view/4XlyW8) or the Eikonal node instead.
+
+<img src="./images/cops/cops_voronoi1.webp" width="30%"></img>
+<img src="./images/cops/cops_voronoi2.webp" width="30%"></img>
+<img src="./images/cops/cops_voronoi3.webp" width="30%"></img>
+
+| [Download the HIP file!](./hips/cops/cops_voronoi.hiplc?raw=true) |
+| --- |
 
 ```cpp
 #bind parm metric_default int
@@ -2218,9 +2225,6 @@ float distance_metric(float3 a, float3 b, int metric, float power)
 }
 ```
 
-| [Download the HIP file!](./hips/cops/cops_voronoi.hiplc?raw=true) |
-| --- |
-
 ## SOP: Volume Multiply
 
 This file was made by [Lewis Saunders](https://github.com/lcrs/_.hips), reuploaded with permission.
@@ -2253,6 +2257,9 @@ Friedrich on Discord wanted to find a fast way to subtract a curve from an SDF.
 While VDB Combine is fast, it's even faster to do the SDF subtraction in OpenCL.
 
 <img src="./images/sdf_subtract_speed.png?raw=true" width="600">
+
+| [Download the HIP file!](./hips/sdf_subtract_curve.hiplc?raw=true) |
+| --- |
 
 ```cpp
 #bind vdb &surface float
@@ -2296,14 +2303,14 @@ float dist = xyzdist(1, v@P) - chf("thickness");
 f@surface = opSubtraction(dist, f@surface);
 ```
 
-| [Download the HIP file!](./hips/sdf_subtract_curve.hiplc?raw=true) |
-| --- |
-
 ## SOP: Volume Smooth Subtract
 
 Friedrich on Discord also asked about smooth subtraction. This combines [SDF smooth min](https://github.com/MysteryPancake/Houdini-Fun?tab=readme-ov-file#smooth-min) with [SDF subtraction](https://github.com/MysteryPancake/Houdini-Fun?tab=readme-ov-file#boolean-operations).
 
 <img src="./images/sdf_smooth_subtract.png?raw=true" width="600">
+
+| [Download the HIP file!](./hips/sdf_smooth_subtract.hiplc?raw=true) |
+| --- |
 
 ```cpp
 #bind parm k float
@@ -2361,9 +2368,6 @@ float k = chf("k");
 f@surface = smin(dist, dist2, k);
 f@surface = opSubtraction(dist2, f@surface);
 ```
-
-| [Download the HIP file!](./hips/sdf_smooth_subtract.hiplc?raw=true) |
-| --- |
 
 ## SOP: Vertex Block Descent
 
