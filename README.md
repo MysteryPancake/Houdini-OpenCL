@@ -2114,6 +2114,102 @@ const float16 bayerIndex = (float16)(
 | [Download the HIP file!](./hips/cops/bayer_dithering.hiplc?raw=true) |
 | --- |
 
+## Copernicus: Brute Force Voronoi
+
+Highly customizable voronoi based on points with different metrics (euclidean, manhattan, chebyshev and minkowski)
+
+I used used a brute force for loop to find the nearest point. For better performance, use [jump flooding](https://www.shadertoy.com/view/4XlyW8) or the Eikonal node instead.
+
+```cpp
+#bind parm metric_default int
+// To animate the expansion, remove if no animation is needed
+#bind parm max_distance float val=1
+#bind parm power_default float val=2
+
+#bind layer ?src val=0 int
+#bind layer !&id int
+#bind layer !&sdf float
+#bind point points float3 port=points name=P
+// Each point may offset its distance to take priority
+#bind point ?offset float port=points val=0
+// Each point may speed itself up
+#bind point ?speed float port=points val=1
+// Each point may have a different metric (-1 to use default)
+#bind point ?metric int port=points val=-1
+// Each point may have a different minkowski power (-1 to use default)
+#bind point ?power float port=points val=-1
+
+float distance_metric(float3 a, float3 b, int metric, float power)
+{
+    switch (metric)
+    {
+        case 0: // Euclidean (circular)
+        default:
+        {
+            return distance(a, b);
+        }
+        case 1: // Manhattan (diamond)
+        {
+            float3 d = fabs(a - b);
+            return d.x + d.y + d.z;
+        }
+        case 2: // Chebyshev (square)
+        {
+            float3 d = fabs(a - b);
+            return max(d.x, max(d.y, d.z));
+        }
+        case 3: // Minkowski (power 1 = manhattan, 2 = euclidean)
+        {
+            float3 d = fabs(a - b);
+            float sum = pow(d.x, power) + pow(d.y, power) + pow(d.z, power);
+            return pow(sum, 1.0f / power);
+        }
+    }
+}
+
+@KERNEL
+{
+    int nearest_id = INT_MIN;
+    float nearest_dist = FLT_MAX;
+    
+    // To avoid recomputation
+    int len = @points.len;
+    int metric_default = @metric_default;
+    float power_default = @power_default;
+    float max_dist = @max_distance;
+
+	// Find the nearest point using brute force
+    // Use jump flooding for better performance (shadertoy.com/view/4XlyW8)
+    for (int i = 0; i < len; ++i)
+    {
+        float3 p = @points.getAt(i);
+        
+        float speed = @speed.getAt(i);
+        float offset = @offset.getAt(i);
+        
+        int metric = @metric.getAt(i);
+        if (metric < 0) metric = metric_default;
+        
+        float power = @power.getAt(i);
+        if (power < 0) power = power_default;
+        
+        float dist = distance_metric(p, @P.world, metric, power) / speed - offset;
+        if (dist < min(nearest_dist, max_dist))
+        {
+            nearest_id = i;
+            nearest_dist = dist;
+        }
+    }
+    
+    @id.set(nearest_id);
+    // This SDF is only valid for euclidean distance with no speed change
+    @sdf.set(nearest_dist);
+}
+```
+
+| [Download the HIP file!](./hips/cops/cops_voronoi.hiplc?raw=true) |
+| --- |
+
 ## SOP: Volume Multiply
 
 This file was made by [Lewis Saunders](https://github.com/lcrs/_.hips), reuploaded with permission.
@@ -2430,6 +2526,8 @@ Instead I tried iterative binary reduction, inspired by workgroup reduction. Eac
 
 This makes the performance orders of magnitude faster!
 
+**EDIT: This was a bug fixed in Houdini 21.0.594. The performance is much closer now.**
+
 <img src="./images/cops/fast_prefixsum.png?raw=true" width="800">
 
 The number of iterations required for each dimension is `log2(res) / 2`. The division by 2 comes from the extra pass in the writeback kernel. You can animate the iterations to get interesting effects.
@@ -2648,6 +2746,8 @@ The tricky part is masking. I found the mask can be applied beforehand to get th
 The Statistics and Equalize nodes are very slow since they use Prefix Sum.
 
 Although I optimized Prefix Sum above, it's orders of magnitude faster to use workgroup reduction!
+
+**EDIT: This was a bug fixed in Houdini 21.0.594. The performance is much closer now.**
 
 <img src="./images/cops/fast_statistics.png?raw=true" width="800">
 
