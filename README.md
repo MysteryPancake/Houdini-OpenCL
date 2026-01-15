@@ -2043,6 +2043,8 @@ static void mat3lincomb2(mat3 mout, const mat3 m1, fpreal scale1, const mat3 m2,
 static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 ```
 
+# Examples
+
 ## Copernicus: Radial Blur
 
 Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses @ binding syntax.
