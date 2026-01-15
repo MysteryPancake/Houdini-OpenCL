@@ -2052,27 +2052,36 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 <img src="./images/cops/radial_blur.png?raw=true" width="600">
 
 ```cpp
-#bind layer src? val=0
-#bind layer !&dst
-
 #bind parm quality int val=10
 #bind parm center float2 val=0
 #bind parm scale float val=0.2
 #bind parm rotation float val=0
 
+#bind layer src? val=0
+#bind layer !&dst
+
 @KERNEL
 {
-     float2 offset = @P - @center;
-     float4 result = 0.;
-     float scale = 1;
-     
-     for (int i = 0; i <= @quality; ++i) {
-          result += @src.imageSample(offset * scale + @center) / (@quality + 1);
-          offset = rotate2D(offset, @rotation / @quality);
-          scale -= @scale / @quality;
-     }
-     
-     @dst.set(result);
+    float2 offset = @P - @center;
+    float4 result = (float4)(0.0f);
+    float scale = 1.0f;
+    
+    // To avoid recomputation
+    float2 center = @center;
+    float scale_factor = @scale;
+    float rotation = @rotation;
+    int quality = @quality;
+    
+    // Brute force sample the image with different transforms
+    // Equivalent to copy pasting the image a bunch of times
+    for (int i = 0; i <= quality; ++i) {
+        result += @src.imageSample(offset * scale + center) / (quality + 1);
+        // rotate2D() is from matrix.h, included by default in Copernicus
+        offset = rotate2D(offset, rotation / quality);
+        scale -= scale_factor / quality;
+    }
+    
+    @dst.set(result);
 }
 ```
 
