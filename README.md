@@ -2127,9 +2127,9 @@ const float16 bayerIndex = (float16)(
 
 ## Copernicus: Brute Force Voronoi
 
-Highly customizable voronoi based on points with different metrics (euclidean, manhattan, chebyshev and minkowski)
+Customizable voronoi based on points with different metrics (euclidean, manhattan, chebyshev and minkowski)
 
-I used used a brute force for loop to find the nearest point. For better performance, use [jump flooding](https://www.shadertoy.com/view/4XlyW8) or the Eikonal node instead.
+I used brute force to find the nearest point. For better performance, use [jump flooding](https://www.shadertoy.com/view/4XlyW8) or the Eikonal node instead.
 
 ```cpp
 #bind parm metric_default int
@@ -2529,7 +2529,7 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 
 The Prefix Sum node is quite slow because it uses for loops rather than fully parallel code.
 
-Sadly it can't use workgroup reduction since it has to run horizontally and vertically. Workgroups aren't aligned to a spatial dimension.
+Sadly it can't use workgroup reduction since it has to run horizontally and vertically. Workgroups aren't usually aligned to a spatial dimension.
 
 Instead I tried iterative binary reduction, inspired by workgroup reduction. Each iteration takes 2 pixels next to eachother, does the operation and writes the result in a ping-pong way, [like Attribute Blur](#example-2-remaking-attribute-blur).
 
