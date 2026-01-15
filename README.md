@@ -2127,7 +2127,7 @@ const float16 bayerIndex = (float16)(
 
 ## Copernicus: Brute Force Voronoi
 
-Customizable voronoi based on points with different metrics (euclidean, manhattan, chebyshev and minkowski)
+Highly customizable voronoi with different metrics (euclidean, manhattan, chebyshev and minkowski)
 
 I used brute force to find the nearest point. For better performance, use [jump flooding](https://www.shadertoy.com/view/4XlyW8) or the Eikonal node instead.
 
