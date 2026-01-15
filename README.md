@@ -2526,6 +2526,8 @@ Instead I tried iterative binary reduction, inspired by workgroup reduction. Eac
 
 This makes the performance orders of magnitude faster!
 
+**EDIT: This was a bug fixed in Houdini 21.0.594. The performance is much closer now.**
+
 <img src="./images/cops/fast_prefixsum.png?raw=true" width="800">
 
 The number of iterations required for each dimension is `log2(res) / 2`. The division by 2 comes from the extra pass in the writeback kernel. You can animate the iterations to get interesting effects.
@@ -2744,6 +2746,8 @@ The tricky part is masking. I found the mask can be applied beforehand to get th
 The Statistics and Equalize nodes are very slow since they use Prefix Sum.
 
 Although I optimized Prefix Sum above, it's orders of magnitude faster to use workgroup reduction!
+
+**EDIT: This was a bug fixed in Houdini 21.0.594. The performance is much closer now.**
 
 <img src="./images/cops/fast_statistics.png?raw=true" width="800">
 
