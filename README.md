@@ -2047,7 +2047,7 @@ static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 
 ## Copernicus: Radial Blur
 
-Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses @ binding syntax.
+Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses @-binding syntax.
 
 <img src="./images/cops/radial_blur.png?raw=true" width="600">
 
