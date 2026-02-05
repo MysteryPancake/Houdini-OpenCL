@@ -2225,6 +2225,79 @@ float distance_metric(float3 a, float3 b, int metric, float power)
 }
 ```
 
+## Copernicus: Brute Force Convolution
+
+Copernicus has a Convolve 3x3 node, but sometimes 3x3 isn't enough. This node takes an image kernel as a kernel, then convolves each pixel.
+
+This is useful for lens flares, bloom and bokeh effects, [like in this video by AngeTheGreat](https://www.youtube.com/watch?v=QWqb5Gewbx8).
+
+For better performance, use a Fast Fourier Transform (FFT) instead.
+
+<img src="./images/cops/cops_convolve.png?raw=true" width="600">
+
+| [Download the HIP file!](./hips/cops/cops_convolve.hip?raw=true) |
+| --- |
+
+```cpp
+#bind parm normalize int val=1
+#bind parm normalize_mode int val=1
+
+#bind layer ?src val=0
+#bind layer ?kernel val=1
+#bind layer !&dst
+
+@KERNEL
+{
+    int2 res = convert_int2(@kernel.res);
+    float4 src_sum = (float4)(0.0f);
+    float4 kernel_sum = (float4)(1.0f);
+    
+    if (!@normalize)
+    {
+        kernel_sum = res.x * res.y;
+    }
+    
+    // Multiply by each pixel of the kernel
+    for (int x = 0; x < res.x; ++x)
+    {
+        for (int y = 0; y < res.y; ++y)
+        {
+            int2 pos = (int2)(x, y);
+            float4 kernel_color = @kernel.bufferIndex(pos);
+            float4 src_color = @src.bufferIndex(@ixy + pos - res / 2);
+            src_sum += kernel_color * src_color;
+            
+            if (@normalize)
+            {
+                kernel_sum += kernel_color;
+            }
+        }
+    }
+    
+    // Normalize
+    switch (@normalize_mode)
+    {
+        case 0: // Per channel
+        {
+            @dst.set(src_sum / kernel_sum);
+            break;
+        }
+        case 1: // Average
+        {
+            float avg_rgb = (kernel_sum.r + kernel_sum.g + kernel_sum.b) / 3.0f;
+            @dst.set((float4)(src_sum.rgb / avg_rgb, src_sum.a / kernel_sum.a));
+            break;
+        }
+        case 2: // Maximum
+        {
+            float max_rgb = max(kernel_sum.r, max(kernel_sum.g, kernel_sum.b));
+            @dst.set((float4)(src_sum.rgb / max_rgb, src_sum.a / kernel_sum.a));
+            break;
+        }
+    }
+}
+```
+
 ## SOP: Volume Multiply
 
 This file was made by [Lewis Saunders](https://github.com/lcrs/_.hips), reuploaded with permission.
