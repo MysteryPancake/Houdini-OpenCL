@@ -2233,7 +2233,7 @@ This is useful for lens flares, bloom and bokeh effects, [like in this video by 
 
 For better performance, use a Fast Fourier Transform (FFT) instead.
 
-<img src="./images/cops/cops_convolve.png?raw=true" width="600">
+<img src="./images/cops/cops_convolve.webp?raw=true" width="600">
 
 | [Download the HIP file!](./hips/cops/cops_convolve.hip?raw=true) |
 | --- |
