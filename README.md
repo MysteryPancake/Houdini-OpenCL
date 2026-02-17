@@ -1466,7 +1466,7 @@ kernel void kernelName(
 
     // Dummy binding
     int P_length,
-    global float* P
+    global float* P_array
 )
 {
     // The global ID still starts at 0 like normal
