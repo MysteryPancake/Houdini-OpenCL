@@ -1446,7 +1446,7 @@ There are various solutions to this:
 
 ## Worksets
 
-Worksets run the same kernel multiple times in a row, in sequential order so it's deterministic.
+Worksets run the same kernel multiple times in a row, in sequential order to guarantee deterministic results.
 
 <img src="./images/multiple_global_workgroups2.png">
 
