@@ -1446,7 +1446,7 @@ There are various solutions to this:
 
 ## Worksets
 
-Worksets basically run the same kernel multiple times in a row.
+Worksets run the same kernel multiple times in a row, always in sequential order.
 
 Each time the kernel is run, the data length and offset changes depending on the workset detail attributes you provide.
 
