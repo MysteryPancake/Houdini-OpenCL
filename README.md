@@ -1452,17 +1452,21 @@ The diagram below is an illustration, since it's actually running the same kerne
 
 <img src="./images/multiple_global_workgroups2.png">
 
-Each time the kernel is run, the data length and offset changes depending on the workset detail attributes you provide.
+To use workgroups, you can use the workset option on any OpenCL node.
 
-The offset is passed as another kernel argument, and should be added onto the global ID `get_global_id(0)` to get the actual global ID.
+<img src="./images/multiple_global_workgroups.png" width="500">
+
+Each time the kernel is run, the data length and offset changes depending on the begin and length attributes you provide.
+
+The offset is passed as a kernel argument, and should be added onto the global ID `get_global_id(0)` to get the actual global ID.
 
 ### Plain OpenCL version
 
 ```cpp
 kernel void kernelName(
     // Assuming "Use Single Workgroup" is disabled
-    int color_offset,
-    int color_length,
+    int color_offset, // Current workset offset, from the "Workset Begin" array
+    int color_length, // Current workset length, from the "Workset Lengths" array
 
     // Dummy binding
     int P_length,
@@ -1493,10 +1497,6 @@ Vellum, VBD and Otis use the Graph Color node to generate these sections. It com
 Sections are sometimes called **colors**, like with the Graph Color node. The section offset is called `color_offset` in the code for Vellum.
 
 <img src="./images/graph_color.png" width="500">
-
-To use workgroups to run an operation in sections, you can use the workset option on any OpenCL node.
-
-<img src="./images/multiple_global_workgroups.png" width="500">
 
 ### Worksets vs local workgroups
 
