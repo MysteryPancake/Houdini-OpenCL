@@ -1448,17 +1448,15 @@ There are various solutions to this:
 
 Worksets run the same kernel multiple times in a row, in sequential order so it's deterministic.
 
-The diagram below is an illustration, since it's actually running the same kernel each time.
-
 <img src="./images/multiple_global_workgroups2.png">
 
-To use workgroups, you can use the workset option on any OpenCL node.
+To use workgroups, you can use the "Detail Attribute of Worksets" option on any OpenCL node.
 
 <img src="./images/multiple_global_workgroups.png" width="500">
 
-Each time the kernel is run, the data length and offset changes depending on the begin and length attributes you provide.
+Each time the kernel is run, it's passed a different length and offset argument. Everything else works the same as usual.
 
-The offset is passed as a kernel argument, and should be added onto the global ID `get_global_id(0)` to get the actual global ID.
+The offset can be added onto the global ID `get_global_id(0)` to get the true global ID.
 
 ### Plain OpenCL version
 
@@ -1473,16 +1471,21 @@ kernel void kernelName(
     global float* P_array
 )
 {
-    // The global ID still starts at 0 like normal
-    // To get the global ID, you can add color_offset to the id
-    int id = get_global_id(0);
-    if (id >= color_length) return;
+    // The global ID still starts at 0, so it's really the local ID of the current workset
+    int local_id = get_global_id(0);
+    if (local_id >= color_length) return;
     
     // Only run on the first workitem in each workset
-    if (id != 0) return;
-    
+    if (local_id != 0) return;
+
+	// Add the color offset to get the actual global ID
+	int id = local_id + color_offset;
+
+	// Print the local and global ID of the current workset
+	printf("Local ID: %d, Global ID: %d\n", local_id, id);
+
     // Print the offset and length of the current workset
-    printf("Color offset: %d, color length: %d\n", color_offset, color_length);
+    printf("Color offset: %d, Color length: %d\n", color_offset, color_length);
 }
 ```
 
