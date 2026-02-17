@@ -1446,21 +1446,45 @@ There are various solutions to this:
 
 ## Worksets
 
-Worksets run the same kernel multiple times in a row, always in sequential order.
+Worksets run the same kernel multiple times in a row, in sequential order so it's deterministic.
 
-Each time the kernel is run, the data length and offset changes depending on the workset detail attributes you provide.
-
-It's useful when you have an operation that overlaps data (causing a race condition), but it can be broken into sections that don't overlap.
-
-I think of worksets like multiple global workgroups. The diagram below is an illustration, since it's actually running the same kernel each time.
+The diagram below is an illustration, since it's actually running the same kernel each time.
 
 <img src="./images/multiple_global_workgroups2.png">
 
+Each time the kernel is run, the data length and offset changes depending on the workset detail attributes you provide.
+
 The offset is passed as another kernel argument, and should be added onto the global ID `get_global_id(0)` to get the actual global ID.
 
-Worksets are useful for solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](#sop-vertex-block-descent) and Otis.
+### Plain OpenCL version
 
-Vellum runs over sections of prims, while VBD and Otis run over sections of points.
+```cpp
+kernel void kernelName(
+    // Assuming "Use Single Workgroup" is disabled
+    int color_offset,
+    int color_length,
+
+    // Dummy binding
+    int P_length,
+    global float* P
+)
+{
+    // The global ID still starts at 0 like normal
+    // To get the global ID, you can add color_offset to the id
+    int id = get_global_id(0);
+    if (id >= color_length) return;
+    
+    // Only run on the first workitem in each workset
+    if (id != 0) return;
+    
+    // Print the offset and length of the current workset
+    printf("Color offset: %d, color length: %d\n", color_offset, color_length);
+}
+```
+
+Worksets are useful when you have an operation that overlaps data (causing a race condition), but it can be broken into sections that don't overlap.
+
+They're useful for solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](#sop-vertex-block-descent) and Otis. Vellum runs over sections of prims, while VBD and Otis run over sections of points.
 
 <img src="./images/vellum_vs_vbd.png" width="800">
 
