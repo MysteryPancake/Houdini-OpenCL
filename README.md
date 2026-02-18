@@ -1448,7 +1448,7 @@ There are various solutions to this:
 
 ## Worksets
 
-Worksets run the same kernel multiple times in a row, in sequential order to guarantee deterministic results.
+Worksets run the same kernel multiple times in a row, in sequential order to ensure deterministic results.
 
 <img src="./images/multiple_global_workgroups2.png">
 
@@ -2071,6 +2071,28 @@ static void mat3scale(mat3 mout, const mat3 m, fpreal scale)
 static void mat3lincomb2(mat3 mout, const mat3 m1, fpreal scale1, const mat3 m2, fpreal scale2)
 static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 ```
+
+# SideFX Q&A
+
+## Are worksets guaranteed to run in sequential order?
+
+> Simple answer, yes.
+> 
+> Each workset is enqueued to the OpenCL driver in-order. Each kernel will have a data dependency on the previous kernel, so OpenCL will strictly evaluate them one after another.
+> 
+> This is commonly used for stuff like Graph Colouring where it is important to run in order, and for determinism, important it is always the same order.
+> 
+> One exception is the "Use Single Workgroup if Possible". This will, if the GPU can tolerate it, run all the workgroups in a single pass, requiring the coder to add global memory fences at the correct locations. We use this for very small worksets to reduce overhead. If it isn't possible to run on a single workgroup; and thus the memory fence isn't possible; it wil lact as if this wasn't set. (Important because you can't tell what magic size your gpu supports until you know both your hardware and the code)
+
+## Is there a way to allocate memory that stays on the OpenCL device and doesn't get copied back to CPU?
+
+> Yes, there is a way, but it is kept hidden as it can be pretty confusing. But stuff like vellum's neighbour arrays are kept on the gpu for exactly this reason.
+> 
+> There is a "leave_on_gpu" attribute option. You'll have to use a Python SOP or HDK to set it, however, as there is no normal node for this. The `hou.Attrib.setOption` I believe will do it.
+
+## How to translate float pixel coordinates to integer buffer coordinates?
+
+> You probably want to do `@layer.textureToBuffer((float2)(...))`, then you are on your own for rounding or flooring that into an integer (there's also `imageToBuffer` and `pixelToBuffer`)
 
 # Examples
 
