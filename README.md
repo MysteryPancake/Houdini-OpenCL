@@ -330,6 +330,8 @@ This can be fixed by setting the environment variable `HOUDINI_OCL_REPORT_BUILD_
 
 Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
 
+<img src="./images/display_opencl_errors.png" width="700">
+
 ## Example 1: Translating VEX to OpenCL
 
 Take a look at this incredible VEX code. I put my blood, sweat and tears into it.
