@@ -1461,8 +1461,8 @@ It expects two detail attributes, integer arrays containing offsets and lengths.
 ```js
 // Run this in a Detail wrangle
 // Run worksets between the ranges of 0-3, 4-7, 8-11, and 12-15
-i[]@offsets = [0, 4, 8, 12];
-i[]@sizes = [4, 4, 4, 4];
+i[]@offsets = {0, 4, 8, 12};
+i[]@sizes = {4, 4, 4, 4};
 ```
 
 Note it's not guaranteed to run 4 workitems in this case, [since it rounds up to the nearest multiple of the local workgroup size](#bounds-checking).
