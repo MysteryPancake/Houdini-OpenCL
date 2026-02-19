@@ -1465,7 +1465,7 @@ i[]@offsets = {0, 4, 8, 12};
 i[]@sizes = {4, 4, 4, 4};
 ```
 
-Note it's not guaranteed to run 4 workitems in this case, [since it rounds up to the nearest multiple of the local workgroup size](#bounds-checking).
+Note this won't always run 4 workitems per workgroup, [since it rounds up to the nearest multiple of the local workgroup size](#bounds-checking).
 
 Each time the kernel runs, it passes pairs of offsets and lengths from these arrays as extra kernel arguments.
 
