@@ -1452,13 +1452,24 @@ Worksets run the same kernel multiple times in a row, in sequential order to ens
 
 <img src="./images/multiple_global_workgroups2.png">
 
-To use workgroups, you can use the "Detail Attribute of Worksets" option on any OpenCL node.
+To use worksets, use the "Detail Attribute of Worksets" option on any OpenCL node.
 
 <img src="./images/multiple_global_workgroups.png" width="500">
 
-Each time the kernel is run, it's passed a different length and offset argument. Everything else works the same as usual.
+It expects two detail attributes, integer arrays containing offsets and lengths. Both arrays must be the same length.
 
-The offset can be added onto the global ID `get_global_id(0)` to get the true global ID.
+```js
+// Run this in a Detail wrangle
+// Run worksets between the ranges of 0-4, 4-8, 8-12, and 12-16
+i[]@offsets = [0, 4, 8, 12];
+i[]@sizes = [4, 4, 4, 4];
+```
+
+Note it's not guaranteed to run 4 workitems in this case, [since it rounds up to the nearest multiple of the local workgroup size](#bounds-checking).
+
+Each time the kernel runs, it passes pairs of offsets and lengths from these arrays as extra kernel arguments.
+
+Note `get_global_id(0)` still starts at 0 as usual. You need to add the passed offset to get the true global ID.
 
 ### Plain OpenCL version
 
