@@ -2208,13 +2208,12 @@ Inspired by [this 3Blue1Brown video](https://www.youtube.com/watch?v=ldxFjLJ3rVY
 
 #bind layer src? val=0
 #bind layer !&dst
+#bind layer !&uv float2
 
 @KERNEL
 {
     // Forward transform
-    float2 uv = @P.texture - 0.5f;
-    uv *= @scale;
-    uv -= @offset;
+    float2 uv = (@P.texture - 0.5f) * @scale - @offset;
     
     // Tiling to get better quality
     float range = log(@tile_range);
@@ -2222,13 +2221,11 @@ Inspired by [this 3Blue1Brown video](https://www.youtube.com/watch?v=ldxFjLJ3rVY
     if (@tile_right && uv.x > @tile_offset) uv.x = fmod(uv.x, range) - range;
     
     // Log polar transform
-    float ex = exp(uv.x);
-    float2 w = (float2)(ex * -cos(uv.y), ex * sin(uv.y));
+    uv = (float2)(-cos(uv.y), sin(uv.y)) * exp(uv.x) * 0.5f + 0.5f;
+    if (@flip) uv.y = -uv.y;
     
-    float2 texCoord = w * 0.5f + 0.5f;
-    if (@flip) texCoord.y *= -1.0f;
-    
-    @dst.set(@src.textureSample(texCoord));
+    @uv.set(uv);
+    @dst.set(@src.textureSample(uv));
 }
 ```
 
@@ -2241,24 +2238,20 @@ Inspired by [this 3Blue1Brown video](https://www.youtube.com/watch?v=ldxFjLJ3rVY
 
 #bind layer src? val=0
 #bind layer !&dst
+#bind layer !&uv float2
 
 @KERNEL
 {
     // Backward transform
-    float2 uv = @P.texture;
-    float2 w = (uv - 0.5f) / 0.5f;
-    w = rotate2D(w, @slice_angle);
+    float2 uv = rotate2D((@P.texture - 0.5f) / 0.5f, @slice_angle);
     
     // Inverse log polar transform
-    float r = length(w);
-    float theta = atan2(@flip ? -w.y : w.y, -w.x);
-    theta -= radians(@slice_angle);
+    float r = length(uv);
+    float theta = atan2(@flip ? -uv.y : uv.y, -uv.x) - radians(@slice_angle);
+    uv = (float2)(log(r), theta) / @scale + 0.5f;
     
-    float2 logW = (float2)(log(r), theta);
-    logW /= @scale;
-    logW += 0.5f;
-    
-    @dst.set(@src.textureSample(logW));
+    @uv.set(uv);
+    @dst.set(@src.textureSample(uv));
 }
 ```
 
