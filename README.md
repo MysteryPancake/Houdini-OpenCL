@@ -2248,9 +2248,8 @@ Forward and inverse log polar transform, inspired by [this 3Blue1Brown video](ht
     float2 uv = rotate2D((@P.texture - 0.5f) / 0.5f, @slice_angle);
     
     // Inverse log polar transform
-    float r = length(uv);
     float theta = atan2(@flip ? -uv.y : uv.y, -uv.x) - radians(@slice_angle);
-    uv = (float2)(log(r), theta) / @scale + 0.5f;
+    uv = (float2)(log(length(uv)), theta) / @scale + 0.5f;
     
     @uv.set(uv);
     @dst.set(@src.textureSample(uv));
