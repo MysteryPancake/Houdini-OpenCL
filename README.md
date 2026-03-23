@@ -2107,6 +2107,13 @@ static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 
 # Examples
 
+## Copernicus: Escher Transform (Print Gallery)
+
+Inspired by [this 3Blue1Brown video](https://www.youtube.com/watch?v=ldxFjLJ3rVY) and [reinder's shader](https://www.shadertoy.com/view/Mdf3zM).
+
+| [Download the HIP file!](./hips/cops/escher_tiling.hiplc?raw=true) |
+| --- |
+
 ## Copernicus: Radial Blur
 
 Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses @-binding syntax.
