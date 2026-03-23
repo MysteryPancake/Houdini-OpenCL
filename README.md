@@ -2189,7 +2189,9 @@ const float16 bayerIndex = (float16)(
 
 ## Copernicus: Escher Transform (Print Gallery)
 
-Inspired by [this 3Blue1Brown video](https://www.youtube.com/watch?v=ldxFjLJ3rVY) and [reinder's shader](https://www.shadertoy.com/view/Mdf3zM).
+Forward and inverse log polar transform, inspired by [this 3Blue1Brown video](https://www.youtube.com/watch?v=ldxFjLJ3rVY) and [reinder's shader](https://www.shadertoy.com/view/Mdf3zM).
+
+<img src="./images/cops/escher_transform.webp?raw=true" width="700">
 
 | [Download the HIP file!](./hips/cops/escher_transform.hiplc?raw=true) |
 | --- |
