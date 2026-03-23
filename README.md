@@ -2107,13 +2107,6 @@ static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 
 # Examples
 
-## Copernicus: Escher Transform (Print Gallery)
-
-Inspired by [this 3Blue1Brown video](https://www.youtube.com/watch?v=ldxFjLJ3rVY) and [reinder's shader](https://www.shadertoy.com/view/Mdf3zM).
-
-| [Download the HIP file!](./hips/cops/escher_transform.hiplc?raw=true) |
-| --- |
-
 ## Copernicus: Radial Blur
 
 Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses @-binding syntax.
@@ -2191,6 +2184,74 @@ const float16 bayerIndex = (float16)(
     
     // Output
     @dst.set((float4)(step(bayerValue, color.rgb - (float3)0.001), color.a));
+}
+```
+
+## Copernicus: Escher Transform (Print Gallery)
+
+Inspired by [this 3Blue1Brown video](https://www.youtube.com/watch?v=ldxFjLJ3rVY) and [reinder's shader](https://www.shadertoy.com/view/Mdf3zM).
+
+| [Download the HIP file!](./hips/cops/escher_transform.hiplc?raw=true) |
+| --- |
+
+### Forward Transform
+
+```cpp
+#bind parm scale float
+#bind parm offset float2
+#bind parm flip int
+
+#bind parm tile_range float
+#bind parm tile_offset float
+#bind parm tile_left int
+#bind parm tile_right int
+
+#bind layer src? val=0
+#bind layer !&dst
+#bind layer !&uv float2
+
+@KERNEL
+{
+    // Forward transform
+    float2 uv = (@P.texture - 0.5f) * @scale - @offset;
+    
+    // Tiling to get better quality
+    float range = log(@tile_range);
+    if (@tile_left && uv.x < -range + @tile_offset) uv.x = fmod(uv.x - range, range);
+    if (@tile_right && uv.x > @tile_offset) uv.x = fmod(uv.x, range) - range;
+    
+    // Log polar transform
+    uv = (float2)(-cos(uv.y), sin(uv.y)) * exp(uv.x) * 0.5f + 0.5f;
+    if (@flip) uv.y = -uv.y;
+    
+    @uv.set(uv);
+    @dst.set(@src.textureSample(uv));
+}
+```
+
+### Inverse Transform
+
+```cpp
+#bind parm scale float
+#bind parm flip int
+#bind parm slice_angle float
+
+#bind layer src? val=0
+#bind layer !&dst
+#bind layer !&uv float2
+
+@KERNEL
+{
+    // Backward transform
+    float2 uv = rotate2D((@P.texture - 0.5f) / 0.5f, @slice_angle);
+    
+    // Inverse log polar transform
+    float r = length(uv);
+    float theta = atan2(@flip ? -uv.y : uv.y, -uv.x) - radians(@slice_angle);
+    uv = (float2)(log(r), theta) / @scale + 0.5f;
+    
+    @uv.set(uv);
+    @dst.set(@src.textureSample(uv));
 }
 ```
 
