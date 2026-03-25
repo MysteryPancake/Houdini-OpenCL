@@ -208,18 +208,25 @@ You can even animate the data to visualize how it's arranged in each workgroup.
 // To use VEXhsvtorgb() for colorization
 #include <color.h>
 
+// Bind the blend parameter as 32-bit float (like chf("blend") in VEX)
 #bind parm blend float
 
+// Bind P attribute as 32-bit vector with read/write
 #bind point &P float3
+// Bind Cd attribute as a 32-bit vector with read/write
 #bind point &Cd float3
 
 @KERNEL
 {
+	// ID relative to the start of the current local workgroup
     int local_id = get_local_id(0);
+	// Number of items within the current local workgroup
     int num_ids = get_local_size(0);
     float local_ratio = (float)local_id / num_ids;
-    
+
+	// Number of the current local workgroup
     int group_id = get_group_id(0);
+	// Total number of local workgroups in the current global workgroup
     int num_groups = get_num_groups(0);
     float group_ratio = (float)group_id / num_groups;
     
