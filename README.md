@@ -2630,9 +2630,7 @@ Normally you'd check the constraint's type to change the behaviour, but for now 
 
 Vellum uses graph coloring for constraints. Graph coloring splits the constraints into disconnected groups that can run in parallel without affecting eachother.
 
-This results in much faster convergence for stiff constraints, and prevents race conditions.
-
-It's fast in OpenCL but sadly extremely slow in VEX, since it requires a feedback loop.
+Sadly it's extremely slow in VEX, since it requires feedback loops.
 
 ```js
 // Based on distanceUpdateXPBD() in houdini/ocl/sim/pbd_constraints.cl (line 107)
@@ -2701,7 +2699,7 @@ if (point(-1, "mass", i@ptnum) <= 0.0) return;
 v@v = (v@P - v@pprevious) / f@TimeInc;
 ```
 
-The VEX version is very slow due to the feedback loops. We can get much faster results using OpenCL!
+The VEX version is slow due to the feedback loops. We can get much faster results using OpenCL!
 
 In OpenCL, integration works exactly the same as VEX. The benefit of running it in OpenCL is the data stays on the OpenCL device. This prevents unnecessary copying back to the CPU.
 
@@ -2747,7 +2745,9 @@ In OpenCL, integration works exactly the same as VEX. The benefit of running it 
 
 ### 2. Solve the constraints (OpenCL)
 
-OpenCL is extremely fast at feedback loops, since we can use [worksets](#worksets) to run everything in parallel.
+OpenCL is much faster than VEX at feedback loops, since we can use [worksets](#worksets) to run everything in parallel.
+
+This prevents race conditions and results in much faster convergence for stiff constraints.
 
 Worksets require using a "Detail Attribute of Worksets". Worksets mean running the same kernel multiple times in a row.
 
