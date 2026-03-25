@@ -90,8 +90,8 @@ Here's the kernel in the diagram above, written in plain OpenCL.
 ```cpp
 // Assumes P is bound as 32-bit float with read/write in the Bindings tab
 kernel void kernelName(
-    int _bound_P_length,
-    global float* _bound_P
+    int _bound_P_length, // number of values for the P attribute, same as the number of points
+    global float* _bound_P // float array of each P attribute value, ordered by point index
 )
 {
     // Only print on the first workitem to prevent spam
@@ -177,7 +177,7 @@ The workgroup diagram above is by [Martin Schreiber](https://www.researchgate.ne
 It's also possible for workgroups to be 2D, 3D or higher. You might see this with volumes or heightfields.
 
 ```cpp
-// Volumes and heightfields may have multiple global IDs
+// Volumes like images and heightfields may have multiple global IDs
 int idx = get_global_id(0);
 int idy = get_global_id(1);
 int idz = get_global_id(2);
