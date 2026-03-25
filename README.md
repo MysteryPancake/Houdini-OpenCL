@@ -1514,7 +1514,7 @@ kernel void kernelName(
 
 Worksets are useful when you have an operation that overlaps data (causing a race condition), but it can be broken into sections that don't overlap.
 
-They're useful for solvers such as Vellum (XPBD), [Vertex Block Descent (VBD)](#sop-vertex-block-descent) and Otis. Vellum runs over sections of prims, while VBD and Otis run over sections of points.
+They're useful for solvers such as [Vellum (XPBD)](#sop-vellum-remake-in-vex-and-opencl), [Vertex Block Descent (VBD)](#sop-vertex-block-descent) and Otis. Vellum runs over sections of prims, while VBD and Otis run over sections of points.
 
 <img src="./images/vellum_vs_vbd.png" width="800">
 
@@ -2559,6 +2559,324 @@ float dist2 = volumesample(1, 0, v@P);
 float k = chf("k");
 f@surface = smin(dist, dist2, k);
 f@surface = opSubtraction(dist2, f@surface);
+```
+
+## SOP: Vellum remake in VEX and OpenCL
+
+Vellum is based on a technique called Extended Position Based Dynamics (XPBD).
+
+XPBD is based on Verlet integration, and it's surprisingly easy to remake it.
+
+There's some [great demos and videos on XPBD by Matthias Müller](https://www.youtube.com/watch?v=jrociOAYqxA), an author of the XPBD paper.
+
+At its core, Vellum is really just 3 steps:
+
+1. Integrate the positions
+2. Solve the constraints
+3. Recompute the velocities
+
+There's also another step, collision handling. Vellum handles collisions with the Detangle node. The purpose of Detangle is pushing apart intersecting triangles. This can happen at any point throughout the 3 steps, so Vellum triggers Detangle pretty randomly using a Gas Intermittent Solver.
+
+| [Download the HIP file!](./hips/vellum_remake.hiplc?raw=true) |
+| --- |
+
+### 1. Integrate the positions (VEX)
+
+Integration means adding the velocity to the position, to move the points forwards in space.
+
+Vellum includes both 1st and 2nd order integration (BDF1 and BDF2), with 2nd order being the default.
+
+Order means the integration accuracy. 2nd order preserves the energy a lot better, so the result is more detailed.
+
+The difference between 1st and 2nd order is the number of velocity samples used. The more samples, the better you can approximate the curve the object travels in real life.
+
+- 1st order uses 1 previous velocity sample: `v@v`.
+- 2nd order uses 3 previous velocity samples: `v@v`, `v@vprevious` and `v@vlast`.<br>It also uses 2 previous position samples: `v@pprevious` and `v@plast`.
+
+For simplicity, I'll just implement 1st order integration (BDF1) for now.
+
+The code for 2nd order integration can be found in Vellum inside `point_update_2nd_order_fallback`.
+
+```js
+// Skip pinned points
+if (point(-1, "mass", i@ptnum) <= 0.0) return;
+
+// Swap pprevious to current position (store_prev_attributes in the Vellum solver)
+v@pprevious = v@P;
+
+// Add gravity to velocity (Vellum uses a Gravity Force instead)
+v@v += chv("gravity") * f@TimeInc;
+
+// First order BDF1 integration (point_update_1st_order in the Vellum solver)
+v@P += v@v * f@TimeInc;
+```
+
+### 2. Solve the constraints (VEX)
+
+Cloth simulations are the easiest to remake, since they only involve 2 types of constraints:
+
+- Distance/stretching constraints (try to keep their length the same)
+- Angle/bending constraints (try to keep their angle the same)
+
+Being extra lazy, you can even [use a distance constraint as an angle constraint](https://carmencincotti.com/2022-09-05/the-most-performant-bending-constraint-of-xpbd/)!
+
+This means we only need to implement distance constraints to get a working cloth simulation!
+
+Normally you'd check the constraint's type to change the behaviour, but for now let's assume everything is a distance constraint.
+
+Vellum uses graph coloring for constraints. Graph coloring splits the constraints into disconnected groups that can run in parallel without affecting eachother.
+
+This results in much faster convergence for stiff constraints, and prevents race conditions.
+
+It's fast in OpenCL but sadly extremely slow in VEX, since it requires a feedback loop.
+
+```js
+// Based on distanceUpdateXPBD() in houdini/ocl/sim/pbd_constraints.cl (line 107)
+
+int point1 = i[]@pts[0];
+int point2 = i[]@pts[1];
+
+vector pos1 = point(0, "P", point1);
+vector pos2 = point(0, "P", point2);
+
+float mass1 = point(-1, "mass", point1);
+float mass2 = point(-1, "mass", point2);
+
+// Prevent divide by zero errors
+float inverse_mass1 = mass1 > 0 ? 1.0 / mass1 : 0;
+float inverse_mass2 = mass2 > 0 ? 1.0 / mass2 : 0;
+
+float sum = inverse_mass1 + inverse_mass2;
+if (sum == 0) return;
+
+// Direction between both points on the line
+vector dir = pos2 - pos1;
+
+// Current line length (f@restlength is the target length)
+float current_length = length(dir);
+if (current_length < 1e-6) return;
+
+// Alpha, lambda and C terms from the XPBD paper (see youtube.com/watch?v=jrociOAYqxA)
+float alpha = (1.0 / f@stiffness) / (f@TimeInc * f@TimeInc);
+float C = current_length - f@restlength;
+float delta_lambda = (-C - alpha * f@L) / (sum + alpha);
+vector delta_P = (dir / current_length) * -delta_lambda;
+
+// Update lambda value
+f@L += delta_lambda;
+
+// Update point positions
+setpointattrib(0, "P", point1, pos1 + inverse_mass1 * delta_P);
+setpointattrib(0, "P", point2, pos2 - inverse_mass2 * delta_P);
+```
+
+### 3. Recompute the velocities (VEX)
+
+After solving the constraints, the object likely moved since it was pulled around by the constraints. This adds energy to the simulation.
+
+To make sure the energy continues throughout the simulation without unnecessary damping, we need to recalculate the velocity.
+
+Like with integration, Vellum includes both 1st and 2nd order velocity recalculation (BDF1 and BDF2), with 2nd order being the default.
+
+1st order recalculation is the same as using the Trail node set to "Backward Difference".
+
+Like with integration, the difference between 1st and 2nd order is the number of position samples used.
+
+- 1st order uses 1 previous position sample: `v@pprevious`.
+- 2nd order uses 2 previous position samples: `v@pprevious`, `v@plast`.
+
+For simplicity, I'll just implement 1st order velocity recalculation (BDF1) for now.
+
+The code for 2nd order recalculation can be found in Vellum inside `calc_v_2nd_order_fallback`.
+
+```js
+// Skip pinned points
+if (point(-1, "mass", i@ptnum) <= 0.0) return;
+
+// First order BDF1 integration (calc_v_1st_order in the Vellum solver)
+v@v = (v@P - v@pprevious) / f@TimeInc;
+```
+
+The VEX version is very slow due to the feedback loops. We can get much faster results using OpenCL!
+
+In OpenCL, integration works exactly the same as VEX. The benefit of running it in OpenCL is the data stays on the OpenCL device. This prevents unnecessary copying back to the CPU.
+
+### 1. Integrate the positions (OpenCL)
+
+```cpp
+#runover attrib
+
+// Bind the gravity parameter as a varying precision vector (float3)
+#bind parm gravity fpreal3
+
+// Bind mass attribute as a varying precision float with read only
+#bind point mass fpreal
+// Bind pprevious attribute as a varying precision vector with read/write
+#bind point &pprevious fpreal3
+// Bind P attribute as a varying precision vector with read/write
+#bind point &P fpreal3
+// Bind v attribute as a varying precision vector with read/write
+#bind point &v fpreal3
+
+@KERNEL
+{
+    // Skip pinned points
+    if (@mass <= 0.0f) return;
+    
+    // Using @-binding syntax, @P and @v call vload3() every time
+    // It's better to cache them to avoid unnecessary vload3() spam
+    // Float attributes like @TimeInc are OK since they don't use vload3()
+    fpreal3 P = @P;
+    fpreal3 v = @v;
+    
+    // Swap pprevious to current position (store_prev_attributes in the Vellum solver)
+    @pprevious.set(P);
+    
+    // Add gravity to velocity (Vellum uses a Gravity Force instead)
+    v += @gravity * @TimeInc;
+    @v.set(v);
+    
+    // First order BDF1 integration (point_update_1st_order in the Vellum solver)
+    @P.set(P + v * @TimeInc);
+}
+```
+
+### 2. Solve the constraints (OpenCL)
+
+OpenCL is extremely fast at feedback loops, since we can use [worksets](#worksets) to run everything in parallel.
+
+Worksets require using a "Detail Attribute of Worksets". Worksets mean running the same kernel multiple times in a row.
+
+It expects two arrays containing offsets and sizes, [as described in the worksets section](#worksets).
+
+```cpp
+// Based on distanceUpdateXPBD() in houdini/ocl/sim/pbd_constraints.cl (line 107)
+
+// I prefer this way of accessing array attribute values, since it has bounds checking to prevent memory leaks
+// Equivalent to @primpoints.entriesAt(...)
+#define entriesAt(_arr_, _idx_) ((_idx_ >= 0 && _idx_ < _arr_##_length) ? (_arr_##_index[_idx_+1] - _arr_##_index[_idx_]) : 0)
+// Equivalent to @primpoints.compAt(...)
+#define compAt(_arr_, _idx_, _compidx_) ((_idx_ >= 0 && _idx_ < _arr_##_length && _compidx_ >= 0 && _compidx_ < entriesAt(_arr_, _idx_)) ? _arr_[_arr_##_index[_idx_] + _compidx_] : 0)
+
+// Sadly @-binding isn't supported for worksets yet, so we need to use plain OpenCL :(
+kernel void solveDistanceConstraints(
+
+    int color_offset, // current workset offset, as defined by the "Worksets Begins" attribute
+    int color_length, // current workset length, as defined by the "Worksets Lengths" attribute
+    
+    float timeinc, // timestep bound in "Options" tab, roughly equivalent to ((1/fps)/solver_substeps)*solver_timescale
+    
+    int _P_length, // number of values for the P attribute, same as the number of points
+    global float* _P, // float array of each P attribute value, ordered by point index
+    
+    int _mass_length, // number of values for the mass attribute, same as the number of points
+    global float* _mass, // float array of each mass attribute value, ordered by point index
+    
+    int _stiffness_length, // number of values for the stiffness attribute, same as the number of prims
+    global float* _stiffness, // float array of each stiffness attribute value, ordered by prim index
+    
+    int _restlength_length, // number of values for the restlength attribute, same as the number of prims
+    global float* _restlength, // float array of each restlength attribute value, ordered by prim index
+    
+    int _L_length, // number of values for the L attribute, same as the number of prims
+    global float* _L, // float array of each L attribute value, ordered by prim index
+    
+    int _primpoints_length, // length (number of entries) of the int attribute
+    global int* _primpoints_index, // array of the starting indices of each subarray
+    global int* _primpoints // array of int attribute values, flattened in index order
+)
+{
+    // When using "Detail Attribute of Worksets", each workset is run separately
+    // get_global_id(0) resets to 0 each time, so it's really the local ID of the current workset
+    int prim = get_global_id(0);
+    
+    // Never process data outside the current workset
+    if (prim >= color_length) return;
+    
+    // color_offset is the current workset's offset, as defined by the "Workset Begins" attribute
+    // To get the true prim ID, we need to add color_offset to the global ID
+    prim += color_offset;
+    
+    // primpoints is an array attribute, so each prim stores an array containing its points
+    // I think of it like subarrays within a larger array
+    // [[0, 1], [2, 3], [4, 5]]
+    
+    // Houdini merges array attributes into a single array before passing them to OpenCL
+    // It passes an offset array (_primpoints_index), and the values array (_primpoints)
+    // Index:   [0,    2,    4   ]
+    // Values:  [0, 1, 2, 3, 4, 5]
+    
+    // I prefer using compAt() to access subarrays, since it has bounds checking to prevent memory leaks
+    int point1 = compAt(_primpoints, prim, 0);
+    int point2 = compAt(_primpoints, prim, 1);
+    
+    // Below is the unsafe equivalent, which may cause memory leaks
+    // int point1 = _primpoints[_primpoints_index[prim]];
+    // int point2 = _primpoints[_primpoints_index[prim] + 1];
+    
+    fpreal3 pos1 = vload3(point1, _P);
+    fpreal3 pos2 = vload3(point2, _P);
+    
+    float mass1 = _mass[point1];
+    float mass2 = _mass[point2];
+    
+    // Prevent divide by zero errors
+    float inverse_mass1 = mass1 > 0.0f ? 1.0f / mass1 : 0.0f;
+    float inverse_mass2 = mass2 > 0.0f ? 1.0f / mass2 : 0.0f;
+    
+    float sum = inverse_mass1 + inverse_mass2;
+    if (sum == 0.0f) return;
+    
+    // Direction between both points on the line
+    fpreal3 dir = pos2 - pos1;
+    
+    // Current line length (f@restlength is the target length)
+    float current_length = length(dir);
+    if (current_length < 1e-6f) return;
+    
+    float stiffness = _stiffness[prim];
+    float restlength = _restlength[prim];
+    float L = _L[prim];
+    
+    // Alpha, lambda and C terms from the XPBD paper (see youtube.com/watch?v=jrociOAYqxA)
+    float alpha = (1.0f / stiffness) / (timeinc * timeinc);
+    float C = current_length - restlength;
+    float delta_lambda = (-C - alpha * L) / (sum + alpha);
+    fpreal3 delta_P = (dir / current_length) * -delta_lambda;
+    
+    // Update lambda value
+    _L[prim] += delta_lambda;
+    
+    // Update point positions
+    vstore3(pos1 + inverse_mass1 * delta_P, point1, _P);
+    vstore3(pos2 - inverse_mass2 * delta_P, point2, _P);
+}
+```
+
+### 3. Recompute the velocities (OpenCL)
+
+This is exactly the same as in VEX, except the data stays on the OpenCL device.
+
+```cpp
+#runover attrib
+
+// Bind mass attribute as a varying precision float with read only
+#bind point mass fpreal
+// Bind P attribute as a varying precision vector with read only
+#bind point P fpreal3
+// Bind pprevious attribute as a varying precision vector with read only
+#bind point pprevious fpreal3
+// Bind v attribute as a varying precision vector with read/write
+#bind point &v fpreal3
+
+@KERNEL
+{
+    // Skip pinned points
+    if (@mass <= 0.0f) return;
+    
+    // First order BDF1 integration (calc_v_1st_order in the Vellum solver)
+    @v.set((@P - @pprevious) / @TimeInc);
+}
 ```
 
 ## SOP: Vertex Block Descent
