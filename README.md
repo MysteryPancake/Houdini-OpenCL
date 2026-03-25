@@ -2699,11 +2699,13 @@ if (point(-1, "mass", i@ptnum) <= 0.0) return;
 v@v = (v@P - v@pprevious) / f@TimeInc;
 ```
 
-The VEX version is slow due to the feedback loops. We can get much faster results using OpenCL!
-
-In OpenCL, integration works exactly the same as VEX. The benefit of running it in OpenCL is the data stays on the OpenCL device. This prevents unnecessary copying back to the CPU.
+The VEX version of Vellum is slow due to the feedback loops. We can get much faster results using OpenCL!
 
 ### 1. Integrate the positions (OpenCL)
+
+In OpenCL, integration works exactly the same as VEX.
+
+The benefit of running it in OpenCL is the data stays on the OpenCL device. This prevents unnecessary copying back to the CPU.
 
 ```cpp
 #runover attrib
