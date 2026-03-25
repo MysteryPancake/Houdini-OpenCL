@@ -2565,11 +2565,11 @@ f@surface = opSubtraction(dist2, f@surface);
 
 Vellum is based on a technique called Extended Position Based Dynamics (XPBD).
 
-XPBD is based on Verlet integration, and it's surprisingly easy to remake it.
+XPBD is based on Verlet integration, and it's surprisingly easy to remake.
 
-There's some [great demos and videos on XPBD by Matthias Müller](https://www.youtube.com/watch?v=jrociOAYqxA), an author of the XPBD paper.
+There's some [great demos and videos on XPBD by Matthias Müller](https://www.youtube.com/watch?v=jrociOAYqxA), the author of the XPBD paper.
 
-At its core, Vellum is really just 3 steps:
+At its core, Vellum is just 3 steps:
 
 1. Integrate the positions
 2. Solve the constraints
