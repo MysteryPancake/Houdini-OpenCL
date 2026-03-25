@@ -2575,7 +2575,11 @@ At its core, Vellum is really just 3 steps:
 2. Solve the constraints
 3. Recompute the velocities
 
-There's also another step, collision handling. Vellum handles collisions with the Detangle node. The purpose of Detangle is pushing apart intersecting triangles. This can happen at any point throughout the 3 steps, so Vellum triggers Detangle pretty randomly using a Gas Intermittent Solver.
+There's also another step, collision handling.
+
+Vellum handles collisions with the Detangle node. The purpose of Detangle is pushing apart intersecting triangles.
+
+This can happen at any point throughout the 3 steps, so Vellum triggers Detangle pretty randomly using a Gas Intermittent Solver.
 
 | [Download the HIP file!](./hips/vellum_remake.hiplc?raw=true) |
 | --- |
