@@ -90,8 +90,8 @@ Here's the kernel in the diagram above, written in plain OpenCL.
 ```cpp
 // Assumes P is bound as 32-bit float with read/write in the Bindings tab
 kernel void kernelName(
-    int _bound_P_length,
-    global float* _bound_P
+    int _bound_P_length, // number of values for the P attribute, same as the number of points
+    global float* _bound_P // float array of each P attribute value, ordered by point index
 )
 {
     // Only print on the first workitem to prevent spam
@@ -177,7 +177,7 @@ The workgroup diagram above is by [Martin Schreiber](https://www.researchgate.ne
 It's also possible for workgroups to be 2D, 3D or higher. You might see this with volumes or heightfields.
 
 ```cpp
-// Volumes and heightfields may have multiple global IDs
+// Volumes like images and heightfields may have multiple global IDs
 int idx = get_global_id(0);
 int idy = get_global_id(1);
 int idz = get_global_id(2);
@@ -208,18 +208,25 @@ You can even animate the data to visualize how it's arranged in each workgroup.
 // To use VEXhsvtorgb() for colorization
 #include <color.h>
 
+// Bind the blend parameter as 32-bit float (like chf("blend") in VEX)
 #bind parm blend float
 
+// Bind P attribute as 32-bit vector with read/write
 #bind point &P float3
+// Bind Cd attribute as a 32-bit vector with read/write
 #bind point &Cd float3
 
 @KERNEL
 {
+	// ID relative to the start of the current local workgroup
     int local_id = get_local_id(0);
+	// Number of items within the current local workgroup
     int num_ids = get_local_size(0);
     float local_ratio = (float)local_id / num_ids;
-    
+
+	// Number of the current local workgroup
     int group_id = get_group_id(0);
+	// Total number of local workgroups in the current global workgroup
     int num_groups = get_num_groups(0);
     float group_ratio = (float)group_id / num_groups;
     
