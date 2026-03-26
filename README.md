@@ -1457,6 +1457,8 @@ There are various solutions to this:
 
 Worksets run the same kernel multiple times in a row. It runs in sequential order to ensure deterministic results.
 
+I think of it like this. The diagram below represents the same kernel running multiple times, rather than 3 separate kernels.
+
 <img src="./images/multiple_global_workgroups2.png">
 
 To use worksets, use the "Detail Attribute of Worksets" option on any OpenCL node.
