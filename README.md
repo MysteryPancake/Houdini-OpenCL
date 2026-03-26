@@ -1457,7 +1457,7 @@ There are various solutions to this:
 
 Worksets run the same kernel multiple times in a row. It runs in sequential order to ensure deterministic results.
 
-I think of it like this. The diagram below represents the same kernel running multiple times, rather than 3 separate kernels.
+I think of it like this. The diagram below represents the same kernel running multiple times.
 
 <img src="./images/multiple_global_workgroups2.png">
 
