@@ -1474,11 +1474,15 @@ i[]@offsets = {0, 4, 8, 12};
 i[]@sizes = {4, 4, 4, 4};
 ```
 
-Note this won't always run 4 workitems per workgroup, [since it rounds up to the nearest multiple of the local workgroup size](#bounds-checking).
+Note it won't always run 4 workitems per workgroup, [since it rounds up to the nearest multiple of the local workgroup size](#bounds-checking).
+
+In other words, if you set `i[]@sizes = {4}` but `get_local_size(0)` return 12, it rounds up to 12 workitems instead of 4.
+
+In this case, you can either [skip the extra workitems](#bounds-checking) or [manually set the local workgroup size](#changing-the-local-workgroup-size).
 
 Each time the kernel runs, it passes pairs of offsets and lengths from these arrays as extra kernel arguments.
 
-Note `get_global_id(0)` still starts at 0 as usual. You need to add the passed offset to get the true global ID.
+Note `get_global_id(0)` starts at 0 as usual. This means you need to add the passed offset argument to get the true global ID.
 
 ### Plain OpenCL version
 
