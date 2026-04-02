@@ -201,7 +201,7 @@ You can even animate the data to visualize how it's arranged in each workgroup.
 
 <img src="./images/visualize_workgroups.webp" width="700">
 
-| [Download the HIP file!](./hips/visualize_workgroups.hiplc?raw=true) |
+| [Download the HIP file!](./hips/visualize_workgroups.hiplc) |
 | --- |
 
 ```cpp
@@ -326,7 +326,7 @@ Vellum gets around this by using a switch to check if functionality from version
 ocldeviceinfo("CL_DEVICE_TYPE")==4 && ocldeviceinfo("CL_DEVICE_DEVICE_ENQUEUE_SUPPORT") && ocldeviceinfo("CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT")
 ```
 
-| [Download the HIP file!](./hips/set_opencl_version.hiplc?raw=true) |
+| [Download the HIP file!](./hips/set_opencl_version.hiplc) |
 | --- |
 
 ## Display "1 warning generated" errors
@@ -351,7 +351,7 @@ v@P += v@N * f@noise;
 
 <img src="./images/peak1.png" width="400">
 
-| [Download the HIP file!](./hips/example1_basics.hiplc?raw=true) |
+| [Download the HIP file!](./hips/example1_basics.hiplc) |
 | --- |
 
 I know it looks overwhelming already, but it's about to get worse. We're going to translate it into OpenCL!
@@ -575,7 +575,7 @@ kernel void kernelName(
 
 <img src="./images/opencl_equivalent_vex.png" width="600">
 
-| [Download the HIP file!](./hips/example1_basics.hiplc?raw=true) |
+| [Download the HIP file!](./hips/example1_basics.hiplc) |
 | --- |
 
 You can see how much more verbose it's become compared to the VEX version. What can we do to fix this?
@@ -611,7 +611,7 @@ They generate the same OpenCL code under the hood, but let you use a VEX-like sy
 
 <img src="./images/at_bindings_equivalent_vex.png" width="600">
 
-| [Download the HIP file!](./hips/example1_basics.hiplc?raw=true) |
+| [Download the HIP file!](./hips/example1_basics.hiplc) |
 | --- |
 
 Look at how much shorter it is for the same result! But what's it really doing under the hood?
@@ -713,7 +713,7 @@ v@P = lerp(v@P, blurredP, chf("step_size") * f@weight);
 
 <img src="./images/odd_even_steps.png" width="700">
 
-| [Download the HIP file!](./hips/example2_neighbours.hiplc?raw=true) |
+| [Download the HIP file!](./hips/example2_neighbours.hiplc) |
 | --- |
 
 Now the VEX is complete enough, how does it translate to OpenCL?
@@ -1036,7 +1036,7 @@ One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy
 
 <img src="./images/blur_opencl_correct.png" width="800">
 
-| [Download the HIP file!](./hips/example1_basics.hiplc?raw=true) |
+| [Download the HIP file!](./hips/example1_basics.hiplc) |
 | --- |
 
 ## Precision
@@ -1319,7 +1319,7 @@ Since `mat3` is an array of vectors, loading it from memory requires loading 3 v
 
 <img src="./images/read_write_matrix.png" width="600">
 
-| [Download the HIP file!](./hips/matrix_example.hiplc?raw=true) |
+| [Download the HIP file!](./hips/matrix_example.hiplc) |
 | --- |
 
 ```cpp
@@ -1351,7 +1351,7 @@ You can use `vec = mat3vecmul(mat, vec)` to transform a vector using a 3x3 matri
 
 <img src="./images/apply_matrix.png" width="600">
 
-| [Download the HIP file!](./hips/matrix_example.hiplc?raw=true) |
+| [Download the HIP file!](./hips/matrix_example.hiplc) |
 | --- |
 
 ```cpp
@@ -1486,7 +1486,7 @@ Note `get_global_id(0)` starts at 0 as usual. This means you need to add the pas
 
 ### Plain OpenCL version
 
-| [Download the HIP file!](./hips/workset_example.hiplc?raw=true) |
+| [Download the HIP file!](./hips/workset_example.hiplc) |
 | --- |
 
 ```cpp
@@ -1950,7 +1950,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
 <img src="./images/cops/shadertoy_conversion.png" width="700">
 
-| [Download the HIP file!](./hips/cops/shadertoy_examples.hiplc?raw=true) |
+| [Download the HIP file!](./hips/cops/shadertoy_examples.hiplc) |
 | --- |
 
 ### fragCoord in OpenCL
@@ -1995,7 +1995,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) // Integer pixel coordin
 
 <img src="./images/cops/shadertoy_conversion3.png" width="700">
 
-| [Download the HIP file!](./hips/cops/shadertoy_examples.hiplc?raw=true) |
+| [Download the HIP file!](./hips/cops/shadertoy_examples.hiplc) |
 | --- |
 
 ### iResolution in OpenCL
@@ -2105,9 +2105,9 @@ static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 
 Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses @-binding syntax.
 
-<img src="./images/cops/radial_blur.png?raw=true" width="600">
+<img src="./images/cops/radial_blur.png" width="600">
 
-| [Download the HIP file!](./hips/cops/radial_blur.hiplc?raw=true) |
+| [Download the HIP file!](./hips/cops/radial_blur.hiplc) |
 | --- |
 
 ```cpp
@@ -2150,9 +2150,9 @@ Copernicus doesn't have many good dithering options, so I translated [4x4 Bayer 
 
 I removed the gamma correction since Houdini already has color management.
 
-<img src="./images/cops/bayer_dithering.png?raw=true" width="700">
+<img src="./images/cops/bayer_dithering.png" width="700">
 
-| [Download the HIP file!](./hips/cops/bayer_dithering.hiplc?raw=true) |
+| [Download the HIP file!](./hips/cops/bayer_dithering.hiplc) |
 | --- |
 
 ```cpp
@@ -2185,9 +2185,9 @@ const float16 bayerIndex = (float16)(
 
 Forward and inverse log polar transform, inspired by [this 3Blue1Brown video](https://www.youtube.com/watch?v=ldxFjLJ3rVY) and [reinder's shader](https://www.shadertoy.com/view/Mdf3zM).
 
-<img src="./images/cops/escher_transform.webp?raw=true" width="700">
+<img src="./images/cops/escher_transform.webp" width="700">
 
-| [Download the HIP file!](./hips/cops/escher_transform.hiplc?raw=true) |
+| [Download the HIP file!](./hips/cops/escher_transform.hiplc) |
 | --- |
 
 ### Forward Transform
@@ -2260,7 +2260,7 @@ I used brute force to find the nearest point. For better performance, use [jump 
 <img src="./images/cops/cops_voronoi2.webp" width="30%"></img>
 <img src="./images/cops/cops_voronoi3.webp" width="30%"></img>
 
-| [Download the HIP file!](./hips/cops/cops_voronoi.hiplc?raw=true) |
+| [Download the HIP file!](./hips/cops/cops_voronoi.hiplc) |
 | --- |
 
 ```cpp
@@ -2358,9 +2358,9 @@ This is useful for lens flares, bloom and bokeh effects, [like in this video by 
 
 For better performance, use a Fast Fourier Transform (FFT) instead.
 
-<img src="./images/cops/cops_convolve.webp?raw=true" width="600">
+<img src="./images/cops/cops_convolve.webp" width="600">
 
-| [Download the HIP file!](./hips/cops/cops_convolve.hip?raw=true) |
+| [Download the HIP file!](./hips/cops/cops_convolve.hip) |
 | --- |
 
 ```cpp
@@ -2429,9 +2429,9 @@ This file was made by [Lewis Saunders](https://github.com/lcrs/_.hips), reupload
 
 Using OpenCL to multiply the density of one VDB by another, like VDB Combine set to "Multiply".
 
-<img src="./images/Ls_OpenCLMaskVDB.png?raw=true" width="600">
+<img src="./images/Ls_OpenCLMaskVDB.png" width="600">
 
-| [Download the HIP file!](./hips/Ls_OpenCLMaskVDB.hipnc?raw=true) |
+| [Download the HIP file!](./hips/Ls_OpenCLMaskVDB.hipnc) |
 | --- |
 
 ```cpp
@@ -2450,13 +2450,13 @@ Using OpenCL to multiply the density of one VDB by another, like VDB Combine set
 
 Friedrich on Discord wanted to find a fast way to subtract a curve from an SDF.
 
-<img src="./images/sdf_subtract_curve.png?raw=true" width="600">
+<img src="./images/sdf_subtract_curve.png" width="600">
 
 While VDB Combine is fast, it's even faster to do the SDF subtraction in OpenCL.
 
-<img src="./images/sdf_subtract_speed.png?raw=true" width="600">
+<img src="./images/sdf_subtract_speed.png" width="600">
 
-| [Download the HIP file!](./hips/sdf_subtract_curve.hiplc?raw=true) |
+| [Download the HIP file!](./hips/sdf_subtract_curve.hiplc) |
 | --- |
 
 ```cpp
@@ -2505,9 +2505,9 @@ f@surface = opSubtraction(dist, f@surface);
 
 Friedrich on Discord also asked about smooth subtraction. This combines [SDF smooth min](https://github.com/MysteryPancake/Houdini-Fun?tab=readme-ov-file#smooth-min) with [SDF subtraction](https://github.com/MysteryPancake/Houdini-Fun?tab=readme-ov-file#boolean-operations).
 
-<img src="./images/sdf_smooth_subtract.png?raw=true" width="600">
+<img src="./images/sdf_smooth_subtract.png" width="600">
 
-| [Download the HIP file!](./hips/sdf_smooth_subtract.hiplc?raw=true) |
+| [Download the HIP file!](./hips/sdf_smooth_subtract.hiplc) |
 | --- |
 
 ```cpp
@@ -2587,7 +2587,7 @@ Vellum handles collisions with the Detangle node. The purpose of Detangle is pus
 
 This can happen at any point throughout the 3 steps, so Vellum triggers Detangle pretty randomly using a Gas Intermittent Solver.
 
-| [Download the HIP file!](./hips/vellum_remake.hiplc?raw=true) |
+| [Download the HIP file!](./hips/vellum_remake.hiplc) |
 | --- |
 
 ### 1. Integrate the positions (VEX)
@@ -3005,9 +3005,9 @@ The process is the same as in the previous example:
 2. Get the global max using atomics, this time using `atomic_max()` rather than `atomic_add()`.
 3. Move the point to the biggest value in the writeback kernel, assuming only one value is the largest.
 
-<img src="./images/cops/workgroup_max.png?raw=true" width="600">
+<img src="./images/cops/workgroup_max.png" width="600">
 
-| [Download the HIP file!](./hips/cops/workgroup_max.hiplc?raw=true) |
+| [Download the HIP file!](./hips/cops/workgroup_max.hiplc) |
 | --- |
 
 ```cpp
@@ -3059,21 +3059,21 @@ Sadly it can't use workgroup reduction since it has to run horizontally and vert
 
 Instead I tried iterative binary reduction, inspired by workgroup reduction. Each iteration takes 2 pixels next to eachother, does the operation and writes the result in a ping-pong way, [like Attribute Blur](#example-2-remaking-attribute-blur).
 
-<img src="./images/cops/prefixsum_max.png?raw=true">
+<img src="./images/cops/prefixsum_max.png">
 
 This makes the performance orders of magnitude faster!
 
 **EDIT: This was a bug fixed in Houdini 21.0.594. The performance is much closer now.**
 
-<img src="./images/cops/fast_prefixsum.png?raw=true" width="800">
+<img src="./images/cops/fast_prefixsum.png" width="800">
 
 The number of iterations required for each dimension is `log2(res) / 2`. The division by 2 comes from the extra pass in the writeback kernel. You can animate the iterations to get interesting effects.
 
-<img src="./images/cops/prefixsum_animate.webp?raw=true" width="400">
+<img src="./images/cops/prefixsum_animate.webp" width="400">
 
 The tricky part is masking. I found the mask can be applied beforehand to get the same result.
 
-| [Download the HIP file!](./hips/cops/cops_fast_prefixsum.hiplc?raw=true) |
+| [Download the HIP file!](./hips/cops/cops_fast_prefixsum.hiplc) |
 | --- |
 
 ### Applying the mask
@@ -3286,11 +3286,11 @@ Although I optimized Prefix Sum above, it's orders of magnitude faster to use wo
 
 **EDIT: This was a bug fixed in Houdini 21.0.594. The performance is much closer now.**
 
-<img src="./images/cops/fast_statistics.png?raw=true" width="800">
+<img src="./images/cops/fast_statistics.png" width="800">
 
-<img src="./images/cops/fast_equalize.png?raw=true" width="800">
+<img src="./images/cops/fast_equalize.png" width="800">
 
-| [Download the HIP file!](./hips/cops/cops_fast_statistics.hiplc?raw=true) |
+| [Download the HIP file!](./hips/cops/cops_fast_statistics.hiplc) |
 | --- |
 
 ### Average
