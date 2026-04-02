@@ -201,7 +201,7 @@ You can even animate the data to visualize how it's arranged in each workgroup.
 
 <img src="./images/visualize_workgroups.webp" width="700">
 
-| [Download the HIP file!](./hips/visualize_workgroups.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/visualize_workgroups.hiplc) |
 | --- |
 
 ```cpp
@@ -326,7 +326,7 @@ Vellum gets around this by using a switch to check if functionality from version
 ocldeviceinfo("CL_DEVICE_TYPE")==4 && ocldeviceinfo("CL_DEVICE_DEVICE_ENQUEUE_SUPPORT") && ocldeviceinfo("CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT")
 ```
 
-| [Download the HIP file!](./hips/set_opencl_version.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/set_opencl_version.hiplc) |
 | --- |
 
 ## Display "1 warning generated" errors
@@ -351,7 +351,7 @@ v@P += v@N * f@noise;
 
 <img src="./images/peak1.png" width="400">
 
-| [Download the HIP file!](./hips/example1_basics.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/example1_basics.hiplc) |
 | --- |
 
 I know it looks overwhelming already, but it's about to get worse. We're going to translate it into OpenCL!
@@ -575,7 +575,7 @@ kernel void kernelName(
 
 <img src="./images/opencl_equivalent_vex.png" width="600">
 
-| [Download the HIP file!](./hips/example1_basics.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/example1_basics.hiplc) |
 | --- |
 
 You can see how much more verbose it's become compared to the VEX version. What can we do to fix this?
@@ -611,7 +611,7 @@ They generate the same OpenCL code under the hood, but let you use a VEX-like sy
 
 <img src="./images/at_bindings_equivalent_vex.png" width="600">
 
-| [Download the HIP file!](./hips/example1_basics.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/example1_basics.hiplc) |
 | --- |
 
 Look at how much shorter it is for the same result! But what's it really doing under the hood?
@@ -713,7 +713,7 @@ v@P = lerp(v@P, blurredP, chf("step_size") * f@weight);
 
 <img src="./images/odd_even_steps.png" width="700">
 
-| [Download the HIP file!](./hips/example2_neighbours.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/example2_neighbours.hiplc) |
 | --- |
 
 Now the VEX is complete enough, how does it translate to OpenCL?
@@ -1036,7 +1036,7 @@ One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy
 
 <img src="./images/blur_opencl_correct.png" width="800">
 
-| [Download the HIP file!](./hips/example1_basics.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/example1_basics.hiplc) |
 | --- |
 
 ## Precision
@@ -1319,7 +1319,7 @@ Since `mat3` is an array of vectors, loading it from memory requires loading 3 v
 
 <img src="./images/read_write_matrix.png" width="600">
 
-| [Download the HIP file!](./hips/matrix_example.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/matrix_example.hiplc) |
 | --- |
 
 ```cpp
@@ -1351,7 +1351,7 @@ You can use `vec = mat3vecmul(mat, vec)` to transform a vector using a 3x3 matri
 
 <img src="./images/apply_matrix.png" width="600">
 
-| [Download the HIP file!](./hips/matrix_example.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/matrix_example.hiplc) |
 | --- |
 
 ```cpp
@@ -1486,7 +1486,7 @@ Note `get_global_id(0)` starts at 0 as usual. This means you need to add the pas
 
 ### Plain OpenCL version
 
-| [Download the HIP file!](./hips/workset_example.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/workset_example.hiplc) |
 | --- |
 
 ```cpp
@@ -1950,7 +1950,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 
 <img src="./images/cops/shadertoy_conversion.png" width="700">
 
-| [Download the HIP file!](./hips/cops/shadertoy_examples.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/cops/shadertoy_examples.hiplc) |
 | --- |
 
 ### fragCoord in OpenCL
@@ -1995,7 +1995,7 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord ) // Integer pixel coordin
 
 <img src="./images/cops/shadertoy_conversion3.png" width="700">
 
-| [Download the HIP file!](./hips/cops/shadertoy_examples.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/cops/shadertoy_examples.hiplc) |
 | --- |
 
 ### iResolution in OpenCL
@@ -2107,7 +2107,7 @@ Simple radial blur shader I made for Balthazar on the CGWiki Discord. This uses 
 
 <img src="./images/cops/radial_blur.png" width="600">
 
-| [Download the HIP file!](./hips/cops/radial_blur.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/cops/radial_blur.hiplc) |
 | --- |
 
 ```cpp
@@ -2152,7 +2152,7 @@ I removed the gamma correction since Houdini already has color management.
 
 <img src="./images/cops/bayer_dithering.png" width="700">
 
-| [Download the HIP file!](./hips/cops/bayer_dithering.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/cops/bayer_dithering.hiplc) |
 | --- |
 
 ```cpp
@@ -2187,7 +2187,7 @@ Forward and inverse log polar transform, inspired by [this 3Blue1Brown video](ht
 
 <img src="./images/cops/escher_transform.webp" width="700">
 
-| [Download the HIP file!](./hips/cops/escher_transform.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/cops/escher_transform.hiplc) |
 | --- |
 
 ### Forward Transform
@@ -2260,7 +2260,7 @@ I used brute force to find the nearest point. For better performance, use [jump 
 <img src="./images/cops/cops_voronoi2.webp" width="30%"></img>
 <img src="./images/cops/cops_voronoi3.webp" width="30%"></img>
 
-| [Download the HIP file!](./hips/cops/cops_voronoi.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/cops/cops_voronoi.hiplc) |
 | --- |
 
 ```cpp
@@ -2360,7 +2360,7 @@ For better performance, use a Fast Fourier Transform (FFT) instead.
 
 <img src="./images/cops/cops_convolve.webp" width="600">
 
-| [Download the HIP file!](./hips/cops/cops_convolve.hip) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/cops/cops_convolve.hip) |
 | --- |
 
 ```cpp
@@ -2431,7 +2431,7 @@ Using OpenCL to multiply the density of one VDB by another, like VDB Combine set
 
 <img src="./images/Ls_OpenCLMaskVDB.png" width="600">
 
-| [Download the HIP file!](./hips/Ls_OpenCLMaskVDB.hipnc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/Ls_OpenCLMaskVDB.hipnc) |
 | --- |
 
 ```cpp
@@ -2456,7 +2456,7 @@ While VDB Combine is fast, it's even faster to do the SDF subtraction in OpenCL.
 
 <img src="./images/sdf_subtract_speed.png" width="600">
 
-| [Download the HIP file!](./hips/sdf_subtract_curve.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/sdf_subtract_curve.hiplc) |
 | --- |
 
 ```cpp
@@ -2507,7 +2507,7 @@ Friedrich on Discord also asked about smooth subtraction. This combines [SDF smo
 
 <img src="./images/sdf_smooth_subtract.png" width="600">
 
-| [Download the HIP file!](./hips/sdf_smooth_subtract.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/sdf_smooth_subtract.hiplc) |
 | --- |
 
 ```cpp
@@ -2587,7 +2587,7 @@ Vellum handles collisions with the Detangle node. The purpose of Detangle is pus
 
 This can happen at any point throughout the 3 steps, so Vellum triggers Detangle pretty randomly using a Gas Intermittent Solver.
 
-| [Download the HIP file!](./hips/vellum_remake.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/vellum_remake.hiplc) |
 | --- |
 
 ### 1. Integrate the positions (VEX)
@@ -3007,7 +3007,7 @@ The process is the same as in the previous example:
 
 <img src="./images/cops/workgroup_max.png" width="600">
 
-| [Download the HIP file!](./hips/cops/workgroup_max.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/cops/workgroup_max.hiplc) |
 | --- |
 
 ```cpp
@@ -3073,7 +3073,7 @@ The number of iterations required for each dimension is `log2(res) / 2`. The div
 
 The tricky part is masking. I found the mask can be applied beforehand to get the same result.
 
-| [Download the HIP file!](./hips/cops/cops_fast_prefixsum.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/cops/cops_fast_prefixsum.hiplc) |
 | --- |
 
 ### Applying the mask
@@ -3290,7 +3290,7 @@ Although I optimized Prefix Sum above, it's orders of magnitude faster to use wo
 
 <img src="./images/cops/fast_equalize.png" width="800">
 
-| [Download the HIP file!](./hips/cops/cops_fast_statistics.hiplc) |
+| [Download the HIP file!](../../raw/refs/heads/main/hips/cops/cops_fast_statistics.hiplc) |
 | --- |
 
 ### Average
