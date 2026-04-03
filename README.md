@@ -1457,7 +1457,7 @@ There are various solutions to this:
 
 Worksets run the same kernel multiple times in a row. It runs in sequential order to ensure deterministic results.
 
-I think of it like this. The diagram below represents the same kernel running multiple times.
+When using worksets, it adds another level of hierarchy: `Worksets -> Global workgroups -> Local workgroups`.
 
 <img src="./images/multiple_global_workgroups2.png">
 
@@ -1492,8 +1492,8 @@ Note `get_global_id(0)` starts at 0 as usual. This means you need to add the pas
 ```cpp
 kernel void kernelName(
     // Assuming "Use Single Workgroup" is disabled
-    int color_offset, // Current workset offset, from the "Workset Begin" array
-    int color_length, // Current workset length, from the "Workset Lengths" array
+    int workset_offset, // Current workset offset, from the "Workset Begin" array
+    int workset_length, // Current workset length, from the "Workset Lengths" array
     
     // Dummy binding
     int P_length,
@@ -1502,19 +1502,19 @@ kernel void kernelName(
 {
     // The global ID still starts at 0, so it's really the local ID of the current workset
     int local_id = get_global_id(0);
-    if (local_id >= color_length) return;
+    if (local_id >= workset_length) return;
     
     // Only run on the first workitem in each workset
     if (local_id != 0) return;
     
-    // Add the color offset to get the actual global ID
-    int id = local_id + color_offset;
+    // Add the workset offset to get the actual global ID
+    int id = local_id + workset_offset;
     
     // Print the local and global ID of the current workset
     printf("Local ID: %d, Global ID: %d\n", local_id, id);
     
     // Print the offset and length of the current workset
-    printf("Color offset: %d, Color length: %d\n", color_offset, color_length);
+    printf("Color offset: %d, Color length: %d\n", workset_offset, workset_length);
 }
 ```
 
