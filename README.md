@@ -2699,7 +2699,7 @@ This makes 3 arrays, `i[]@offsets`, `i[]@sizes` and `v[]@workset_avgs`.
 
 <img src="./images/workset_average3.png" width="800">
 
-For averaging, I used the same method as in the [Laplacian filter example](#sop-laplacian-filter) above.
+For averaging in OpenCL, I used the same method as in the [Laplacian filter example](#sop-laplacian-filter) above.
 
 I used [workgroup reduction](#workgroup-reduction) for local accumulation, and [atomic operations](#atomic-operations) for global accumulation.
 
