@@ -2691,7 +2691,15 @@ for (int i = 0; i < num_worksets; ++i) {
 resize(v[]@workset_avgs, num_worksets);
 ```
 
-For the averaging, I used the same approach as in the [Laplacian filter example](#sop-laplacian-filter) above.
+This makes 3 arrays, `i[]@offsets`, `i[]@sizes` and `v[]@workset_avgs`.
+
+- `i[]@offsets` contains the starting offsets of each cluster, a running total of the sizes.
+- `i[]@sizes` contains the number of values in each cluster, the number of points with the same `i@workset_idx`.
+- `v[]@workset_avgs` is to store the averages of `v@P` for each cluster.
+
+<img src="./images/workset_average3.png" width="800">
+
+For averaging, I used the same method as in the [Laplacian filter example](#sop-laplacian-filter) above.
 
 I used [workgroup reduction](#workgroup-reduction) for local accumulation, and [atomic operations](#atomic-operations) for global accumulation.
 
