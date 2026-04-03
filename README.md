@@ -1530,6 +1530,10 @@ Sections are sometimes called **colors**, like with the Graph Color node. The se
 
 <img src="./images/graph_color.png" width="500">
 
+For advanced examples of using worksets, see the [examples section](#examples) for [workset averaging](#sop-workset-averaging-to-get-cluster-centers) and [remaking Vellum](#sop-vellum-remake-in-vex-and-opencl).
+
+<img src="./images/workset_average.png">
+
 ### Worksets vs local workgroups
 
 Worksets seem pretty similar to local workgroups, but there's two important differences.
@@ -2567,6 +2571,250 @@ f@surface = smin(dist, dist2, k);
 f@surface = opSubtraction(dist2, f@surface);
 ```
 
+## SOP: Laplacian Filter
+
+The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) lets you break geometry into frequencies, similar to a fourier transform. You can exaggerate or reduce certain frequencies (eigenvectors) of the geometry for blurring and sharpening effects.
+
+This is based on [White Dog's Eigenspace Projection example](https://drive.google.com/drive/folders/1gFYlmsFgpeihmcqZLFITvYQIW5mpYyJd). It uses global sums in a feedback loop. Perfect candidate for OpenCL!
+
+<p align="left">
+     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter.png" width="45%">
+     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter2.png" width="45%">
+</p>
+
+| [Download the HDA!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/laplacian_filter.hiplc) |
+| --- | --- |
+
+Global sums are hard to compute in OpenCL due to [parallel processing headaches](#parallel-processing-headaches).
+
+There's many workarounds, but I chose to use [workgroup reduction](#workgroup-reduction) and [atomic operations](#atomic-operations).
+
+1. Sum within each local workgroup, often called a partial sum. I used `work_group_reduce_add3()` from `reduce.h`.
+2. After all the partial sums complete, the first workitem in each local workgroup uses `atomic_add()` to add onto the global sum.
+
+<img src="./images/workgroup_reduction.png">
+
+Sadly `atomic_add()` only works on `int` types in OpenCL, not `float` or vector types.
+
+In this case I had `fpreal3`, so I used [VioletSpace's](https://violetspace.github.io/blog/atomic-float-addition-in-opencl.html) `atomic_add_f()` which works on floating types.
+
+```cpp
+#include <reduce.h>
+
+// atomic_add() only works on ints, floats need custom handling
+// From violetspace.github.io/blog/atomic-float-addition-in-opencl.html
+inline void atomic_add_f(volatile __global float* addr, const float val) {
+    #if defined(cl_nv_pragma_unroll) // use hardware-supported atomic addition on Nvidia GPUs with inline PTX assembly
+        float ret; asm volatile("atom.global.add.f32 %0,[%1],%2;":"=f"(ret):"l"(addr),"f"(val):"memory");
+    #elif defined(__opencl_c_ext_fp32_global_atomic_add) // use hardware-supported atomic addition on some Intel GPUs
+        atomic_fetch_add_explicit((volatile global atomic_float*)addr, val, memory_order_relaxed);
+    #elif __has_builtin(__builtin_amdgcn_global_atomic_fadd_f32) // use hardware-supported atomic addition on some AMD GPUs
+        __builtin_amdgcn_global_atomic_fadd_f32(addr, val);
+    #else // fallback emulation: forums.developer.nvidia.com/t/atomicadd-float-float-atomicmul-float-float/14639/5
+        float old = val; while((old=atomic_xchg(addr, atomic_xchg(addr, 0.0f)+old))!=0.0f);
+    #endif
+}
+
+#bind point &rest fpreal3 name=__rest
+#bind point eigenvector fpreal[] input=1
+#bind detail &Psum fpreal3 name=__Psum
+
+@KERNEL
+{
+    if (@iteration >= @eigenvector.len) return;
+
+    // Each iteration is an eigenfrequency we need to add
+    fpreal x = @eigenvector.compAt(@iteration, @elemnum);
+    
+    // Sum within the current workgroup
+    fpreal3 P_group_sum = tofpreal3(work_group_reduce_add3(toaccum3(@rest * x)));
+    
+    // Sum all workgroups to get the global total
+    if (get_local_id(0) == 0)
+    {
+        atomic_add_f((global float*)&@Psum.data[0], (float)P_group_sum.x);
+        atomic_add_f((global float*)&@Psum.data[1], (float)P_group_sum.y);
+        atomic_add_f((global float*)&@Psum.data[2], (float)P_group_sum.z);
+    }
+}
+```
+
+The total sum is stored in a `@Psum` attribute. It scales the amplitude in the feedback loop below.
+
+```cpp
+#bind point &P fpreal3
+#bind point eigenvector fpreal[] input=1
+#bind detail &Psum fpreal3 name=__Psum
+
+@KERNEL
+{
+     // Feedback loop, this should only run over @eigenvector entries in total
+     if (@iteration >= @eigenvector.len) return;
+
+     fpreal x = @eigenvector.compAt(@iteration, @elemnum);
+     fpreal3 total = @Psum.getAt(0);
+     fpreal offset = (fpreal)@iteration / (@max_frequency - 1);
+     fpreal amplitude = @amplitude.getAt(offset);
+     @P.set(@P + total * x * amplitude);
+}
+```
+
+## SOP: Workset averaging to get cluster centers
+
+WaffleboyTom on Discord was wondering how to use worksets to find the average of clusters of points.
+
+It turned out much more complicated than I expected, involving [workgroup reduction](#workgroup-reduction), [atomics](#atomic-operations) and [a writeback kernel](#writeback-kernels).
+
+<img src="./images/workset_average2.png" width="600">
+
+| [Download the HIP file!](./hips/workset_average.hiplc) |
+| --- |
+
+For clusters, the worksets need to be setup manually in VEX.
+
+Their offsets and sizes depend on the number of points with the same index attribute, called `i@workset_idx` below.
+
+```cpp
+int num_worksets = nuniqueval(0, "point", "workset_idx");
+resize(i[]@offsets, num_worksets);
+resize(i[]@sizes, num_worksets);
+
+// Loop through each cluster to store the offsets and sizes of each
+int total_offset = 0;
+for (int i = 0; i < num_worksets; ++i) {
+    i[]@offsets[i] = total_offset;
+    i[]@sizes[i] = findattribvalcount(0, "point", "workset_idx", i);
+    total_offset += i[]@sizes[i];
+}
+
+// Make another array to store the averages for each workset
+resize(v[]@workset_avgs, num_worksets);
+```
+
+For the averaging, I used the same approach as in the [Laplacian filter example](#sop-laplacian-filter) above.
+
+I used [workgroup reduction](#workgroup-reduction) for local accumulation, and [atomic operations](#atomic-operations) for global accumulation.
+
+1. Sum within each local workgroup, often called a partial sum. I used `work_group_reduce_add3()` from `reduce.h`.
+2. After all the partial sums complete, the first workitem in each local workgroup uses `atomic_add()` to add onto the global sum.
+
+In the VEX above, I made a detail array called `v[]@workset_avgs` to store the averages of each workset (or cluster).
+
+<img src="./images/workset_average.png">
+
+```cpp
+#include <reduce.h>
+
+// atomic_add() only works on ints, floats need custom handling
+// From violetspace.github.io/blog/atomic-float-addition-in-opencl.html
+inline void atomic_add_f(volatile __global float* addr, const float val) {
+    #if defined(cl_nv_pragma_unroll) // use hardware-supported atomic addition on Nvidia GPUs with inline PTX assembly
+        float ret; asm volatile("atom.global.add.f32 %0,[%1],%2;":"=f"(ret):"l"(addr),"f"(val):"memory");
+    #elif defined(__opencl_c_ext_fp32_global_atomic_add) // use hardware-supported atomic addition on some Intel GPUs
+        atomic_fetch_add_explicit((volatile global atomic_float*)addr, val, memory_order_relaxed);
+    #elif __has_builtin(__builtin_amdgcn_global_atomic_fadd_f32) // use hardware-supported atomic addition on some AMD GPUs
+        __builtin_amdgcn_global_atomic_fadd_f32(addr, val);
+    #else // fallback emulation: forums.developer.nvidia.com/t/atomicadd-float-float-atomicmul-float-float/14639/5
+        float old = val; while((old=atomic_xchg(addr, atomic_xchg(addr, 0.0f)+old))!=0.0f);
+    #endif
+}
+
+kernel void averageClusterPositions(
+    // Assuming "Use Single Workgroup" is disabled
+    int workset_offset, // Current workset offset, from the "Workset Begin" array
+    int workset_length, // Current workset length, from the "Workset Lengths" array
+    
+    // P attribute we want to average
+    int P_length, // number of values for the P attribute, same as the number of points
+    global float* P_array, // float array of each P attribute value, ordered by point index
+    
+    // Array storing the workset index of each point, to know which workset we're currently in
+    int workset_index_length, // number of values for the workset index attribute
+    global int* workset_index_array, // int array of each workset index value
+    
+    // Array to store averages of the P attribute for each workset
+    int workset_avgs_length, // length (number of entries) of the averages array
+    global int* workset_avgs_index, // array of the starting indices of each subarray
+    global float* workset_avgs_array // array of vector attribute values, flattened in index order
+)
+{
+    // The global ID still starts at 0, so it's really the local ID of the current workset
+    int local_id = get_global_id(0);
+    if (local_id >= workset_length) return;
+    
+    // Add the cluster offset to get the actual global ID
+    int id = local_id + workset_offset;
+    
+    // Get the P attribute of the current point
+    float3 P = vload3(id, P_array);
+    
+    // Sum within the current local workgroup
+    float3 P_group_sum = tofpreal3(work_group_reduce_add3(toaccum3(P)));
+    
+    // Divide by the workset length to get the average
+    float3 P_group_avg = P_group_sum / workset_length;
+    
+    // Sum all local workgroups to get the total for each workset
+    if (get_local_id(0) == 0)
+    {
+        // Get the workset index we're currently in
+        int workset_index = workset_index_array[id];
+        
+        // Since vectors have 3 components, each workset average is stored 3 elements apart
+        // workset_avgs_index: [0,         3,          6       ]
+        // workset_avgs_array: [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
+        
+        // Ideally this would work:
+        // int offset = worksets_avgs_index[workset_index];
+        // But worksets_avgs_index contains garbage data for some reason
+        
+        // I'll send a RFE about this, but for now compute the offset manually
+        int offset = workset_index * 3;
+        
+        // Sum the average X, Y and Z coordinates for this workset
+        atomic_add_f((global float*)&workset_avgs_array[offset  ], (float)P_group_avg.x);
+        atomic_add_f((global float*)&workset_avgs_array[offset+1], (float)P_group_avg.y);
+        atomic_add_f((global float*)&workset_avgs_array[offset+2], (float)P_group_avg.z);
+    }
+}
+
+kernel void writeBack(
+    // Assuming "Use Single Workgroup" is disabled
+    int workset_offset, // Current workset offset, from the "Workset Begin" array
+    int workset_length, // Current workset length, from the "Workset Lengths" array
+    
+    // P attribute we want to average
+    int P_length, // number of values for the P attribute, same as the number of points
+    global float* P_array, // float array of each P attribute value, ordered by point index
+    
+    // Array storing the workset index of each point, to know which workset we're currently in
+    int workset_index_length, // number of values for the workset index attribute
+    global int* workset_index_array, // int array of each workset index value
+    
+    // Array to store averages of the P attribute for each workset
+    int workset_avgs_length, // length (number of entries) of the averages array
+    global int* workset_avgs_index, // array of the starting indices of each subarray
+    global float* workset_avgs_array // array of vector attribute values, flattened in index order
+)
+{
+    // The global ID still starts at 0, so it's really the local ID of the current workset
+    int local_id = get_global_id(0);
+    if (local_id >= workset_length) return;
+    
+    // Add the cluster offset to get the actual global ID
+    int id = local_id + workset_offset;
+    
+    // Get the workset index we're currently in
+    int workset_index = workset_index_array[id];
+    
+    // Read the average for this workset (computed in the other kernel)
+    float3 average = vload3(workset_index, workset_avgs_array);
+    
+    // Store the average as the current position
+    vstore3(average, id, P_array);
+}
+```
+
 ## SOP: Vellum remake in VEX and OpenCL
 
 Vellum is based on a technique called Extended Position Based Dynamics (XPBD).
@@ -2904,94 +3152,6 @@ It uses jacobians and hessians for everything, so the math is confusing. If usin
 
 | [Download the HIP file!](https://github.com/MysteryPancake/Houdini-VBD/releases/latest) | [OpenCL code](https://github.com/MysteryPancake/Houdini-VBD/tree/main/ocl) |
 | --- | --- |
-
-## SOP: Laplacian Filter
-
-The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) lets you break geometry into frequencies, similar to a fourier transform. You can exaggerate or reduce certain frequencies (eigenvectors) of the geometry for blurring and sharpening effects.
-
-This is based on [White Dog's Eigenspace Projection example](https://drive.google.com/drive/folders/1gFYlmsFgpeihmcqZLFITvYQIW5mpYyJd). It uses global sums in a feedback loop. Perfect candidate for OpenCL!
-
-<p align="left">
-     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter.png" width="45%">
-     <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/laplacianfilter2.png" width="45%">
-</p>
-
-| [Download the HDA!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/laplacian_filter.hiplc) |
-| --- | --- |
-
-Global sums are hard to compute in OpenCL due to [parallel processing headaches](#parallel-processing-headaches).
-
-There's many workarounds, but I chose to use [workgroup reduction](#workgroup-reduction) and [atomic operations](#atomic-operations).
-
-1. Sum within each local workgroup, often called a partial sum. I used `work_group_reduce_add3()` from `reduce.h`.
-2. After all the partial sums complete, the first workitem in each local workgroup uses `atomic_add()` to add onto the global sum.
-
-<img src="./images/workgroup_reduction.png">
-
-Sadly `atomic_add()` only works on `int` types in OpenCL, not `float` or vector types.
-
-In this case I had `fpreal3`, so I used [VioletSpace's](https://violetspace.github.io/blog/atomic-float-addition-in-opencl.html) `atomic_add_f()` which works on floating types.
-
-```cpp
-#include <reduce.h>
-
-// atomic_add() only works on ints, floats need custom handling
-// From violetspace.github.io/blog/atomic-float-addition-in-opencl.html
-inline void atomic_add_f(volatile __global float* addr, const float val) {
-    #if defined(cl_nv_pragma_unroll) // use hardware-supported atomic addition on Nvidia GPUs with inline PTX assembly
-        float ret; asm volatile("atom.global.add.f32 %0,[%1],%2;":"=f"(ret):"l"(addr),"f"(val):"memory");
-    #elif defined(__opencl_c_ext_fp32_global_atomic_add) // use hardware-supported atomic addition on some Intel GPUs
-        atomic_fetch_add_explicit((volatile global atomic_float*)addr, val, memory_order_relaxed);
-    #elif __has_builtin(__builtin_amdgcn_global_atomic_fadd_f32) // use hardware-supported atomic addition on some AMD GPUs
-        __builtin_amdgcn_global_atomic_fadd_f32(addr, val);
-    #else // fallback emulation: forums.developer.nvidia.com/t/atomicadd-float-float-atomicmul-float-float/14639/5
-        float old = val; while((old=atomic_xchg(addr, atomic_xchg(addr, 0.0f)+old))!=0.0f);
-    #endif
-}
-
-#bind point &rest fpreal3 name=__rest
-#bind point eigenvector fpreal[] input=1
-#bind detail &Psum fpreal3 name=__Psum
-
-@KERNEL
-{
-    if (@iteration >= @eigenvector.len) return;
-
-    // Each iteration is an eigenfrequency we need to add
-    fpreal x = @eigenvector.compAt(@iteration, @elemnum);
-    
-    // Sum within the current workgroup
-    fpreal3 P_group_sum = tofpreal3(work_group_reduce_add3(toaccum3(@rest * x)));
-    
-    // Sum all workgroups to get the global total
-    if (get_local_id(0) == 0)
-    {
-        atomic_add_f((global float*)&@Psum.data[0], (float)P_group_sum.x);
-        atomic_add_f((global float*)&@Psum.data[1], (float)P_group_sum.y);
-        atomic_add_f((global float*)&@Psum.data[2], (float)P_group_sum.z);
-    }
-}
-```
-
-The total sum is stored in a `@Psum` attribute. It scales the amplitude in the feedback loop below.
-
-```cpp
-#bind point &P fpreal3
-#bind point eigenvector fpreal[] input=1
-#bind detail &Psum fpreal3 name=__Psum
-
-@KERNEL
-{
-     // Feedback loop, this should only run over @eigenvector entries in total
-     if (@iteration >= @eigenvector.len) return;
-
-     fpreal x = @eigenvector.compAt(@iteration, @elemnum);
-     fpreal3 total = @Psum.getAt(0);
-     fpreal offset = (fpreal)@iteration / (@max_frequency - 1);
-     fpreal amplitude = @amplitude.getAt(offset);
-     @P.set(@P + total * x * amplitude);
-}
-```
 
 ## Copernicus: Sun Detection
 
