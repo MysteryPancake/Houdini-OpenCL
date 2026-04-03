@@ -1457,7 +1457,7 @@ There are various solutions to this:
 
 Worksets run the same kernel multiple times in a row. It runs in sequential order to ensure deterministic results.
 
-When using worksets, it adds another level of hierarchy: `Worksets -> Global workgroups -> Local workgroups`.
+Worksets behave like adding another level of hierarchy: `Worksets -> Global workgroups -> Local workgroups`.
 
 <img src="./images/multiple_global_workgroups2.png">
 
