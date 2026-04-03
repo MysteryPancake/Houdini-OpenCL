@@ -2663,7 +2663,7 @@ The total sum is stored in a `@Psum` attribute. It scales the amplitude in the f
 
 WaffleboyTom on Discord was wondering how to use worksets to find the average of clusters of points.
 
-It turned out much more complicated than I expected, involving [workgroup reduction](#workgroup-reduction), [atomics](#atomic-operations) and [a writeback kernel](#writeback-kernels).
+It turned out quite complicated, involving [workgroup reduction](#workgroup-reduction), [atomics](#atomic-operations) and [a writeback kernel](#writeback-kernels).
 
 <img src="./images/workset_average2.png" width="600">
 
