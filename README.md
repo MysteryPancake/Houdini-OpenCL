@@ -263,7 +263,7 @@ __attribute__((reqd_work_group_size(48, 1, 1)))
 
 In VEX, you can run over Detail, Primitives, Points and Vertices.
 
-OpenCL doesn't care about this. It just gives you a bunch of workitems to do whatever you want.
+OpenCL doesn't care about this. It just gives you a bunch of workitems you can use however you want.
 
 The workitem index (`get_global_id(0)` / `@elemnum`) can represent whatever you want in the kernel.
 
@@ -273,7 +273,7 @@ The only thing that matters is the number of workitems you need. This depends on
 
 <img src="./images/run_over.png" width="400">
 
-The default is "First Writeable Attribute", so it picks the length of the first attribute marked as writeable.
+The default is "First Writeable Attribute", meaning it picks the length of the first attribute marked as writeable.
 
 <img src="./images/writeable_attribute.png" width="500">
 
