@@ -269,7 +269,7 @@ The workitem index (`get_global_id(0)` / `@elemnum`) can represent whatever you 
 
 It can represent `@ptnum`, `@vtxnum`, or `@primnum`, depending what data you read with it.
 
-The only thing that matters is the number of workitems. This depends on the "Run Over" setting in the "Options" tab.
+The only thing that matters is the number of workitems you need. This depends on the "Run Over" setting in the "Options" tab.
 
 <img src="./images/run_over.png" width="400">
 
@@ -295,7 +295,7 @@ If you had a prim attribute called `i@id`:
 
 It creates the same number of workitems as the number of primitives ([rounded up based on the local workgroup size](#bounds-checking)).
 
-This only affects the number of workitems created. You can read/write totally different attributes if you want.
+This only affects the number of workitems. You can read/write totally different attributes if you want.
 
 ## Changing the OpenCL version
 
