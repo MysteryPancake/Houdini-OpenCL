@@ -519,185 +519,6 @@ To include files in other directories, you can use `..` to move up relative to t
 #include "$HH/ocl/sim/vbd_energy.cl"
 ```
 
-## Matrices
-
-OpenCL doesn't have good support for matrices. For this reason, SideFX wrote a `matrix.h` header that ships with Houdini.
-
-It helps to keep this file open while writing any code involving matrices, as there's barely any documentation for it.
-
-You can to include this file with `#include <matrix.h>` to use matrix operations in OpenCL.
-
-- Generic path: `$HH/ocl/include/matrix.h`
-- On Windows: `C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl/include/matrix.h`
-
-### Creating a matrix
-
-You can create a matrix by declaring a variable with no value. You might want to fill it with zeroes or identity afterwards.
-
-```cpp
-// Create a 3x3 matrix called mat
-mat3 mat;
-
-// Fill mat with zeroes
-mat3zero(mat);
-
-// Fill mat with identity matrix
-mat3identity(mat)
-```
-
-### Accessing matrix entries
-
-It's important to note how matrix types are defined in `matrix.h`:
-
-```cpp
-// A 3x3 matrix in row-major order (to match UT_Matrix3)
-// NOTE: fpreal3 is 4 floats, so this is size 12
-typedef fpreal3 mat3[3];  
-
-// A 3x2 matrix in row-major order
-typedef fpreal2 mat32[3];
-
-// A 2x2 matrix in row-major order, stored in a single fpreal4
-typedef fpreal4 mat2;
-
-// A 4x4 matrix in row-major order, stored in a single fpreal16
-typedef fpreal16 mat4;
-```
-
-- All matrix types are derived from `fpreal`, so they all have [variable precision](#precision).
-- `mat2` and `mat4` are vector types, but `mat3` and `mat32` are arrays of vectors.
-
-Since `mat3` and `mat32` are array types, they are accessed differently.
-
-```cpp
-// Accessing mat2 entries (float4 type)
-mat2 mat;
-mat.x = 1.0f; // mat[0] and mat.s0 also work
-mat.y = 2.0f; // mat[1] and mat.s1 also work
-mat.z = 3.0f; // mat[2] and mat.s2 also work
-mat.w = 4.0f; // mat[3] and mat.s3 also work
-```
-
-```cpp
-// Accessing mat4 entries (float16 type)
-mat4 mat;
-mat.x = 1.0f; // mat[0] and mat.s0 also work
-mat.y = 2.0f; // mat[1] and mat.s1 also work
-// ...
-```
-
-```cpp
-// Accessing mat3 entries (array of float3)
-mat3 mat;
-mat[0][0] = 1.0f; // mat[0].s0 also works
-mat[0][1] = 2.0f; // mat[0].s1 also works
-// ...
-```
-
-```cpp
-// Accessing mat32 entries (array of float2)
-mat32 mat;
-mat[0][0] = 1.0f; // mat[0].s0 also works
-mat[0][1] = 2.0f; // mat[0].s1 also works
-// ...
-```
-
-### Binding matrices
-
-Matrices should be bound as float arrays. `matrix3` contains `3x3=9` floats. `matrix` contains `4x4=16` floats.
-
-| Binding `matrix3` (3x3) | Binding `matrix` (4x4) |
-| --- | --- |
-| <img src="./images/matrix3_binding.png"> | <img src="./images/matrix4_binding.png"> |
-
-### Reading/writing matrices
-
-Since `mat3` is an array of vectors, loading it from memory requires loading 3 vectors in a row.
-
-- `mat3load(idx, matrix_attr_array, loaded_matrix)` is used to read a matrix.
-- `mat3store(loaded_matrix, idx, matrix_attr_array)` is used to write a matrix.
-
-<img src="./images/read_write_matrix.png" width="600">
-
-| [Download the HIP file!](./hips/matrix_example.hiplc) |
-| --- |
-
-```cpp
-#include <matrix.h>
-
-kernel void kernelName(
-    int matrix_attr_length,
-    global float* matrix_attr
-)
-{
-    int idx = get_global_id(0);
-    if (idx >= matrix_attr_length) return;
-    
-    // Load matrix from matrix_attr array into loaded_matrix variable
-    mat3 loaded_matrix;
-    mat3load(idx, matrix_attr, loaded_matrix);
-    
-    // Add 10 to the first value (top corner) of the matrix
-    loaded_matrix[0][0] = 10.0f;
-    
-    // Store it again back in the attribute
-    mat3store(loaded_matrix, idx, matrix_attr);
-}
-```
-
-### Applying matrices
-
-You can use `vec = mat3vecmul(mat, vec)` to transform a vector using a 3x3 matrix.
-
-<img src="./images/apply_matrix.png" width="600">
-
-| [Download the HIP file!](./hips/matrix_example.hiplc) |
-| --- |
-
-```cpp
-#include <matrix.h>
-
-#bind parm axis fpreal3
-#bind parm angle fpreal
-
-#bind point &P fpreal3
-
-// Made by jan on Discord
-void rotfromaxis(fpreal3 axis, fpreal angle, mat3 m)
-{
-    // Normalize the axis (ensure it's a unit vector)
-    axis = normalize(axis);
-
-    // Precompute trigonometric values
-    fpreal c = cos(angle);
-    fpreal s = sin(angle);
-    fpreal t = 1.0f - c;
-
-    // Extract axis components for clarity
-    fpreal ux = axis.x;
-    fpreal uy = axis.y;
-    fpreal uz = axis.z;
-
-    // Construct the rotation matrix columns using Rodrigues' formula
-    fpreal3 c0 = { t*ux*ux + c,    t*ux*uy - s*uz, t*ux*uz + s*uy };
-    fpreal3 c1 = { t*ux*uy + s*uz, t*uy*uy + c,    t*uy*uz - s*ux };
-    fpreal3 c2 = { t*ux*uz - s*uy, t*uy*uz + s*ux, t*uz*uz + c    };
-
-    // Build the matrix from columns
-    mat3fromcols(c0, c1, c2, m);
-}
-
-@KERNEL
-{
-    mat3 rot;
-    rotfromaxis(@axis, @angle, rot);
-
-    fpreal3 pos = @P;
-    pos = mat3vecmul(rot, pos);
-    @P.set(pos);
-}
-```
-
 ## Example 1: Translating VEX to OpenCL
 
 Take a look at this incredible VEX code. I put my blood, sweat and tears into it.
@@ -1397,6 +1218,185 @@ One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy
 
 | [Download the HIP file!](./hips/example1_basics.hiplc) |
 | --- |
+
+## Matrices
+
+OpenCL doesn't have good support for matrices. For this reason, SideFX wrote a `matrix.h` header that ships with Houdini.
+
+It helps to keep this file open while writing any code involving matrices, as there's barely any documentation for it.
+
+You can to include this file with `#include <matrix.h>` to use matrix operations in OpenCL.
+
+- Generic path: `$HH/ocl/include/matrix.h`
+- On Windows: `C:/Program Files/Side Effects Software/Houdini 21.0.440/houdini/ocl/include/matrix.h`
+
+### Creating a matrix
+
+You can create a matrix by declaring a variable with no value. You might want to fill it with zeroes or identity afterwards.
+
+```cpp
+// Create a 3x3 matrix called mat
+mat3 mat;
+
+// Fill mat with zeroes
+mat3zero(mat);
+
+// Fill mat with identity matrix
+mat3identity(mat)
+```
+
+### Accessing matrix entries
+
+It's important to note how matrix types are defined in `matrix.h`:
+
+```cpp
+// A 3x3 matrix in row-major order (to match UT_Matrix3)
+// NOTE: fpreal3 is 4 floats, so this is size 12
+typedef fpreal3 mat3[3];  
+
+// A 3x2 matrix in row-major order
+typedef fpreal2 mat32[3];
+
+// A 2x2 matrix in row-major order, stored in a single fpreal4
+typedef fpreal4 mat2;
+
+// A 4x4 matrix in row-major order, stored in a single fpreal16
+typedef fpreal16 mat4;
+```
+
+- All matrix types are derived from `fpreal`, so they all have [variable precision](#precision).
+- `mat2` and `mat4` are vector types, but `mat3` and `mat32` are arrays of vectors.
+
+Since `mat3` and `mat32` are array types, they are accessed differently.
+
+```cpp
+// Accessing mat2 entries (float4 type)
+mat2 mat;
+mat.x = 1.0f; // mat[0] and mat.s0 also work
+mat.y = 2.0f; // mat[1] and mat.s1 also work
+mat.z = 3.0f; // mat[2] and mat.s2 also work
+mat.w = 4.0f; // mat[3] and mat.s3 also work
+```
+
+```cpp
+// Accessing mat4 entries (float16 type)
+mat4 mat;
+mat.x = 1.0f; // mat[0] and mat.s0 also work
+mat.y = 2.0f; // mat[1] and mat.s1 also work
+// ...
+```
+
+```cpp
+// Accessing mat3 entries (array of float3)
+mat3 mat;
+mat[0][0] = 1.0f; // mat[0].s0 also works
+mat[0][1] = 2.0f; // mat[0].s1 also works
+// ...
+```
+
+```cpp
+// Accessing mat32 entries (array of float2)
+mat32 mat;
+mat[0][0] = 1.0f; // mat[0].s0 also works
+mat[0][1] = 2.0f; // mat[0].s1 also works
+// ...
+```
+
+### Binding matrices
+
+Matrices should be bound as float arrays. `matrix3` contains `3x3=9` floats. `matrix` contains `4x4=16` floats.
+
+| Binding `matrix3` (3x3) | Binding `matrix` (4x4) |
+| --- | --- |
+| <img src="./images/matrix3_binding.png"> | <img src="./images/matrix4_binding.png"> |
+
+### Reading/writing matrices
+
+Since `mat3` is an array of vectors, loading it from memory requires loading 3 vectors in a row.
+
+- `mat3load(idx, matrix_attr_array, loaded_matrix)` is used to read a matrix.
+- `mat3store(loaded_matrix, idx, matrix_attr_array)` is used to write a matrix.
+
+<img src="./images/read_write_matrix.png" width="600">
+
+| [Download the HIP file!](./hips/matrix_example.hiplc) |
+| --- |
+
+```cpp
+#include <matrix.h>
+
+kernel void kernelName(
+    int matrix_attr_length,
+    global float* matrix_attr
+)
+{
+    int idx = get_global_id(0);
+    if (idx >= matrix_attr_length) return;
+    
+    // Load matrix from matrix_attr array into loaded_matrix variable
+    mat3 loaded_matrix;
+    mat3load(idx, matrix_attr, loaded_matrix);
+    
+    // Add 10 to the first value (top corner) of the matrix
+    loaded_matrix[0][0] = 10.0f;
+    
+    // Store it again back in the attribute
+    mat3store(loaded_matrix, idx, matrix_attr);
+}
+```
+
+### Applying matrices
+
+You can use `vec = mat3vecmul(mat, vec)` to transform a vector using a 3x3 matrix.
+
+<img src="./images/apply_matrix.png" width="600">
+
+| [Download the HIP file!](./hips/matrix_example.hiplc) |
+| --- |
+
+```cpp
+#include <matrix.h>
+
+#bind parm axis fpreal3
+#bind parm angle fpreal
+
+#bind point &P fpreal3
+
+// Made by jan on Discord
+void rotfromaxis(fpreal3 axis, fpreal angle, mat3 m)
+{
+    // Normalize the axis (ensure it's a unit vector)
+    axis = normalize(axis);
+
+    // Precompute trigonometric values
+    fpreal c = cos(angle);
+    fpreal s = sin(angle);
+    fpreal t = 1.0f - c;
+
+    // Extract axis components for clarity
+    fpreal ux = axis.x;
+    fpreal uy = axis.y;
+    fpreal uz = axis.z;
+
+    // Construct the rotation matrix columns using Rodrigues' formula
+    fpreal3 c0 = { t*ux*ux + c,    t*ux*uy - s*uz, t*ux*uz + s*uy };
+    fpreal3 c1 = { t*ux*uy + s*uz, t*uy*uy + c,    t*uy*uz - s*ux };
+    fpreal3 c2 = { t*ux*uz - s*uy, t*uy*uz + s*ux, t*uz*uz + c    };
+
+    // Build the matrix from columns
+    mat3fromcols(c0, c1, c2, m);
+}
+
+@KERNEL
+{
+    mat3 rot;
+    rotfromaxis(@axis, @angle, rot);
+
+    fpreal3 pos = @P;
+    pos = mat3vecmul(rot, pos);
+    @P.set(pos);
+}
+```
 
 ## Parallel processing headaches
 
