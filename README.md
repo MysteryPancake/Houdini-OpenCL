@@ -178,23 +178,23 @@ It's also possible for workgroups to be 2D, 3D or higher. You might see this wit
 
 ```cpp
 // Volumes like images and heightfields may have multiple global IDs
-int idx = get_global_id(0);
-int idy = get_global_id(1);
-int idz = get_global_id(2);
+int idx = get_global_id(0); // Global index of the current workitem along the X axis
+int idy = get_global_id(1); // Global index of the current workitem along the Y axis
+int idz = get_global_id(2); // Global index of the current workitem along the Z axis
 ```
 
 Like you'd expect, you can access the [offset and sizes](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for these things.
 
 ```cpp
 // Offsets
-int global_id = get_global_id(0); // @elemnum when using @-bindings
-int local_id = get_local_id(0);
-int group_id = get_group_id(0);
+int global_id = get_global_id(0); // Global index of the current workitem, @elemnum when using @-bindings
+int local_id = get_local_id(0); // Local index of the current workitem, 0 at the start of each local workgroup
+int group_id = get_group_id(0); // Index of the current local workgroup within the global workgroup
 
 // Sizes
-int global_size = get_global_size(0); // @attr.len when using @-bindings
-int local_size = get_local_size(0);
-int num_groups = get_num_groups(0);
+int global_size = get_global_size(0); // Number of workitems in the current global workgroup, @attr.len when using @-bindings
+int local_size = get_local_size(0); // Number of workitems in the current local workgroup
+int num_groups = get_num_groups(0); // Number of local workgroups in the current global workgroup
 ```
 
 You can even animate the data to visualize how it's arranged in each workgroup.
