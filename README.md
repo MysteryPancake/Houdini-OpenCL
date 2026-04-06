@@ -263,15 +263,13 @@ __attribute__((reqd_work_group_size(48, 1, 1)))
 
 In VEX, you can run over Detail, Primitives, Points and Vertices.
 
-OpenCL doesn't care what you run it over, it just gives you the index of the current workitem and hopes for the best.
+OpenCL doesn't care about this. It just gives you a bunch of workitems to do whatever you want.
 
-A workitem just runs kernel code. The workitem index `get_global_id(0)` can represent whatever you need it to in the kernel.
+The workitem index (`get_global_id(0)` / `@elemnum`) can represent whatever you want in the kernel.
 
-It can represent `@ptnum`, `@vtxnum`, or `@primnum`, depending what data you read with it. It's just a number.
+It can represent `@ptnum`, `@vtxnum`, or `@primnum`, depending what data you read with it.
 
-If using @-bindings, it's better to use `@elemnum` instead of `get_global_id(0)` for consistency.
-
-But how does it decide the length to run over? It depends on the "Run Over" setting in the "Options" tab.
+The only thing that matters is the number of workitems. This depends on the "Run Over" setting in the "Options" tab.
 
 <img src="./images/run_over.png" width="400">
 
@@ -279,14 +277,25 @@ The default is "First Writeable Attribute", so it picks the length of the first 
 
 <img src="./images/writeable_attribute.png" width="500">
 
-The @-binding equivalent is the first attribute marked with `&`.
+For example, if you had a point attribute called `v@P`:
 
 ```cpp
-// & means the attribute is writeable
+// Bind P attribute as a 32-bit vector with read/write
 #bind point &P float3
 ```
 
-This only affects the loop range, not data access. You can read/write totally different attributes if you want.
+It creates the same number of workitems as the number of points ([rounded up based on the local workgroup size](#bounds-checking)).
+
+If you had a prim attribute called `i@id`:
+
+```cpp
+// Bind id attribute as a 32-bit int with read/write
+#bind prim &id int
+```
+
+It creates the same number of workitems as the number of primitives ([rounded up based on the local workgroup size](#bounds-checking)).
+
+This only affects the number of workitems created. You can read/write totally different attributes if you want.
 
 ## Changing the OpenCL version
 
