@@ -261,9 +261,9 @@ __attribute__((reqd_work_group_size(48, 1, 1)))
 
 ## How OpenCL decides what to run over
 
-In VEX, you can run over Detail, Primitives, Points and Vertices.
+In VEX, you can run code over Detail, Primitives, Points or Vertices.
 
-OpenCL doesn't care about this. It just gives you a bunch of workitems to use however you want.
+OpenCL doesn't care about this. It gives you a bunch of workitems that can run whatever code you want.
 
 The workitem index (`get_global_id(0)` / `@elemnum`) can represent whatever you want in the kernel.
 
