@@ -284,7 +284,7 @@ For example, if you had a point attribute called `v@P`:
 #bind point &P float3
 ```
 
-It creates the same number of workitems as the number of points ([rounded up based on the local workgroup size](#bounds-checking)).
+It creates the same number of workitems as the number of points [(rounded up based on the local workgroup size)](#bounds-checking).
 
 If you had a prim attribute called `i@id`:
 
@@ -293,7 +293,7 @@ If you had a prim attribute called `i@id`:
 #bind prim &id int
 ```
 
-It creates the same number of workitems as the number of primitives ([rounded up based on the local workgroup size](#bounds-checking)).
+It creates the same number of workitems as the number of primitives [(rounded up based on the local workgroup size)](#bounds-checking).
 
 This only affects the number of workitems. You can read/write totally different attributes if you want.
 
