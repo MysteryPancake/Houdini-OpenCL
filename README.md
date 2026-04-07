@@ -2780,14 +2780,7 @@ kernel void averageClusterPositions(
         int workset_index = workset_index_array[id];
         
         // Since vectors have 3 components, each workset average is stored 3 elements apart
-        // workset_avgs_index: [0,         3,          6       ]
         // workset_avgs_array: [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
-        
-        // Ideally this would work:
-        // int offset = worksets_avgs_index[workset_index];
-        // But worksets_avgs_index contains garbage data for some reason
-        
-        // I'll send a RFE about this, but for now compute the offset manually
         int offset = workset_index * 3;
         
         // Sum the average X, Y and Z coordinates for this workset
