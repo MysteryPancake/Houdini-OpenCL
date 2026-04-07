@@ -273,7 +273,7 @@ The only thing that matters is the number of workitems you need. This depends on
 
 <img src="./images/run_over.png" width="400">
 
-The default is "First Writeable Attribute", meaning it picks the length of the first attribute marked as writeable.
+The default is "First Writeable Attribute", meaning it makes one workitem for each thing with the attribute.
 
 <img src="./images/writeable_attribute.png" width="500">
 
