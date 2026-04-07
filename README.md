@@ -263,11 +263,11 @@ __attribute__((reqd_work_group_size(48, 1, 1)))
 
 In VEX, you can run over Detail, Primitives, Points and Vertices.
 
-OpenCL doesn't care about this. It just gives you a bunch of workitems you can use however you want.
+OpenCL doesn't care about this. It just gives you a bunch of workitems to use however you want.
 
 The workitem index (`get_global_id(0)` / `@elemnum`) can represent whatever you want in the kernel.
 
-It can represent `@ptnum`, `@vtxnum`, or `@primnum`, depending what data you read with it.
+This could be `@ptnum`, `@vtxnum`, or `@primnum`, depending what data you read with it.
 
 The only thing that matters is the number of workitems you need. This depends on the "Run Over" setting in the "Options" tab.
 
