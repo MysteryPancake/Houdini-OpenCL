@@ -273,11 +273,11 @@ The only thing that matters is the number of workitems you need. This depends on
 
 <img src="./images/run_over.png" width="400">
 
-The default is "First Writeable Attribute", meaning it makes one workitem for each thing with the attribute.
+The default is "First Writeable Attribute", so it makes one workitem for each entry with the attribute.
 
 <img src="./images/writeable_attribute.png" width="500">
 
-For example, if you had a point attribute called `v@P`:
+For example, if you had a point attribute `v@P`:
 
 ```cpp
 // Bind P attribute as a 32-bit vector with read/write
@@ -286,14 +286,14 @@ For example, if you had a point attribute called `v@P`:
 
 It creates the same number of workitems as the number of points [(rounded up based on the local workgroup size)](#bounds-checking).
 
-If you had a prim attribute called `i@id`:
+If you had a prim attribute `i@id`:
 
 ```cpp
 // Bind id attribute as a 32-bit int with read/write
 #bind prim &id int
 ```
 
-It creates the same number of workitems as the number of primitives [(rounded up based on the local workgroup size)](#bounds-checking).
+It creates the same number of workitems as the number of prims [(rounded up based on the local workgroup size)](#bounds-checking).
 
 This only affects the number of workitems. You can read/write totally different attributes if you want.
 
