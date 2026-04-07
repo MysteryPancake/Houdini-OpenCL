@@ -1466,6 +1466,8 @@ There are various solutions to this:
 
 Worksets run the same kernel multiple times in a row. It runs in sequential order to ensure deterministic results.
 
+You don't normally need to use worksets unless you need extreme control over the number of workitems. [Consider using "First Writeable Attribute" instead](#how-opencl-decides-what-to-run-over).
+
 Worksets are like adding another level of hierarchy: `Worksets -> Global workgroups -> Local workgroups`.
 
 <img src="./images/multiple_global_workgroups2.png">
