@@ -178,23 +178,23 @@ It's also possible for workgroups to be 2D, 3D or higher. You might see this wit
 
 ```cpp
 // Volumes like images and heightfields may have multiple global IDs
-int idx = get_global_id(0);
-int idy = get_global_id(1);
-int idz = get_global_id(2);
+int idx = get_global_id(0); // Global index of the current workitem along the X axis
+int idy = get_global_id(1); // Global index of the current workitem along the Y axis
+int idz = get_global_id(2); // Global index of the current workitem along the Z axis
 ```
 
 Like you'd expect, you can access the [offset and sizes](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/get_work_dim.html) for these things.
 
 ```cpp
 // Offsets
-int global_id = get_global_id(0); // @elemnum when using @-bindings
-int local_id = get_local_id(0);
-int group_id = get_group_id(0);
+int global_id = get_global_id(0); // Global index of the current workitem, @elemnum when using @-bindings
+int local_id = get_local_id(0); // Local index of the current workitem, 0 at the start of each local workgroup
+int group_id = get_group_id(0); // Index of the current local workgroup within the global workgroup
 
 // Sizes
-int global_size = get_global_size(0); // @attr.len when using @-bindings
-int local_size = get_local_size(0);
-int num_groups = get_num_groups(0);
+int global_size = get_global_size(0); // Number of workitems in the current global workgroup, @attr.len when using @-bindings
+int local_size = get_local_size(0); // Number of workitems in the current local workgroup
+int num_groups = get_num_groups(0); // Number of local workgroups in the current global workgroup
 ```
 
 You can even animate the data to visualize how it's arranged in each workgroup.
@@ -261,32 +261,41 @@ __attribute__((reqd_work_group_size(48, 1, 1)))
 
 ## How OpenCL decides what to run over
 
-In VEX, you can run over Detail, Primitives, Points and Vertices.
+In VEX, you can run code over Detail, Primitives, Points or Vertices.
 
-OpenCL doesn't care what you run it over, it just gives you the index of the current workitem and hopes for the best.
+OpenCL doesn't care about this. It just makes a bunch of workitems that can run whatever code you want.
 
-A workitem just runs kernel code. The workitem index `get_global_id(0)` can represent whatever you need it to in the kernel.
+The workitem index (`get_global_id(0)` / `@elemnum`) can represent whatever you want in the kernel.
 
-It can represent `@ptnum`, `@vtxnum`, or `@primnum`, depending what data you read with it. It's just a number.
+This could be `@ptnum`, `@vtxnum`, or `@primnum`, depending what data you read with it.
 
-If using @-bindings, it's better to use `@elemnum` instead of `get_global_id(0)` for consistency.
-
-But how does it decide the length to run over? It depends on the "Run Over" setting in the "Options" tab.
+The only thing that matters is the number of workitems you need. This depends on the "Run Over" setting in the "Options" tab.
 
 <img src="./images/run_over.png" width="400">
 
-The default is "First Writeable Attribute", so it picks the length of the first attribute marked as writeable.
+The default is "First Writeable Attribute", so it makes one workitem for each entry with the attribute.
 
 <img src="./images/writeable_attribute.png" width="500">
 
-The @-binding equivalent is the first attribute marked with `&`.
+For example, if you had a point attribute `v@P`:
 
 ```cpp
-// & means the attribute is writeable
+// Bind P attribute as a 32-bit vector with read/write
 #bind point &P float3
 ```
 
-This only affects the loop range, not data access. You can read/write totally different attributes if you want.
+It creates the same number of workitems as the number of points [(rounded up based on the local workgroup size)](#bounds-checking).
+
+If you had a prim attribute `i@id`:
+
+```cpp
+// Bind id attribute as a 32-bit int with read/write
+#bind prim &id int
+```
+
+It creates the same number of workitems as the number of prims [(rounded up based on the local workgroup size)](#bounds-checking).
+
+This only affects the number of workitems. You can read/write totally different attributes if you want.
 
 ## Changing the OpenCL version
 
@@ -338,6 +347,186 @@ This can be fixed by setting the environment variable `HOUDINI_OCL_REPORT_BUILD_
 Thanks to [Lewis Saunders](https://x.com/lwwwwwws) for this tip!
 
 <img src="./images/display_opencl_errors.png" width="700">
+
+## Precision
+
+OpenCL includes 8, 16, 32 and 64 bit data types, similar to VEX.
+
+- `uchar, char` and their vector types like `char2, char3` use 8-bit precision.
+- `ushort, short, half` and their vector types like `half2, half3` use 16-bit precision.
+- `uint, int, float` and their vector types like `float2, float3` use 32-bit precision.
+- `ulong, long, double` and their vector types like `double2, double3` use 64-bit precision.
+
+Most operations work fine in 32-bit, but sometimes you need higher or lower precision depending what you're doing.
+
+Since it's a pain to change precision by rewriting the types in the code, SideFX added varying precision types.
+
+Varying precision means you can change the precision of each input in the "Bindings" tab, and never have to rewrite the code.
+
+- `exint, fpreal` and their vector types like `fpreal2, fpreal3` are new varying precision types defined by SideFX.
+- `mat2, mat3, mat4` matrix types all have varying precision by default, so no changes are required.
+
+To enable varying precision, all OpenCL nodes have a global precision setting in the "Options" tab:
+
+<img src="./images/precision.png" width="400">
+
+You can then change the precision of each attribute in the "Bindings" tab:
+
+<img src="./images/precision2.png" width="400">
+
+I prefer to use varying precision types for everything, in case I want to change them later.
+
+For debugging, you can force all `fpreal` and `exint` variables to a certain precision using `USE_DOUBLE` or `USE_LONG`.
+
+```cpp
+// Force variables to use double precision
+#define USE_DOUBLE
+
+// Force variables to use long precision
+#define USE_LONG
+```
+
+## Binding attribute types
+
+If using @-bindings, `@KERNEL` automatically generates the kernel arguments for you. If not, you have to add them manually.
+
+Attributes are bound in the order defined in the "Bindings" tab. You can use whatever naming you want, it won't affect anything.
+
+Houdini binds most attributes as arrays. Array attributes are also bound as arrays, by flattening them into a giant array.
+
+### Floating types: `float, vector2, vector, vector4, matrix2, matrix3, matrix`
+
+Floating types add 2 arguments to the kernel: the length of the array, and the array itself.
+
+#### @-bindings version
+
+```cpp
+#bind point attr float   // if float
+#bind point attr float2  // if vector2
+#bind point attr float3  // if vector
+#bind point attr float4  // if vector4
+#bind point attr float9  // if matrix3
+#bind point attr float16 // if matrix
+
+@KERNEL {
+    // ...
+}
+```
+
+#### Plain OpenCL version
+
+```cpp
+kernel void kernelName(
+    // ...
+    int attr_length, // length (number of entries) of the float attribute
+    global float* attr, // array of float attribute values, in index order
+    // ...
+) {
+    // ...
+}
+```
+
+### Integer types: `int`
+
+Integer types add 2 arguments to the kernel: the length of the array, and the array itself.
+
+#### @-bindings version
+
+```cpp
+#bind point attr int
+
+@KERNEL {
+    // ...
+}
+```
+
+#### Plain OpenCL version
+
+```cpp
+kernel void kernelName(
+    // ...
+    int attr_length, // length (number of entries) of the int attribute
+    global int* attr, // array of int attribute values, in index order
+    // ...
+) {
+    // ...
+}
+```
+
+### Floating array types: `float[]`
+
+Floating array types add 3 arguments to the kernel: the length of the array, the start of each subarray, and the array of subarrays.
+
+#### @-bindings version
+
+```cpp
+#bind point attr float[]
+
+@KERNEL {
+    // ...
+}
+```
+
+#### Plain OpenCL version
+
+```cpp
+kernel void kernelName(
+    // ...
+    int attr_length, // length (number of entries) of the float attribute
+    global int* attr_index, // array of the starting indices of each subarray
+    global float* attr, // array of float attribute values, flattened in index order
+    // ...
+) {
+    // ...
+}
+```
+
+### Integer array types: `int[]`
+
+Integer array types add 3 arguments to the kernel: the length of the array, the start of each subarray, and the array of subarrays.
+
+#### @-bindings version
+
+```cpp
+#bind point attr int[]
+
+@KERNEL {
+    // ...
+}
+```
+
+#### Plain OpenCL version
+
+```cpp
+kernel void kernelName(
+    // ...
+    int attr_length, // length (number of entries) of the int attribute
+    global int* attr_index, // array of the starting indices of each subarray
+    global int* attr, // array of int attribute values, flattened in index order
+    // ...
+) {
+    // ...
+}
+```
+
+## Including extra libraries
+
+`#include` means to insert the code from a file into your file. You can do this for any OpenCL header in `houdini/ocl/include`.
+
+```cpp
+// To include the matrix header located in "houdini/ocl/include"
+#include <matrix.h>
+```
+
+To include files in other directories, you can use `..` to move up relative to the `include` folder, or `$HH` to use the base Houdini path.
+
+```cpp
+// To include files in other directories
+#include "../sim/vbd_energy.cl"
+
+// Using $HH to get the same effect, may not be as reliable
+#include "$HH/ocl/sim/vbd_energy.cl"
+```
 
 ## Example 1: Translating VEX to OpenCL
 
@@ -1039,186 +1228,6 @@ One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy
 | [Download the HIP file!](./hips/example1_basics.hiplc) |
 | --- |
 
-## Precision
-
-OpenCL includes 8, 16, 32 and 64 bit data types, similar to VEX.
-
-- `uchar, char` and their vector types like `char2, char3` use 8-bit precision.
-- `ushort, short, half` and their vector types like `half2, half3` use 16-bit precision.
-- `uint, int, float` and their vector types like `float2, float3` use 32-bit precision.
-- `ulong, long, double` and their vector types like `double2, double3` use 64-bit precision.
-
-Most operations work fine in 32-bit, but sometimes you need higher or lower precision depending what you're doing.
-
-Since it's a pain to change precision by rewriting the types in the code, SideFX added varying precision types.
-
-Varying precision means you can change the precision of each input in the "Bindings" tab, and never have to rewrite the code.
-
-- `exint, fpreal` and their vector types like `fpreal2, fpreal3` are new varying precision types defined by SideFX.
-- `mat2, mat3, mat4` matrix types all have varying precision by default, so no changes are required.
-
-To enable varying precision, all OpenCL nodes have a global precision setting in the "Options" tab:
-
-<img src="./images/precision.png" width="400">
-
-You can then change the precision of each attribute in the "Bindings" tab:
-
-<img src="./images/precision2.png" width="400">
-
-I prefer to use varying precision types for everything, in case I want to change them later.
-
-For debugging, you can force all `fpreal` and `exint` variables to a certain precision using `USE_DOUBLE` or `USE_LONG`.
-
-```cpp
-// Force variables to use double precision
-#define USE_DOUBLE
-
-// Force variables to use long precision
-#define USE_LONG
-```
-
-## Binding attribute types
-
-If using @-bindings, `@KERNEL` automatically generates the kernel arguments for you. If not, you have to add them manually.
-
-Attributes are bound in the order defined in the "Bindings" tab. You can use whatever naming you want, it won't affect anything.
-
-Houdini binds most attributes as arrays. Array attributes are also bound as arrays, by flattening them into a giant array.
-
-### Floating types: `float, vector2, vector, vector4, matrix2, matrix3, matrix`
-
-Floating types add 2 arguments to the kernel: the length of the array, and the array itself.
-
-#### @-bindings version
-
-```cpp
-#bind point attr float   // if float
-#bind point attr float2  // if vector2
-#bind point attr float3  // if vector
-#bind point attr float4  // if vector4
-#bind point attr float9  // if matrix3
-#bind point attr float16 // if matrix
-
-@KERNEL {
-    // ...
-}
-```
-
-#### Plain OpenCL version
-
-```cpp
-kernel void kernelName(
-    // ...
-    int attr_length, // length (number of entries) of the float attribute
-    global float* attr, // array of float attribute values, in index order
-    // ...
-) {
-    // ...
-}
-```
-
-### Integer types: `int`
-
-Integer types add 2 arguments to the kernel: the length of the array, and the array itself.
-
-#### @-bindings version
-
-```cpp
-#bind point attr int
-
-@KERNEL {
-    // ...
-}
-```
-
-#### Plain OpenCL version
-
-```cpp
-kernel void kernelName(
-    // ...
-    int attr_length, // length (number of entries) of the int attribute
-    global int* attr, // array of int attribute values, in index order
-    // ...
-) {
-    // ...
-}
-```
-
-### Floating array types: `float[]`
-
-Floating array types add 3 arguments to the kernel: the length of the array, the start of each subarray, and the array of subarrays.
-
-#### @-bindings version
-
-```cpp
-#bind point attr float[]
-
-@KERNEL {
-    // ...
-}
-```
-
-#### Plain OpenCL version
-
-```cpp
-kernel void kernelName(
-    // ...
-    int attr_length, // length (number of entries) of the float attribute
-    global int* attr_index, // array of the starting indices of each subarray
-    global float* attr, // array of float attribute values, flattened in index order
-    // ...
-) {
-    // ...
-}
-```
-
-### Integer array types: `int[]`
-
-Integer array types add 3 arguments to the kernel: the length of the array, the start of each subarray, and the array of subarrays.
-
-#### @-bindings version
-
-```cpp
-#bind point attr int[]
-
-@KERNEL {
-    // ...
-}
-```
-
-#### Plain OpenCL version
-
-```cpp
-kernel void kernelName(
-    // ...
-    int attr_length, // length (number of entries) of the int attribute
-    global int* attr_index, // array of the starting indices of each subarray
-    global int* attr, // array of int attribute values, flattened in index order
-    // ...
-) {
-    // ...
-}
-```
-
-## Including extra libraries
-
-`#include` means to insert the code from a file into your file. You can do this for any OpenCL header in `houdini/ocl/include`.
-
-```cpp
-// To include the matrix header located in "houdini/ocl/include"
-#include <matrix.h>
-```
-
-To include files in other directories, you can use `..` to move up relative to the `include` folder, or `$HH` to use the base Houdini path.
-
-```cpp
-// To include files in other directories
-#include "../sim/vbd_energy.cl"
-
-// Using $HH to get the same effect, may not be as reliable
-#include "$HH/ocl/sim/vbd_energy.cl"
-```
-
 ## Matrices
 
 OpenCL doesn't have good support for matrices. For this reason, SideFX wrote a `matrix.h` header that ships with Houdini.
@@ -1456,6 +1465,8 @@ There are various solutions to this:
 ## Worksets
 
 Worksets run the same kernel multiple times in a row. It runs in sequential order to ensure deterministic results.
+
+You don't normally need to use worksets unless you need extreme control over the number of workitems. [Consider using "First Writeable Attribute" instead](#how-opencl-decides-what-to-run-over).
 
 Worksets are like adding another level of hierarchy: `Worksets -> Global workgroups -> Local workgroups`.
 
@@ -2769,14 +2780,7 @@ kernel void averageClusterPositions(
         int workset_index = workset_index_array[id];
         
         // Since vectors have 3 components, each workset average is stored 3 elements apart
-        // workset_avgs_index: [0,         3,          6       ]
         // workset_avgs_array: [(0, 1, 2), (3, 4, 5), (6, 7, 8)]
-        
-        // Ideally this would work:
-        // int offset = worksets_avgs_index[workset_index];
-        // But worksets_avgs_index contains garbage data for some reason
-        
-        // I'll send a RFE about this, but for now compute the offset manually
         int offset = workset_index * 3;
         
         // Sum the average X, Y and Z coordinates for this workset
