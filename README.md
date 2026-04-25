@@ -3611,7 +3611,7 @@ I tried a few approaches with different speeds. Sadly they're all brute forced, 
 | [Download the HIP file!](./hips/cops/rasterize_points.hiplc) |
 | --- |
 
-### Slowest: Check all 8 neighbours
+### Slowest: SDF including all 8 neighbours
 
 The brute force way is to compute distances as if the current tile is repeated on all sides.
 
@@ -3657,7 +3657,7 @@ This requires 9 distance samples in total, making it the slowest approach.
 }
 ```
 
-### Faster: Single pass SDF + Eikonal
+### Faster: Plain SDF + Eikonal
 
 A faster way is generating the SDF without checking neighbours, then using the Eikonal node to repair the edges.
 
