@@ -2896,6 +2896,8 @@ Normally you'd check the constraint's type to change the behaviour, but for now 
 
 Vellum uses graph coloring for constraints. Graph coloring splits the constraints into disconnected groups that can run in parallel without affecting eachother.
 
+<img src="./images/vellum_workgroups.png" width="600">
+
 Sadly it's extremely slow in VEX, since it requires feedback loops.
 
 ```js
