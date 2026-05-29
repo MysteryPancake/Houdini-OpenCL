@@ -3173,7 +3173,7 @@ As well as global accumulation, workgroup reduction is useful for global min and
 
 This is like Attribute Promote set to "Maximum" except it runs in parallel on the GPU, so the performance may be better.
 
-The process is the same as in the previous example:
+The process is the same as in [the previous example](#sop-laplacian-filter):
 
 1. Get the local max using workgroup reduction, this time using `work_group_reduce_max()` rather than `work_group_reduce_add3()`.
 2. Get the global max using atomics, this time using `atomic_max()` rather than `atomic_add()`.
@@ -3217,10 +3217,10 @@ void atomic_max_float(volatile __global float *source, const float operand) {
     int is_max = @src == @geomax;
     @dst.set(is_max);
     
-    // Move the point's position to this pixel
+    // Move the first point's position to this pixel
     if (is_max) {
         float3 pos = @src.imageToWorld(@P.image);
-        vstore3(pos, 0, @pos.data);
+        @pos.setAt(0, pos);
     }
 }
 ```
