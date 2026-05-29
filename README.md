@@ -301,6 +301,8 @@ This only affects the number of workitems. You can read/write totally different 
 
 In a DOP solver, OpenCL can change multiple geometry streams at the same time within the same kernel.
 
+It's all data at the end of the day, it doesn't really matter what the data belongs to.
+
 The number of workitems stays the same though, so it's only useful when both geometry have the same number of elements, like points or primitives.
 
 <img src="./images/multisolver_opencl.png" width="700">
