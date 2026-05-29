@@ -297,6 +297,29 @@ It creates the same number of workitems as the number of prims [(rounded up base
 
 This only affects the number of workitems. You can read/write totally different attributes if you want.
 
+## Changing multiple geometry streams at once
+
+In a DOP solver, OpenCL can change multiple geometry streams at the same time within the same kernel.
+
+The number of workitems stays the same though, so it's only useful when both geometry have the same number of elements, like points or primitives.
+
+<img src="./images/multisolver_opencl.png" width="700">
+
+| [Download the HIP file!](./hips/multisolver_opencl.hiplc) |
+| --- |
+
+```cpp
+#runover attrib
+#bind point &Cd1 name=Cd geo=Geometry float3
+#bind point &Cd2 name=Cd geo=Geometry2 float3
+
+@KERNEL
+{
+    @Cd1.set((float3)(1.0f, 0.0f, 0.0f));
+    @Cd2.set((float3)(0.0f, 1.0f, 0.0f));
+}
+```
+
 ## Changing the OpenCL version
 
 Houdini compiles OpenCL code with the highest version available by default.
