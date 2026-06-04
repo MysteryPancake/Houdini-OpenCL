@@ -426,12 +426,14 @@ Floating types add 2 arguments to the kernel: the length of the array, and the a
 #### @-bindings version
 
 ```cpp
-#bind point attr float   // if float
-#bind point attr float2  // if vector2
-#bind point attr float3  // if vector
-#bind point attr float4  // if vector4
-#bind point attr float9  // if matrix3
-#bind point attr float16 // if matrix
+#bind point attr_name float   // if float
+#bind point attr_name float2  // if vector2
+#bind point attr_name float3  // if vector
+#bind point attr_name float4  // if vector4
+#bind point attr_name float9  // if matrix3
+#bind point attr_name float16 // if matrix
+#bind point attr_name float64 // 64 sized tuple (replace 64 with any size)
+#bind point attr_name float? // automatic size
 
 @KERNEL {
     // ...
@@ -444,7 +446,7 @@ Floating types add 2 arguments to the kernel: the length of the array, and the a
 kernel void kernelName(
     // ...
     int attr_length, // length (number of entries) of the float attribute
-    global float* attr, // array of float attribute values, in index order
+    global float* attr_name, // array of float attribute values, in index order
     // ...
 ) {
     // ...
@@ -458,7 +460,7 @@ Integer types add 2 arguments to the kernel: the length of the array, and the ar
 #### @-bindings version
 
 ```cpp
-#bind point attr int
+#bind point attr_name int
 
 @KERNEL {
     // ...
@@ -471,7 +473,7 @@ Integer types add 2 arguments to the kernel: the length of the array, and the ar
 kernel void kernelName(
     // ...
     int attr_length, // length (number of entries) of the int attribute
-    global int* attr, // array of int attribute values, in index order
+    global int* attr_name, // array of int attribute values, in index order
     // ...
 ) {
     // ...
@@ -499,7 +501,7 @@ kernel void kernelName(
     // ...
     int attr_length, // length (number of entries) of the float attribute
     global int* attr_index, // array of the starting indices of each subarray
-    global float* attr, // array of float attribute values, flattened in index order
+    global float* attr_name, // array of float attribute values, flattened in index order
     // ...
 ) {
     // ...
@@ -527,7 +529,7 @@ kernel void kernelName(
     // ...
     int attr_length, // length (number of entries) of the int attribute
     global int* attr_index, // array of the starting indices of each subarray
-    global int* attr, // array of int attribute values, flattened in index order
+    global int* attr_name, // array of int attribute values, flattened in index order
     // ...
 ) {
     // ...
@@ -639,7 +641,7 @@ Vector and float types both add 2 arguments to the kernel: the length of the arr
 
 ```cpp
 int attr_length, // length (number of entries) of the float attribute
-global float* attr, // array of float attribute values, in index order
+global float* attr_name, // array of float attribute values, in index order
 ```
 
 We have 3 attributes, so there's 2*3 = 6 arguments in total.
@@ -1252,6 +1254,44 @@ One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy
 
 | [Download the HIP file!](./hips/example1_basics.hiplc) |
 | --- |
+
+## Tuples
+
+I don't understand tuples yet, but here's some notes from Igor Elovikov.
+
+When using @-binding syntax, the preprocessor parses the number after the type as the tuple size:
+
+```cpp
+// Bind an attribute as 32 sized float tuple
+#bind prim attr_name float32
+
+// Bind an attribute as 64 sized float tuple
+#bind prim attr_name2 float64
+
+// Bind an attribute with dynamic size
+#bind point attr_name3 float?
+
+@KERNEL
+{
+	// Print the tuple size
+	printf("%d", @attr_name3.tuplesize);
+}
+```
+
+For example, binding `@P` with automatic size:
+
+```cpp
+// Bind P as a tuple with automatic size
+#bind point &P float?
+
+@KERNEL
+{
+    // Only print on the first workitem to prevent spam
+    if (@elemnum != 0) return;
+
+    printf("%d\n", @P.tuplesize); // 3
+}
+```
 
 ## Matrices
 
