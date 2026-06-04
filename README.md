@@ -297,31 +297,6 @@ It creates the same number of workitems as the number of prims [(rounded up base
 
 This only affects the number of workitems. You can read/write totally different attributes if you want.
 
-## Changing multiple geometry streams at once
-
-In a DOP solver, OpenCL can change multiple geometry streams at the same time within the same kernel.
-
-It's all data at the end of the day, it doesn't really matter what the data belongs to.
-
-The number of workitems stays the same though, so it's only useful when both geometry have the same number of elements, like points or primitives.
-
-<img src="./images/multisolver_opencl.png" width="700">
-
-| [Download the HIP file!](./hips/multisolver_opencl.hiplc) |
-| --- |
-
-```cpp
-#runover attrib
-#bind point &Cd1 name=Cd geo=Geometry float3
-#bind point &Cd2 name=Cd geo=Geometry2 float3
-
-@KERNEL
-{
-    @Cd1.set((float3)(1.0f, 0.0f, 0.0f));
-    @Cd2.set((float3)(0.0f, 1.0f, 0.0f));
-}
-```
-
 ## Changing the OpenCL version
 
 Houdini compiles OpenCL code with the highest version available by default.
@@ -417,7 +392,7 @@ If using @-bindings, `@KERNEL` automatically generates the kernel arguments for 
 
 Attributes are bound in the order defined in the "Bindings" tab. You can use whatever naming you want, it won't affect anything.
 
-Houdini binds most attributes as arrays. Array attributes are also bound as arrays, by flattening them into a giant array.
+Houdini binds most attributes as arrays. Array attributes are flattened to a single 1D array.
 
 ### Floating types: `float, vector2, vector, vector4, matrix2, matrix3, matrix`
 
@@ -426,14 +401,17 @@ Floating types add 2 arguments to the kernel: the length of the array, and the a
 #### @-bindings version
 
 ```cpp
-#bind point attr_name float   // if float
-#bind point attr_name float2  // if vector2
-#bind point attr_name float3  // if vector
-#bind point attr_name float4  // if vector4
-#bind point attr_name float9  // if matrix3
-#bind point attr_name float16 // if matrix
-#bind point attr_name float64 // 64 sized tuple (replace 64 with any size)
-#bind point attr_name float? // automatic size
+#bind point attr_name float   // float, 32-bit
+#bind point attr_name float2  // vector2, 32-bit
+#bind point attr_name float3  // vector, 32-bit
+#bind point attr_name float4  // vector4, 32-bit
+#bind point attr_name float9  // matrix3, 32-bit
+#bind point attr_name float16 // matrix, 32-bit
+#bind point attr_name float64 // 64 sized tuple, 32-bit
+#bind point attr_name float?  // automatic size, 32-bit
+#bind point attr_name half    // float, 16-bit
+#bind point attr_name double  // float, 64-bit
+#bind point attr_name fpreal  // float, automatic precision
 
 @KERNEL {
     // ...
@@ -460,7 +438,13 @@ Integer types add 2 arguments to the kernel: the length of the array, and the ar
 #### @-bindings version
 
 ```cpp
-#bind point attr_name int
+#bind point attr_name int   // integer, 32-bit
+#bind point attr_name int2  // 2 sized integer tuple, 32-bit
+#bind point attr_name int3  // 3 sized integer tuple, 32-bit
+#bind point attr_name int?  // automatic size, 32-bit
+#bind point attr_name short // integer, 16-bit
+#bind point attr_name long  // integer, 64-bit
+#bind point attr_name exint // integer, automatic precision
 
 @KERNEL {
     // ...
@@ -1254,6 +1238,31 @@ One solution is making a copy of `@P`, named `@tmpP` below. You can use one copy
 
 | [Download the HIP file!](./hips/example1_basics.hiplc) |
 | --- |
+
+## Changing multiple geometry streams at once
+
+In a DOP solver, OpenCL can change multiple geometry streams at the same time within the same kernel.
+
+It's all data at the end of the day, it doesn't really matter what the data belongs to.
+
+The number of workitems stays the same though, so it's only useful when both geometry have the same number of elements, like points or primitives.
+
+<img src="./images/multisolver_opencl.png" width="700">
+
+| [Download the HIP file!](./hips/multisolver_opencl.hiplc) |
+| --- |
+
+```cpp
+#runover attrib
+#bind point &Cd1 name=Cd geo=Geometry float3
+#bind point &Cd2 name=Cd geo=Geometry2 float3
+
+@KERNEL
+{
+    @Cd1.set((float3)(1.0f, 0.0f, 0.0f));
+    @Cd2.set((float3)(0.0f, 1.0f, 0.0f));
+}
+```
 
 ## Tuples
 
