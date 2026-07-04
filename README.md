@@ -2448,8 +2448,8 @@ Inigo Quilez wrote a [great article](https://iquilezles.org/articles/voronoiline
 I translated his shader into OpenCL below, using MaterialX noises from the Fractal Noise node.
 
 <p align="left">
-	<img src="./images/cops/cops_voronoi_lines.png" width="30%">
-	<img src="./images/cops/cops_voronoi_lines2.png" width="30%">
+	<img src="./images/cops/cops_voronoi_lines.png" width="45%">
+	<img src="./images/cops/cops_voronoi_lines2.png" width="45%">
 </p>
 
 | [Download the HIP file!](./hips/cops/cops_voronoi_lines.hiplc) |
@@ -2618,8 +2618,8 @@ An alternative to the above is giving each cell a unique ID to its neighbours, l
 This means ID to SDF can be used to find the edges, giving clean edges even in 3D.
 
 <p align="left">
-	<img src="./images/cops/cops_voronoi_ids.png" width="30%">
-	<img src="./images/cops/cops_voronoi_ids2.png" width="30%">
+	<img src="./images/cops/cops_voronoi_ids.png" width="45%">
+	<img src="./images/cops/cops_voronoi_ids2.png" width="45%">
 </p>
 
 | [Download the HIP file!](./hips/cops/cops_voronoi_ids.hiplc) |
