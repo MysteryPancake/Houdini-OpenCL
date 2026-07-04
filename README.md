@@ -2345,9 +2345,11 @@ Highly customizable voronoi with different metrics (euclidean, manhattan, chebys
 
 I used brute force to find the nearest point. For better performance, use [jump flooding](https://www.shadertoy.com/view/4XlyW8) or the Eikonal node instead.
 
-<img src="./images/cops/cops_voronoi1.webp" width="30%"></img>
-<img src="./images/cops/cops_voronoi2.webp" width="30%"></img>
-<img src="./images/cops/cops_voronoi3.webp" width="30%"></img>
+<p align="left">
+	<img src="./images/cops/cops_voronoi1.webp" width="30%">
+	<img src="./images/cops/cops_voronoi2.webp" width="30%">
+	<img src="./images/cops/cops_voronoi3.webp" width="30%">
+</p>
 
 | [Download the HIP file!](./hips/cops/cops_voronoi.hiplc) |
 | --- |
@@ -2444,6 +2446,11 @@ float distance_metric(float3 r, int metric, float power)
 Inigo Quilez wrote a [great article](https://iquilezles.org/articles/voronoilines/) on getting consistent edge distances from voronoi.
 
 I translated his shader into OpenCL below, using MaterialX noises from the Fractal Noise node.
+
+<p align="left">
+	<img src="./images/cops/cops_voronoi_lines.png" width="30%">
+	<img src="./images/cops/cops_voronoi_lines2.png" width="30%">
+</p>
 
 | [Download the HIP file!](./hips/cops/cops_voronoi_lines.hiplc) |
 | --- |
@@ -2609,6 +2616,11 @@ The 3D version doesn't look as clean, since it gets sliced to 2D. A better alter
 An alternative to the above is giving each cell a unique ID to its neighbours, like graph coloring.
 
 This means ID to SDF can be used to find the edges, giving clean edges even in 3D.
+
+<p align="left">
+	<img src="./images/cops/cops_voronoi_ids.png" width="30%">
+	<img src="./images/cops/cops_voronoi_ids2.png" width="30%">
+</p>
 
 | [Download the HIP file!](./hips/cops/cops_voronoi_ids.hiplc) |
 | --- |
