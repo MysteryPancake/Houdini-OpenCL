@@ -2443,7 +2443,7 @@ float distance_metric(float3 r, int metric, float power)
 
 ## Copernicus: Voronoi Lines
 
-Inigo Quilez wrote a [great article](https://iquilezles.org/articles/voronoilines/) on getting consistent edge distances from voronoi.
+Inigo Quilez wrote a [great article](https://iquilezles.org/articles/voronoilines/) on getting a clean SDF for voronoi edge distances.
 
 I translated his shader into OpenCL below, using MaterialX noises from the Fractal Noise node.
 
