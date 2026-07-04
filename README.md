@@ -2371,28 +2371,28 @@ I used brute force to find the nearest point. For better performance, use [jump 
 // Each point may have a different minkowski power (-1 to use default)
 #bind point ?power float port=points val=-1
 
-float distance_metric(float3 a, float3 b, int metric, float power)
+float distance_metric(float3 r, int metric, float power)
 {
     switch (metric)
     {
         case 0: // Euclidean (circular)
         default:
         {
-            return distance(a, b);
+            return length(r);
         }
         case 1: // Manhattan (diamond)
         {
-            float3 d = fabs(a - b);
+            float3 d = fabs(r);
             return d.x + d.y + d.z;
         }
         case 2: // Chebyshev (square)
         {
-            float3 d = fabs(a - b);
+            float3 d = fabs(r);
             return max(d.x, max(d.y, d.z));
         }
         case 3: // Minkowski (power 1 = manhattan, 2 = euclidean)
         {
-            float3 d = fabs(a - b);
+            float3 d = fabs(r);
             float sum = pow(d.x, power) + pow(d.y, power) + pow(d.z, power);
             return pow(sum, 1.0f / power);
         }
@@ -2409,8 +2409,8 @@ float distance_metric(float3 a, float3 b, int metric, float power)
     int metric_default = @metric_default;
     float power_default = @power_default;
     float max_dist = @max_distance;
-
-	// Find the nearest point using brute force
+    
+    // Find the nearest point using brute force
     // Use jump flooding for better performance (shadertoy.com/view/4XlyW8)
     for (int i = 0; i < len; ++i)
     {
@@ -2425,7 +2425,7 @@ float distance_metric(float3 a, float3 b, int metric, float power)
         float power = @power.getAt(i);
         if (power < 0) power = power_default;
         
-        float dist = distance_metric(p, @P.world, metric, power) / speed - offset;
+        float dist = distance_metric(p - @P.world, metric, power) / speed - offset;
         if (dist < min(nearest_dist, max_dist))
         {
             nearest_id = i;
