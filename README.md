@@ -2439,6 +2439,341 @@ float distance_metric(float3 r, int metric, float power)
 }
 ```
 
+## Copernicus: Voronoi Lines
+
+Inigo Quilez wrote a [great article](https://iquilezles.org/articles/voronoilines/) on getting consistent edge distances from voronoi.
+
+I translated his shader into OpenCL below, using MaterialX noises from the Fractal Noise node.
+
+| [Download the HIP file!](./hips/cops/cops_voronoi_lines.hiplc) |
+| --- |
+
+### 2D version
+
+```cpp
+#import <mtlx_noise_internal.h>
+
+#bind layer pos? float2
+#bind layer !&sdf float
+
+#bind parm scale float2
+#bind parm offset float2
+#bind parm period float2
+#bind parm jitter float2
+
+// From https://iquilezles.org/articles/voronoilines
+@KERNEL
+{
+#if @pos.bound
+    float2 pos = @pos.xy;
+#else
+    float2 pos = @P;
+#endif
+    int2 period = convert_int2(@period);
+    float2 pw = (pos - @offset) / @scale;
+    int2 p = convert_int2(floor(pw));
+    int X, Y;
+    float2 f = (float2)(mx_floorfrac(pw.x, &X), mx_floorfrac(pw.y, &Y));
+    int2 mb;
+    float2 mr;
+    
+    // Search neighbours for the nearest point
+    float res = 8.0f;
+    for (int x = -1; x <= 1; x++)
+    {
+        for (int y = -1; y <= 1; y++)
+        {
+            int2 b = (int2)(x, y);
+            float3 tmp = mx_cell_noise_float3_2(convert_float2(p + b), period);
+            float2 off = (tmp.xy - 0.5f) * @jitter + 0.5f;
+            float2 r = convert_float2(b) + off - f;
+            float d = dot(r, r);
+            if (d < res)
+            {
+                res = d;
+                mr = r;
+                mb = b;
+            }
+        }
+    }
+
+    // Search for nearest bisector plane
+    res = 8.0f;
+    for (int x = -2; x <= 2; x++)
+    {
+        for (int y = -2; y <= 2; y++)
+        {
+            int2 b = mb + (int2)(x, y);
+            float3 tmp = mx_cell_noise_float3_2(convert_float2(p + b), period);
+            float2 off = (tmp.xy - 0.5f) * @jitter + 0.5f;
+            float2 r = convert_float2(b) + off - f;
+            float2 delta = r - mr;
+            
+            // Skip the closest point itself
+            if (dot(delta, delta) > 1e-5)
+            {
+                float d = dot(0.5f * (mr + r), normalize(delta));
+                res = min(res, d);
+            }
+        }
+    }
+
+    @sdf.set(res);
+}
+```
+
+### 3D version
+
+The 3D version doesn't look as clean, since it gets sliced to 2D. A better alternative is [voronoi IDs](#copernicus-voronoi-ids).
+
+```cpp
+#import <mtlx_noise_internal.h>
+
+#bind layer pos? float3
+#bind layer !&sdf float
+
+#bind parm scale float3
+#bind parm offset float3
+#bind parm period float3
+#bind parm jitter float3
+
+// From https://iquilezles.org/articles/voronoilines
+@KERNEL
+{
+#if @pos.bound
+    float3 pos = @pos.xyz;
+#else
+    float3 pos = @P.world;
+#endif
+    int3 period = convert_int3(@period);
+    float3 pw = (pos - @offset) / @scale;
+    int3 p = convert_int3(floor(pw));
+    int X, Y, Z;
+    float3 f = (float3)(mx_floorfrac(pw.x, &X), mx_floorfrac(pw.y, &Y), mx_floorfrac(pw.z, &Z));
+    int3 mb;
+    float3 mr;
+
+    // Search neighbours for the nearest point
+    float res = 12.0f;
+    for (int x = -1; x <= 1; x++)
+    {
+        for (int y = -1; y <= 1; y++)
+        {
+            for (int z = -1; z <= 1; z++)
+            {
+                int3 b = (int3)(x, y, z);
+                float3 off = mx_cell_noise_float3_3(convert_float3(p + b), period);
+                off = (off - 0.5f) * @jitter + 0.5f;
+                float3 r = convert_float3(b) + off - f;
+                float d = dot(r, r);
+                if (d < res)
+                {
+                    res = d;
+                    mr = r;
+                    mb = b;
+                }
+            }
+        }
+    }
+    
+    // Search for nearest bisector plane
+    res = 12.0f;
+    for (int x = -3; x <= 3; x++)
+    {
+        for (int y = -3; y <= 3; y++)
+        {
+            for (int z = -3; z <= 3; z++)
+            {
+                int3 b = mb + (int3)(x, y, z);
+                float3 off = mx_cell_noise_float3_3(convert_float3(p + b), period);
+                off = (off - 0.5f) * @jitter + 0.5f;
+                float3 r = convert_float3(b) + off - f;
+                float3 delta = r - mr;
+                
+                // Skip the closest point itself
+                if (dot(delta, delta) > 1e-5)
+                {
+                    float d = dot(0.5f * (mr + r), normalize(delta));
+                    res = min(res, d);
+                }
+            }
+        }
+    }
+    
+    @sdf.set(res);
+}
+```
+
+## Copernicus: Voronoi IDs
+
+An alternative to the above is giving each cell a unique ID to its neighbours, like graph coloring.
+
+This means ID to SDF can be used to find the edges, giving clean edges even in 3D.
+
+| [Download the HIP file!](./hips/cops/cops_voronoi_ids.hiplc) |
+| --- |
+
+### 2D version
+
+```cpp
+#import <mtlx_noise_internal.h>
+
+#bind layer pos? float2
+#bind layer !&id int
+
+#bind parm scale float2
+#bind parm offset float2
+#bind parm period float2
+#bind parm jitter float2
+#bind parm metric int
+
+float distance_metric(float2 r, int metric)
+{
+    switch (metric)
+    {
+        case 0: // Euclidean (circular)
+        default:
+        {
+            return length(r);
+        }
+        case 1: // Manhattan (diamond)
+        {
+            float2 d = fabs(r);
+            return d.x + d.y;
+        }
+        case 2: // Chebyshev (square)
+        {
+            float2 d = fabs(r);
+            return max(d.x, d.y);
+        }
+    }
+}
+
+@KERNEL
+{
+#if @pos.bound
+    float2 pos = @pos.xy;
+#else
+    float2 pos = @P;
+#endif
+    int2 period = convert_int2(@period);
+    float2 pw = (pos - @offset) / @scale;
+    int2 p = convert_int2(floor(pw));
+    int X, Y;
+    float2 f = (float2)(mx_floorfrac(pw.x, &X), mx_floorfrac(pw.y, &Y));
+    
+    // Search neighbours for the nearest point
+    int2 mb;
+    float2 mr;
+    float res = 8.0f;
+    for (int x = -1; x <= 1; x++)
+    {
+        for (int y = -1; y <= 1; y++)
+        {
+            int2 b = (int2)(x, y);
+            float3 tmp = mx_cell_noise_float3_2(convert_float2(p + b), period);
+            float2 off = (tmp.xy - 0.5f) * @jitter + 0.5f;
+            float2 r = convert_float2(b) + off - f;
+            float d = distance_metric(r, @metric);
+            if (d < res)
+            {
+                res = d;
+                mr = r;
+                mb = b;
+            }
+        }
+    }
+    
+    // Tile IDs in a 3x3 pattern to prevent collisions
+    int2 cell = p + mb;
+    int2 m = ((cell % 3) + 3) % 3;
+    int id = m.x + m.y * 3;
+    @id.set(id);
+}
+```
+
+### 3D version
+
+```cpp
+#import <mtlx_noise_internal.h>
+
+#bind layer pos? float3
+#bind layer !&id int
+
+#bind parm scale float3
+#bind parm offset float3
+#bind parm period float3
+#bind parm jitter float3
+#bind parm metric int
+
+float distance_metric(float3 r, int metric)
+{
+    switch (metric)
+    {
+        case 0: // Euclidean (circular)
+        default:
+        {
+            return length(r);
+        }
+        case 1: // Manhattan (diamond)
+        {
+            float3 d = fabs(r);
+            return d.x + d.y + d.z;
+        }
+        case 2: // Chebyshev (square)
+        {
+            float3 d = fabs(r);
+            return max(d.x, max(d.y, d.z));
+        }
+    }
+}
+
+@KERNEL
+{
+#if @pos.bound
+    float3 pos = @pos.xyz;
+#else
+    float3 pos = @P.world;
+#endif
+    int3 period = convert_int3(@period);
+    float3 pw = (pos - @offset) / @scale;
+    int3 p = convert_int3(floor(pw));
+    int X, Y, Z;
+    float3 f = (float3)(mx_floorfrac(pw.x, &X), mx_floorfrac(pw.y, &Y), mx_floorfrac(pw.z, &Z));
+    
+    // Search neighbours for the nearest point
+    int3 mb;
+    float3 mr;
+    float res = 12.0f;
+    for (int x = -1; x <= 1; x++)
+    {
+        for (int y = -1; y <= 1; y++)
+        {
+            for (int z = -1; z <= 1; z++)
+            {
+                int3 b = (int3)(x, y, z);
+                float3 off = mx_cell_noise_float3_3(convert_float3(p + b), period);
+                off = (off - 0.5f) * @jitter + 0.5f;
+                float3 r = convert_float3(b) + off - f;
+                float d = distance_metric(r, @metric);
+                if (d < res)
+                {
+                    res = d;
+                    mr = r;
+                    mb = b;
+                }
+            }
+        }
+    }
+    
+    // Tile IDs in a 3x3 pattern to prevent collisions
+    int3 cell = p + mb;
+    int3 m = ((cell % 3) + 3) % 3;
+    int id = m.x + m.y * 3 + m.z * 9;
+    @id.set(id);
+}
+```
+
 ## Copernicus: Brute Force Convolution
 
 Copernicus has a Convolve 3x3 node, but sometimes 3x3 isn't enough. This node takes an image kernel as a kernel, then convolves each pixel.
