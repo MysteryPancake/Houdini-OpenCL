@@ -2356,21 +2356,21 @@ I used brute force to find the nearest point. For better performance, use [jump 
 
 ```cpp
 #bind parm metric_default int
-// To animate the expansion, remove if no animation is needed
 #bind parm max_distance float val=1
 #bind parm power_default float val=2
 
-#bind layer ?src val=0 int
+#bind layer ?pos float3
 #bind layer !&id int
 #bind layer !&sdf float
+
 #bind point points float3 port=points name=P
-// Each point may offset its distance to take priority
+// Each point can offset its distance to take priority
 #bind point ?offset float port=points val=0
-// Each point may speed itself up
+// Each point can speed itself up
 #bind point ?speed float port=points val=1
-// Each point may have a different metric (-1 to use default)
+// Each point can have a different metric (-1 to use default)
 #bind point ?metric int port=points val=-1
-// Each point may have a different minkowski power (-1 to use default)
+// Each point can have a different minkowski power (-1 to use default)
 #bind point ?power float port=points val=-1
 
 float distance_metric(float3 r, int metric, float power)
@@ -2403,9 +2403,11 @@ float distance_metric(float3 r, int metric, float power)
 
 @KERNEL
 {
-    int nearest_id = INT_MIN;
-    float nearest_dist = FLT_MAX;
-    
+#if @pos.bound
+    float3 pos = @pos.xyz;
+#else
+    float3 pos = @P.world;
+#endif
     // To avoid recomputation
     int len = @points.len;
     int metric_default = @metric_default;
@@ -2413,11 +2415,13 @@ float distance_metric(float3 r, int metric, float power)
     float max_dist = @max_distance;
     
     // Find the nearest point using brute force
-    // Use jump flooding for better performance (shadertoy.com/view/4XlyW8)
+    // Try jump flooding for better performance (shadertoy.com/view/4XlyW8)
+    int nearest_id = INT_MIN;
+    float nearest_dist = FLT_MAX;
+    
     for (int i = 0; i < len; ++i)
     {
-        float3 p = @points.getAt(i);
-        
+        float3 p = @points.getAt(i) - pos;
         float speed = @speed.getAt(i);
         float offset = @offset.getAt(i);
         
@@ -2427,7 +2431,7 @@ float distance_metric(float3 r, int metric, float power)
         float power = @power.getAt(i);
         if (power < 0) power = power_default;
         
-        float dist = distance_metric(p - @P.world, metric, power) / speed - offset;
+        float dist = distance_metric(p, metric, power) / speed - offset;
         if (dist < min(nearest_dist, max_dist))
         {
             nearest_id = i;
