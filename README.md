@@ -2377,23 +2377,19 @@ I used brute force to find the nearest point. For better performance, use [jump 
 | --- |
 
 ```cpp
-#bind parm metric_default int
-#bind parm max_distance float val=1
-#bind parm power_default float val=2
-
 #bind layer ?pos float3
 #bind layer !&id int
 #bind layer !&sdf float
 
 #bind point points float3 port=points name=P
 // Each point can offset its distance to take priority
-#bind point ?offset float port=points val=0
-// Each point can speed itself up
+#bind point ?pscale float port=points val=0.1
+// Each point can speed itself up, making the SDF non-euclidean
 #bind point ?speed float port=points val=1
-// Each point can have a different metric (-1 to use default)
-#bind point ?metric int port=points val=-1
-// Each point can have a different minkowski power (-1 to use default)
-#bind point ?power float port=points val=-1
+// Each point can have a different metric
+#bind point ?metric int port=points val=0
+// Each point can have a different Minkowski power
+#bind point ?power float port=points val=2
 
 float distance_metric(float3 r, int metric, float power)
 {
@@ -2414,7 +2410,7 @@ float distance_metric(float3 r, int metric, float power)
             float3 d = fabs(r);
             return max(d.x, max(d.y, d.z));
         }
-        case 3: // Minkowski (power 1 = manhattan, 2 = euclidean)
+        case 3: // Minkowski (power 1 = manhattan, 2 = euclidean, inf = chebyshev)
         {
             float3 d = fabs(r);
             float sum = pow(d.x, power) + pow(d.y, power) + pow(d.z, power);
@@ -2430,39 +2426,31 @@ float distance_metric(float3 r, int metric, float power)
 #else
     float3 pos = @P.world;
 #endif
-    // To avoid recomputation
+
+    int nearest_id = INT_MIN;
+    float nearest_dist = FLT_MAX;
     int len = @points.len;
-    int metric_default = @metric_default;
-    float power_default = @power_default;
-    float max_dist = @max_distance;
     
     // Find the nearest point using brute force
     // Try jump flooding for better performance (shadertoy.com/view/4XlyW8)
-    int nearest_id = INT_MIN;
-    float nearest_dist = FLT_MAX;
-    
     for (int i = 0; i < len; ++i)
     {
         float3 p = @points.getAt(i) - pos;
+        float pscale = @pscale.getAt(i);
         float speed = @speed.getAt(i);
-        float offset = @offset.getAt(i);
-        
         int metric = @metric.getAt(i);
-        if (metric < 0) metric = metric_default;
-        
         float power = @power.getAt(i);
-        if (power < 0) power = power_default;
-        
-        float dist = distance_metric(p, metric, power) / speed - offset;
-        if (dist < min(nearest_dist, max_dist))
+
+        float dist = distance_metric(p, metric, power) / speed - pscale;
+        if (dist < nearest_dist)
         {
-            nearest_id = i;
             nearest_dist = dist;
+            if (dist < 0.0f) nearest_id = i;
         }
     }
-    
+
     @id.set(nearest_id);
-    // This SDF is only valid for euclidean distance with no speed change
+    // The SDF is non-euclidean, but the the isosurface is at 0
     @sdf.set(nearest_dist);
 }
 ```
