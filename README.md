@@ -4045,6 +4045,8 @@ I tried a few approaches with different speeds. Sadly they're all brute forced, 
 
 **UPDATE: [SideFX added BVH functions to OpenCL!](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags) The examples below have been updated with the BVH equivalent!**
 
+Sadly the BVH versions run slower on my machine. Hopefully this will be fixed later.
+
 <img src="./images/cops/rasterize_points.png" width="800">
 
 | [Download the HIP file!](./hips/cops/rasterize_points.hiplc) |
