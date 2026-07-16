@@ -4041,7 +4041,9 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 
 Inside The Mind wanted to find a way to rasterize points to an SDF, respecting repeated tiling.
 
-I tried a few approaches with different speeds. Sadly they're all brute forced, since I don't know how to access the point cloud's BVH in OpenCL.
+I tried a few approaches with different speeds. Sadly they're all brute forced, since BVH acceleration isn't available in OpenCL yet.
+
+**UPDATE: [SideFX added BVH functions to OpenCL!](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags) The examples below have been updated with the BVH equivalent!**
 
 <img src="./images/cops/rasterize_points.png" width="800">
 
@@ -4098,9 +4100,9 @@ This requires 9 distance samples in total, making it the slowest approach.
 
 A faster way is generating the SDF without checking neighbours, then using the Eikonal node to repair the edges.
 
-Ideally you could use a BVH to avoid looping over every point, but I'm not sure this is possible yet.
-
 <img src="./images/cops/rasterize_points_eikonal.png" width="400">
+
+#### Without BVH acceleration
 
 ```cpp
 #bind layer &layer float
@@ -4120,6 +4122,21 @@ Ideally you could use a BVH to avoid looping over every point, but I'm not sure 
     }
 
     @layer.set(sdf); // Raw SDF distance
+}
+```
+
+#### With BVH acceleration
+
+```cpp
+// Requires Houdini 22 for BVH functions
+#bind layer &layer float
+#bind point points name=P float3 pointbvh
+
+@KERNEL
+{
+    float3 p = @P.world;
+    float3 near_p = @points.minpos(p);
+    @layer.set(distance(p, near_p)); // Raw SDF distance
 }
 ```
 
