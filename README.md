@@ -4102,7 +4102,7 @@ A faster way is generating the SDF without checking neighbours, then using the E
 
 <img src="./images/cops/rasterize_points_eikonal.png" width="400">
 
-#### Without BVH acceleration
+#### Without BVH functions
 
 ```cpp
 #bind layer &layer float
@@ -4110,13 +4110,13 @@ A faster way is generating the SDF without checking neighbours, then using the E
 
 @KERNEL
 {
-    float2 uv = @P;
+    float3 uv = @P.world;
     float sdf = FLT_MAX;
-    
     int count = @points.len;
+    
     for (int i = 0; i < count; ++i)
     {
-        float2 p = @points.getAt(i).xy;
+        float3 p = @points.getAt(i);
         float dist = distance(uv, p);
         sdf = min(dist, sdf); // SDF union
     }
@@ -4125,7 +4125,7 @@ A faster way is generating the SDF without checking neighbours, then using the E
 }
 ```
 
-#### With BVH acceleration
+#### With BVH functions
 
 ```cpp
 // Requires Houdini 22 for BVH functions
