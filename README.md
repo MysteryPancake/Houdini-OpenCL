@@ -2027,7 +2027,7 @@ More information can be found by going to the "Generated Code" tab and clicking 
 
 Say you wanted to store the distance from each pixel to the nearest point, to make an SDF or voronoi diagram.
 
-<img src="./images/cops/bvh_points.png" width="500">
+<img src="./images/cops/bvh_points.png" width="450">
 
 | [Download the HIP file!](./hips/cops/bvh_nearpoint.hiplc) |
 | --- |
@@ -2076,7 +2076,7 @@ With BVH acceleration, this is much faster and easier:
 
 The same code works with surfaces too, just use `bvh` rather than `pointbvh`.
 
-<img src="./images/cops/bvh_surface.png" width="500">
+<img src="./images/cops/bvh_surface.png" width="450">
 
 | [Download the HIP file!](./hips/cops/bvh_nearsurface.hiplc) |
 | --- |
@@ -2092,6 +2092,44 @@ The same code works with surfaces too, just use `bvh` rather than `pointbvh`.
     float3 near_p = @points.minpos(p); // BVH accelerated
     @layer.set(distance(p, near_p)); // Raw SDF distance
 }
+```
+
+### `xyzdist()` with BVH acceleration
+
+`xyzdist()` returns the nearest primitive ID and primitive UV coordinate, just like in VEX.
+
+`primuv()` doesn't exist yet so I used `minpos()` to get the nearest position. If you really need `primuv()`, [I remade it here](https://github.com/MysteryPancake/Houdini-Fun/blob/main/Primuv_Xyzdist.md).
+
+<img src="./images/bvh_xyzdist.png" width="450">
+
+| [Download the HIP file!](./hips/bvh_xyzdist.hiplc) |
+| --- |
+
+```cpp
+// Requires Houdini 22
+#bind point &P float3
+#bind point &Cd float3
+#bind point pts name=P float3 input=1 bvh
+
+@KERNEL
+{
+    uint prim;
+    float3 uv;
+    @pts.xyzdist(@P, prim, uv);
+    
+    // closestpttriangle() currently returns the wrong primitive UV coordiantes, corrected below
+    float3 p = @pts.minpos(@P);
+    @P.set(p);
+    @Cd.set((float3)(uv.y, uv.z, 0));
+}
+```
+
+This is equivalent to the following VEX:
+
+```cpp
+int prim;
+xyzdist(1, v@P, prim, v@Cd);
+v@P = primuv(1, "P", prim, v@Cd);
 ```
 
 ## Converting ShaderToy to Copernicus
