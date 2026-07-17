@@ -4148,6 +4148,51 @@ This doesn't produce fully accurate results, but it's slightly faster than the E
 
 <img src="./images/cops/rasterize_points_edge.png" width="400">
 
+#### With BVH acceleration
+
+```cpp
+#bind layer &layer float
+#bind point points name=P float3 pointbvh
+
+@KERNEL
+{
+    float3 p = @P.world;
+    float3 near_p = @points.minpos(p);
+    @layer.set(distance(p, near_p)); // Raw SDF distance
+}
+
+@WRITEBACK
+{
+    if (@layer.border != 3) return; // Only repair SDF when the border mode is Wrap
+
+    float sdf = @layer;
+    int2 p = @ixy;
+    int2 res = @res;
+    
+    // Calculate wrap distances and edge coordinates
+    int2 near_edge = (int2)(p.x < res.x/2, p.y < res.y/2);
+    int2 wrap = (int2)(near_edge.x ? p.x : res.x - p.x, near_edge.y ? p.y : res.y - p.y);
+    int2 edge_coord = (int2)(near_edge.x ? res.x-1 : 0, near_edge.y ? res.y-1 : 0);
+    float2 spacing = convert_float2(wrap) * @dPdxy;
+    
+    // Horizontal wrap edge distances
+    float sdf_x = @layer.bufferIndex((int2)(edge_coord.x, p.y));
+    sdf = min(sdf, sqrt(sdf_x*sdf_x + spacing.x*spacing.x));
+    
+    // Vertical wrap edge distances
+    float sdf_y = @layer.bufferIndex((int2)(p.x, edge_coord.y));
+    sdf = min(sdf, sqrt(sdf_y*sdf_y + spacing.y*spacing.y));
+    
+    // Diagonal wrap edge distances
+    float sdf_diag = @layer.bufferIndex(edge_coord);
+    sdf = min(sdf, sqrt(sdf_diag*sdf_diag + spacing.x*spacing.x + spacing.y*spacing.y));
+    
+    @layer.set(sdf);
+}
+```
+
+#### Without BVH acceleration
+
 ```cpp
 #bind layer &layer float
 #bind point points name=P float3
