@@ -1981,6 +1981,11 @@ The BVH diagram above is by [Judy Mai and Vivian Wang](https://vivi321.github.io
 
 Say you wanted to store the distance from each pixel to the nearest point, to make an SDF or voronoi diagram.
 
+<img src="./images/cops/bvh_points.png" width="500">
+
+| [Download the HIP file!](./hips/cops/bvh_example.hiplc) |
+| --- |
+
 The brute force approach would be looping over every point:
 
 ```cpp
@@ -2006,22 +2011,20 @@ The brute force approach would be looping over every point:
 
 With BVH acceleration, this is much faster and easier.
 
-Simply add `pointbvh` to any binding to use `xyzdist()`, `nearpoint()` and `nearpoints()` just like in VEX:
+Simply add `pointbvh` to any binding to use `minpos()`, `nearpoint()` and `nearpoints()` just like in VEX:
 
 ```cpp
+// Requires Houdini 22 for BVH functions
 #bind layer &layer float
 #bind point points name=P float3 pointbvh
 
 @KERNEL
 {
     float3 p = @P.world;
-    float3 near_p = @points.minpos(p);
+    float3 near_p = @points.minpos(p); // BVH accelerated
     @layer.set(distance(p, near_p)); // Raw SDF distance
 }
 ```
-
-| [Download the HIP file!](./hips/cops/bvh_example.hiplc) |
-| --- |
 
 [See the Point Rasterizing example](#copernicus-point-rasterizing) for more information.
 
