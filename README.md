@@ -2117,7 +2117,7 @@ The same code works with surfaces too, just use `bvh` rather than `pointbvh`.
     float3 uv;
     @pts.xyzdist(@P, prim, uv);
     
-    // closestpttriangle() currently returns the wrong primitive UV coordiantes, corrected below
+    // closestpttriangle() currently returns the wrong primuv coordinates, corrected below
     float3 p = @pts.minpos(@P);
     @P.set(p);
     @Cd.set((float3)(uv.y, uv.z, 0));
