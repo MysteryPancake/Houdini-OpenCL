@@ -4056,6 +4056,45 @@ This requires 9 distance samples in total, making it the slowest approach.
 
 <img src="./images/cops/rasterize_points_neighbours.png" width="400">
 
+#### With BVH acceleration
+
+```cpp
+// Requires Houdini 22 for BVH functions
+#bind layer &layer float
+#bind point points name=P float3 pointbvh
+
+@KERNEL
+{
+    float3 p = @P.world;
+    float2 size = @dPdxy * convert_float2(@res);
+    float sdf = FLT_MAX;
+
+    if (@layer.border == 3)
+    {
+        // Brute force approach, check all 8 neighbouring tiles
+        for (int x = -1; x <= 1; ++x)
+        {
+            for (int y = -1; y <= 1; ++y)
+            {
+                float3 offset = p + (float3)((float2)(x, y) * size, 0.0f);
+                float3 near_p = @points.minpos(offset);
+                float dist = distance(offset, near_p);
+                sdf = min(sdf, dist); // SDF union
+            }
+        }
+    }
+    else
+    {
+        float3 near_p = @points.minpos(p);
+        sdf = distance(p, near_p);
+    }
+
+    @layer.set(sdf);
+}
+```
+
+#### Without BVH acceleration
+
 ```cpp
 #bind layer &layer float
 #bind point points name=P float3
@@ -4067,23 +4106,22 @@ This requires 9 distance samples in total, making it the slowest approach.
     float sdf = FLT_MAX;
     int count = @points.len;
     
-    if (@layer.border == 3) {
-        // Brute force approach, check all 8 neighbouring tiles
-        for (int i = 0; i < count; ++i)
-        {
-            float2 p = @points.getAt(i).xy;
+    // Brute force approach, check all 8 neighbouring tiles
+    for (int i = 0; i < count; ++i)
+    {
+        float2 p = @points.getAt(i).xy;
+        if (@layer.border == 3) {
             for (int x = -1; x <= 1; ++x)
             {
                 for (int y = -1; y <= 1; ++y)
                 {
-                    float2 offset = (float2)(x,y) * size;
+                    float2 offset = (float2)(x, y) * size;
                     float dist = distance(uv, p + offset);
                     sdf = min(dist, sdf); // SDF union
                 }
             }
         }
-    } else {
-        for (int i = 0; i < count; ++i)
+        else
         {
             float2 p = @points.getAt(i).xy;
             sdf = min(sdf, distance(uv, p));
@@ -4149,6 +4187,7 @@ This doesn't produce fully accurate results, but it's slightly faster than the E
 #### With BVH acceleration
 
 ```cpp
+// Requires Houdini 22 for BVH functions
 #bind layer &layer float
 #bind point points name=P float3 pointbvh
 
@@ -4199,8 +4238,8 @@ This doesn't produce fully accurate results, but it's slightly faster than the E
 {
     float3 uv = @P.world;
     float sdf = FLT_MAX;
-    
     int count = @points.len;
+    
     for (int i = 0; i < count; ++i)
     {
         float3 p = @points.getAt(i);
