@@ -4039,9 +4039,7 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 
 Inside The Mind wanted to find a way to rasterize points to an SDF, respecting repeated tiling.
 
-I tried a few approaches with different speeds. Sadly they're all brute forced, since BVH acceleration isn't available in OpenCL yet.
-
-**UPDATE: [SideFX added BVH functions to OpenCL!](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags) The examples below have been updated with the BVH equivalent!**
+I tried a few approaches with different speeds. [SideFX added BVH functions to OpenCL](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags), so I included the BVH equivalent.
 
 Sadly the BVH versions run slower on my machine. Hopefully this will be fixed later.
 
@@ -4058,6 +4056,45 @@ This requires 9 distance samples in total, making it the slowest approach.
 
 <img src="./images/cops/rasterize_points_neighbours.png" width="400">
 
+#### With BVH acceleration
+
+```cpp
+// Requires Houdini 22 for BVH functions
+#bind layer &layer float
+#bind point points name=P float3 pointbvh
+
+@KERNEL
+{
+    float3 p = @P.world;
+    float2 size = @dPdxy * convert_float2(@res);
+    float sdf = FLT_MAX;
+
+    if (@layer.border == 3)
+    {
+        // Brute force approach, check all 8 neighbouring tiles
+        for (int x = -1; x <= 1; ++x)
+        {
+            for (int y = -1; y <= 1; ++y)
+            {
+                float3 offset = p + (float3)((float2)(x, y) * size, 0.0f);
+                float3 near_p = @points.minpos(offset);
+                float dist = distance(offset, near_p);
+                sdf = min(sdf, dist); // SDF union
+            }
+        }
+    }
+    else
+    {
+        float3 near_p = @points.minpos(p);
+        sdf = distance(p, near_p);
+    }
+
+    @layer.set(sdf);
+}
+```
+
+#### Without BVH acceleration
+
 ```cpp
 #bind layer &layer float
 #bind point points name=P float3
@@ -4067,20 +4104,18 @@ This requires 9 distance samples in total, making it the slowest approach.
     float2 uv = @P;
     float2 size = @dPdxy * convert_float2(@res);
     float sdf = FLT_MAX;
-
     int count = @points.len;
+    
+    // Brute force approach, check all 8 neighbouring tiles
     for (int i = 0; i < count; ++i)
     {
         float2 p = @points.getAt(i).xy;
-        
-        if (@layer.border == 3) // Wrap
-        {
-            // Brute force approach, check all 8 neighbouring tiles
+        if (@layer.border == 3) {
             for (int x = -1; x <= 1; ++x)
             {
                 for (int y = -1; y <= 1; ++y)
                 {
-                    float2 offset = (float2)(x,y) * size;
+                    float2 offset = (float2)(x, y) * size;
                     float dist = distance(uv, p + offset);
                     sdf = min(dist, sdf); // SDF union
                 }
@@ -4088,6 +4123,7 @@ This requires 9 distance samples in total, making it the slowest approach.
         }
         else
         {
+            float2 p = @points.getAt(i).xy;
             sdf = min(sdf, distance(uv, p));
         }
     }
@@ -4148,19 +4184,65 @@ This doesn't produce fully accurate results, but it's slightly faster than the E
 
 <img src="./images/cops/rasterize_points_edge.png" width="400">
 
+#### With BVH acceleration
+
+```cpp
+// Requires Houdini 22 for BVH functions
+#bind layer &layer float
+#bind point points name=P float3 pointbvh
+
+@KERNEL
+{
+    float3 p = @P.world;
+    float3 near_p = @points.minpos(p);
+    @layer.set(distance(p, near_p)); // Raw SDF distance
+}
+
+@WRITEBACK
+{
+    if (@layer.border != 3) return; // Only repair SDF when the border mode is Wrap
+
+    float sdf = @layer;
+    int2 p = @ixy;
+    int2 res = @res;
+    
+    // Calculate wrap distances and edge coordinates
+    int2 near_edge = (int2)(p.x < res.x/2, p.y < res.y/2);
+    int2 wrap = (int2)(near_edge.x ? p.x : res.x - p.x, near_edge.y ? p.y : res.y - p.y);
+    int2 edge_coord = (int2)(near_edge.x ? res.x-1 : 0, near_edge.y ? res.y-1 : 0);
+    float2 spacing = convert_float2(wrap) * @dPdxy;
+    
+    // Horizontal wrap edge distances
+    float sdf_x = @layer.bufferIndex((int2)(edge_coord.x, p.y));
+    sdf = min(sdf, sqrt(sdf_x*sdf_x + spacing.x*spacing.x));
+    
+    // Vertical wrap edge distances
+    float sdf_y = @layer.bufferIndex((int2)(p.x, edge_coord.y));
+    sdf = min(sdf, sqrt(sdf_y*sdf_y + spacing.y*spacing.y));
+    
+    // Diagonal wrap edge distances
+    float sdf_diag = @layer.bufferIndex(edge_coord);
+    sdf = min(sdf, sqrt(sdf_diag*sdf_diag + spacing.x*spacing.x + spacing.y*spacing.y));
+    
+    @layer.set(sdf);
+}
+```
+
+#### Without BVH acceleration
+
 ```cpp
 #bind layer &layer float
 #bind point points name=P float3
 
 @KERNEL
 {
-    float2 uv = @P;
+    float3 uv = @P.world;
     float sdf = FLT_MAX;
-    
     int count = @points.len;
+    
     for (int i = 0; i < count; ++i)
     {
-        float2 p = @points.getAt(i).xy;
+        float3 p = @points.getAt(i);
         float dist = distance(uv, p);
         sdf = min(dist, sdf); // SDF union
     }
