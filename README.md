@@ -2002,8 +2002,6 @@ For plain OpenCL, you can toggle bindings for each attribute in the Bindings tab
 
 <img src="./images/opencl_bvh.png" width="500">
 
-Note `bvh` only works on triangles at the moment, so you must triangulate the mesh beforehand.
-
 `bvh` generates these functions:
 
 - `@P.xyzdist(pos, closetri, closeuv)`
@@ -2012,6 +2010,8 @@ Note `bvh` only works on triangles at the moment, so you must triangulate the me
 - `@P.minpos_max(pos, tmax)`
 - `@P.closest_idx(pos, closetri)`
 - `@P.closest_idx_max(pos, tmax, closetri)`
+
+Note `bvh` only works on triangles at the moment, so you must triangulate the mesh beforehand.
 
 `pointbvh` generates these functions:
 
