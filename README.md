@@ -379,7 +379,9 @@ For debugging, you can force all `fpreal` and `exint` variables to a certain pre
 ```cpp
 // Force variables to use double precision
 #define USE_DOUBLE
+```
 
+```cpp
 // Force variables to use long precision
 #define USE_LONG
 ```
@@ -1977,18 +1979,28 @@ This is great for SDFs, collision handling, raytracing and anything else involvi
 
 The BVH diagram above is by [Judy Mai and Vivian Wang](https://vivi321.github.io/418).
 
+### @-bindings version
+
 To enable the new BVH functions, simply add `bvh` or `pointbvh` after any point binding:
 
 ```cpp
 // Enable the surface BVH functions
 #bind point &P float3 bvh
-
+```
+```cpp
 // Enable the point BVH functions
 #bind point &P float3 pointbvh
-
+```
+```cpp
 // Enable both the surface and point BVH functions
 #bind point &P float3 bvh pointbvh
 ```
+
+### Plain OpenCL version
+
+For plain OpenCL, you can toggle bindings for each attribute in the Bindings tab:
+
+<img src="./images/opencl_bvh.png" width="500">
 
 Note `bvh` only works on triangles at the moment, so you must triangulate the mesh beforehand.
 
