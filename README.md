@@ -2098,7 +2098,9 @@ The same code works with surfaces too, just use `bvh` rather than `pointbvh`.
 
 `xyzdist()` returns the nearest primitive ID and primitive UV coordinate, just like in VEX.
 
-`primuv()` doesn't exist yet so I used `minpos()` to get the nearest position. If you really need `primuv()`, [I remade it here](https://github.com/MysteryPancake/Houdini-Fun/blob/main/Primuv_Xyzdist.md).
+`primuv()` doesn't exist yet, so I used `minpos()` to get the nearest position instead.
+
+[If you really need it, I remade `primuv()` in VEX and OpenCL](https://github.com/MysteryPancake/Houdini-Fun/blob/main/Primuv_Xyzdist.md).
 
 <img src="./images/bvh_xyzdist.png" width="450">
 
