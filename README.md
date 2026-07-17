@@ -1965,6 +1965,66 @@ kernel void kernelName(
 }
 ```
 
+## BVH acceleration
+
+[SideFX added BVH acceleration to OpenCL in Houdini 22!](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags)
+
+BVH acceleration divides space into regions, allowing large amount of space to be skipped for better performance.
+
+This is great for SDFs, collision handling, raytracing and anything else involving surface intersection.
+
+<img src="./images/bvh_diagram.png" width="600">
+
+The BVH diagram above is by [Judy Mai and Vivian Wang](https://vivi321.github.io/418).
+
+### SDFs with BVH acceleration
+
+Say you wanted to store the distance from each pixel to the nearest point, to make an SDF or voronoi diagram.
+
+The brute force approach would be looping over every point:
+
+```cpp
+#bind layer &layer float
+#bind point points name=P float3
+
+@KERNEL
+{
+    float3 uv = @P.world;
+    float sdf = FLT_MAX;
+    
+    int count = @points.len;
+    for (int i = 0; i < count; ++i)
+    {
+        float3 p = @points.getAt(i);
+        float dist = distance(uv, p);
+        sdf = min(dist, sdf); // SDF union
+    }
+
+    @layer.set(sdf); // Raw SDF distance
+}
+```
+
+With BVH acceleration, this is much faster and easier.
+
+Simply add `pointbvh` to any binding to use `xyzdist()`, `nearpoint()` and `nearpoints()` just like in VEX:
+
+```cpp
+#bind layer &layer float
+#bind point points name=P float3 pointbvh
+
+@KERNEL
+{
+    float3 p = @P.world;
+    float3 near_p = @points.minpos(p);
+    @layer.set(distance(p, near_p)); // Raw SDF distance
+}
+```
+
+| [Download the HIP file!](./hips/cops/bvh_example.hiplc) |
+| --- |
+
+[See the Point Rasterizing example](#copernicus-point-rasterizing) for more information.
+
 ## Converting ShaderToy to Copernicus
 
 Copernicus mainly uses OpenCL. Sadly no one outside Houdini really uses OpenCL for graphics programming.
@@ -4039,11 +4099,7 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 
 Inside The Mind wanted to find a way to rasterize points to an SDF, respecting repeated tiling.
 
-[SideFX added BVH acceleration to OpenCL in Houdini 22](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags).
-
-BVH acceleration divides space into regions, allowing large amount of space to be skipped for better performance.
-
-This is perfect for rasterizing points, since it avoids having to loop through all points to find the nearest.
+[BVH acceleration is perfect for this](#bvh-acceleration), since it avoids having to loop through all points to find the nearest.
 
 <img src="./images/cops/rasterize_points.png" width="800">
 
