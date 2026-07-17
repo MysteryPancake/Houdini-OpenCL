@@ -4039,9 +4039,7 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 
 Inside The Mind wanted to find a way to rasterize points to an SDF, respecting repeated tiling.
 
-I tried a few approaches with different speeds. Sadly they're all brute forced, since BVH acceleration isn't available in OpenCL yet.
-
-**UPDATE: [SideFX added BVH functions to OpenCL!](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags) The examples below have been updated with the BVH equivalent!**
+I tried a few approaches with different speeds. [SideFX added BVH functions to OpenCL](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags), so I included the BVH equivalent.
 
 Sadly the BVH versions run slower on my machine. Hopefully this will be fixed later.
 
@@ -4067,15 +4065,13 @@ This requires 9 distance samples in total, making it the slowest approach.
     float2 uv = @P;
     float2 size = @dPdxy * convert_float2(@res);
     float sdf = FLT_MAX;
-
     int count = @points.len;
-    for (int i = 0; i < count; ++i)
-    {
-        float2 p = @points.getAt(i).xy;
-        
-        if (@layer.border == 3) // Wrap
+    
+    if (@layer.border == 3) {
+        // Brute force approach, check all 8 neighbouring tiles
+        for (int i = 0; i < count; ++i)
         {
-            // Brute force approach, check all 8 neighbouring tiles
+            float2 p = @points.getAt(i).xy;
             for (int x = -1; x <= 1; ++x)
             {
                 for (int y = -1; y <= 1; ++y)
@@ -4086,8 +4082,10 @@ This requires 9 distance samples in total, making it the slowest approach.
                 }
             }
         }
-        else
+    } else {
+        for (int i = 0; i < count; ++i)
         {
+            float2 p = @points.getAt(i).xy;
             sdf = min(sdf, distance(uv, p));
         }
     }
@@ -4199,13 +4197,13 @@ This doesn't produce fully accurate results, but it's slightly faster than the E
 
 @KERNEL
 {
-    float2 uv = @P;
+    float3 uv = @P.world;
     float sdf = FLT_MAX;
     
     int count = @points.len;
     for (int i = 0; i < count; ++i)
     {
-        float2 p = @points.getAt(i).xy;
+        float3 p = @points.getAt(i);
         float dist = distance(uv, p);
         sdf = min(dist, sdf); // SDF union
     }
