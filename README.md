@@ -2009,7 +2009,7 @@ Note `bvh` only works on triangles at the moment, so you must triangulate the me
 - `@P.minpos(pos)`
 - `@P.minpos_max(pos, tmax)`
 
-More info can be found by clicking on "Generated Code > Generate Kernel" and scrolling down.
+More information can be found by going to the "Generated Code" tab and clicking "Generate Kernel".
 
 ### Nearest point with BVH acceleration
 
