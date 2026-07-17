@@ -1967,7 +1967,7 @@ kernel void kernelName(
 
 ## BVH acceleration
 
-[SideFX added BVH acceleration to OpenCL in Houdini 22!](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags)
+[SideFX recently added BVH acceleration to OpenCL](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags)!
 
 BVH acceleration divides space into regions, allowing large amount of space to be skipped for better performance.
 
@@ -1976,6 +1976,40 @@ This is great for SDFs, collision handling, raytracing and anything else involvi
 <img src="./images/bvh_diagram.png" width="600">
 
 The BVH diagram above is by [Judy Mai and Vivian Wang](https://vivi321.github.io/418).
+
+To enable the new BVH functions, simply add `bvh` or `pointbvh` after any point binding:
+
+```cpp
+// Enable the surface BVH functions
+#bind point &P float3 bvh
+
+// Enable the point BVH functions
+#bind point &P float3 pointbvh
+
+// Enable both the surface and point BVH functions
+#bind point &P float3 bvh pointbvh
+```
+
+Note `bvh` only works on triangles at the moment, so you must triangulate the mesh beforehand.
+
+`bvh` generates these functions:
+
+- `@P.xyzdist(pos, closetri, closeuv)`
+- `@P.xyzdist_max(pos, tmax, closetri, closeuv)`
+- `@P.minpos(pos)`
+- `@P.minpos_max(pos, tmax)`
+- `@P.closest_idx(pos, closetri)`
+- `@P.closest_idx_max(pos, tmax, closetri)`
+
+`pointbvh` generates these functions:
+
+- `@P.nearpoint(pos, closedist)`
+- `@P.nearpoint_max(pos, tmax, closedist)`
+- `@P.nearpoints(pos, tmax, indices, dists, k)`
+- `@P.minpos(pos)`
+- `@P.minpos_max(pos, tmax)`
+
+More info can be found by clicking on "Generated Code > Generate Kernel" and scrolling down.
 
 ### Nearest point with BVH acceleration
 
@@ -2009,9 +2043,7 @@ The brute force approach would be looping over every point:
 }
 ```
 
-With BVH acceleration, this is much faster and easier.
-
-Simply add `pointbvh` to any binding to use `minpos()`, `nearpoint()` and `nearpoints()` just like in VEX:
+With BVH acceleration, this is much faster and easier:
 
 ```cpp
 // Requires Houdini 22 for BVH functions
@@ -2030,9 +2062,7 @@ Simply add `pointbvh` to any binding to use `minpos()`, `nearpoint()` and `nearp
 
 ### Nearest surface with BVH acceleration
 
-The same code works with surfaces too, just use `bvh` rather than `pointbvh`. This lets you use `minpos()`, `xyzdist()` and `closest_idx()`.
-
-Note `bvh` only works on triangles at the moment, so you need to triangulate the mesh beforehand.
+The same code works with surfaces too, just use `bvh` rather than `pointbvh`.
 
 <img src="./images/cops/bvh_surface.png" width="500">
 
