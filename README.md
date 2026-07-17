@@ -4039,9 +4039,11 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 
 Inside The Mind wanted to find a way to rasterize points to an SDF, respecting repeated tiling.
 
-I tried a few approaches with different speeds. [SideFX added BVH functions to OpenCL](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags), so I included the BVH equivalent.
+[SideFX added BVH acceleration to OpenCL in Houdini 22](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags).
 
-Sadly the BVH versions run slower on my machine. Hopefully this will be fixed later.
+BVH acceleration divides space into regions, allowing large amount of space to be skipped for better performance.
+
+This is perfect for rasterizing points, since it avoids having to loop through all points to find the nearest.
 
 <img src="./images/cops/rasterize_points.png" width="800">
 
