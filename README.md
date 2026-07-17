@@ -2028,6 +2028,30 @@ Simply add `pointbvh` to any binding to use `minpos()`, `nearpoint()` and `nearp
 
 [See the Point Rasterizing example](#copernicus-point-rasterizing) for more information.
 
+#### Nearest surface with BVH acceleration
+
+The same works with surfaces too, just replace `pointbvh` with `bvh`. This gives you `xyzdist()` and `closest_idx()`.
+
+<img src="./images/cops/bvh_surface.png" width="500">
+
+| [Download the HIP file!](./hips/cops/bvh_nearsurface.hiplc) |
+| --- |
+
+Note `bvh` only works on triangles at the moment, so the mesh must be triangulated beforehand:
+
+```cpp
+// Requires Houdini 22 for BVH functions
+#bind layer &layer float
+#bind point points name=P float3 bvh
+
+@KERNEL
+{
+    float3 p = @P.world;
+    float3 near_p = @points.minpos(p); // BVH accelerated
+    @layer.set(distance(p, near_p)); // Raw SDF distance
+}
+```
+
 ## Converting ShaderToy to Copernicus
 
 Copernicus mainly uses OpenCL. Sadly no one outside Houdini really uses OpenCL for graphics programming.
