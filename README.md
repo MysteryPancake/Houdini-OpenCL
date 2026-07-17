@@ -1977,13 +1977,13 @@ This is great for SDFs, collision handling, raytracing and anything else involvi
 
 The BVH diagram above is by [Judy Mai and Vivian Wang](https://vivi321.github.io/418).
 
-### SDFs with BVH acceleration
+### Nearest point with BVH acceleration
 
 Say you wanted to store the distance from each pixel to the nearest point, to make an SDF or voronoi diagram.
 
 <img src="./images/cops/bvh_points.png" width="500">
 
-| [Download the HIP file!](./hips/cops/bvh_example.hiplc) |
+| [Download the HIP file!](./hips/cops/bvh_nearpoint.hiplc) |
 | --- |
 
 The brute force approach would be looping over every point:
