@@ -1969,7 +1969,7 @@ kernel void kernelName(
 
 ## BVH acceleration
 
-[SideFX recently added BVH acceleration to OpenCL](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#feature-flags)!
+SideFX recently added [BVH acceleration to OpenCL](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#attribute-binding-methods)!
 
 BVH acceleration divides space into regions, allowing large amount of space to be skipped for better performance.
 
