@@ -1998,7 +1998,7 @@ To enable the new BVH functions, simply add `bvh` or `pointbvh` after any point 
 
 ### Plain OpenCL version
 
-For plain OpenCL, you can toggle bindings for each attribute in the Bindings tab:
+For regular bindings, you can toggle BVH acceleration in the Bindings tab:
 
 <img src="./images/opencl_bvh.png" width="500">
 
