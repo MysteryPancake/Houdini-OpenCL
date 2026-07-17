@@ -2028,7 +2028,7 @@ Simply add `pointbvh` to any binding to use `minpos()`, `nearpoint()` and `nearp
 
 [See the Point Rasterizing example](#copernicus-point-rasterizing) for more information.
 
-#### Nearest surface with BVH acceleration
+### Nearest surface with BVH acceleration
 
 The same code works with surfaces too, just use `bvh` rather than `pointbvh`. This lets you use `minpos()`, `xyzdist()` and `closest_idx()`.
 
