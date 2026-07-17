@@ -2021,7 +2021,7 @@ Note `bvh` only works on triangles at the moment, so you must triangulate the me
 - `@P.minpos(pos)`
 - `@P.minpos_max(pos, tmax)`
 
-More information can be found by going to the "Generated Code" tab and clicking "Generate Kernel".
+More info can be found in the [Houdini documentation](https://www.sidefx.com/docs/houdini22.0/vex/ocl.html#attribute-binding-methods).
 
 ### Nearest point with BVH acceleration
 
