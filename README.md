@@ -2030,14 +2030,14 @@ Simply add `pointbvh` to any binding to use `minpos()`, `nearpoint()` and `nearp
 
 #### Nearest surface with BVH acceleration
 
-The same works with surfaces too, just replace `pointbvh` with `bvh`. This gives you `xyzdist()` and `closest_idx()`.
+The same code works with surfaces too, just use `bvh` rather than `pointbvh`. This lets you use `minpos()`, `xyzdist()` and `closest_idx()`.
+
+Note `bvh` only works on triangles at the moment, so you need to triangulate the mesh beforehand.
 
 <img src="./images/cops/bvh_surface.png" width="500">
 
 | [Download the HIP file!](./hips/cops/bvh_nearsurface.hiplc) |
 | --- |
-
-Note `bvh` only works on triangles at the moment, so the mesh must be triangulated beforehand:
 
 ```cpp
 // Requires Houdini 22 for BVH functions
