@@ -2383,7 +2383,7 @@ static fpreal2 rotate2D(fpreal2 pos, fpreal angle)
 
 Copernicus doesn't support deep comp yet, but you can blend two RGBA layers based on their depth maps.
 
-This shader supports transparency on both layers, and even lets you smooth the transition.
+This shader supports transparency on both layers, and also lets you smooth out the transition.
 
 <img src="./images/cops/deep_merge.png" width="350">
 
