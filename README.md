@@ -2391,7 +2391,7 @@ This shader supports transparency on both layers, and also lets you smooth out t
 | --- |
 
 ```cpp
-#bind parm depth_softness val=0.01 float
+#bind parm softness val=0.01 float
 #bind layer bg val=0 float4
 #bind layer bg_depth? val=0 float
 #bind layer fg? val=0 float4
@@ -2405,13 +2405,13 @@ This shader supports transparency on both layers, and also lets you smooth out t
     float4 bg = @bg;
     float fg_z_raw = @fg_depth;
     float bg_z_raw = @bg_depth;
-    float softness = @depth_softness;
+    float softness = @softness;
 
     // 0 depth means no data, treat it as infinitely far away
     float fg_z_for_order = fg_z_raw == 0.0f ? FLT_MAX : fg_z_raw;
     float bg_z_for_order = bg_z_raw == 0.0f ? FLT_MAX : bg_z_raw;
     float diff = bg_z_for_order - fg_z_for_order;
-    float fg_front_a = clamp(diff / (2.0f * softness) + 0.5f, 0.0f, 1.0f);
+    float fg_front_a = clamp(diff / softness + 0.5f, 0.0f, 1.0f);
 
     // Blend FG/BG both ways, swap between them by depth
     float4 fg_over_bg = fg + bg * (1.0f - fg.w);
