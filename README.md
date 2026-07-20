@@ -2385,6 +2385,8 @@ Copernicus doesn't support deep comp yet, but you can blend two RGBA layers base
 
 This shader supports transparency on both layers, and also lets you smooth out the transition.
 
+**UPDATE: I found out the [Z Composite node](https://www.sidefx.com/docs/houdini/nodes/cop/zcomp.html) does this already!**
+
 <img src="./images/cops/deep_merge.png" width="350">
 
 | [Download the HIP file!](./hips/cops/deep_merge.hiplc) |
