@@ -69,9 +69,9 @@ You can set the OpenCL device in `Edit > Preferences > Miscellaneous`. It defaul
 
 <img src="./images/opencl_device.png" width="400">
 
-Whenever you use OpenCL, it copies data from the host (the CPU running Houdini) to the OpenCL device (typically a GPU).
+Whenever you use OpenCL, it copies data from the host device (the CPU running Houdini) to the OpenCL device (typically a GPU).
 
-Once all OpenCL operations are complete, it copies data back to the host again.
+Once all operations are complete, it copies data back to the host device again.
 
 Copying lots of data is slow and can overflow the device's memory, causing errors like `CL_OUT_OF_RESOURCES`.
 
