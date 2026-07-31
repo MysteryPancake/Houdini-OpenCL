@@ -69,7 +69,7 @@ You can set the OpenCL device in `Edit > Preferences > Miscellaneous`. It defaul
 
 <img src="./images/opencl_device.png" width="400">
 
-Whenever you use OpenCL, it copies data from the host (the CPU running Houdini) to the OpenCL device.
+Whenever you use OpenCL, it copies data from the host (the CPU running Houdini) to the OpenCL device (typically a GPU).
 
 Once all OpenCL operations are complete, it copies data back to the host again.
 
