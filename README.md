@@ -4255,7 +4255,7 @@ Using atomics, you can rasterize particles directly to the image buffer for incr
 
 This technique was originally created and shared by [Lewis Saunders](https://github.com/lcrs/_.hips#ls_cop3gpuparticles_v01hipnc).
 
-I added new features to the version below, including bounds checking, bilinear interpolation and projection from 3D to 2D.
+I added new features including bounds checking, bilinear interpolation and 3D camera projection.
 
 This is a faster alternative to the rasterization method described in the [Points to SDF section](#copernicus-points-to-sdf).
 
