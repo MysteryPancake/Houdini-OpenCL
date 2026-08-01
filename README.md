@@ -4267,8 +4267,14 @@ This is a faster alternative to the rasterization method described in the [Point
 ```cpp
 #bind parm brightness float val=0.01
 
+// Negative colors are allowed, but produce strange results
 #bind layer pos float3
 #bind layer ?Cd float3 val=1
+
+// We're writing to @dst, but need to run over the pixels of @pos
+// To force OpenCL to do this, mark a dummy binding as first writable
+// The @dummy binding takes metadata from @pos so it has the proper size
+#bind layer &?dummy int
 #bind layer &dst float4
 
 // atomic_add() only works on ints, floats need custom handling
