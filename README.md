@@ -4269,7 +4269,7 @@ This is a faster alternative to the rasterization method described in the [Point
 
 // Negative colors are allowed, but produce strange results
 #bind layer pos float3
-#bind layer ?Cd float3 val=1
+#bind layer ?Cd float4 val=1
 
 // We're writing to @dst, but need to run over the pixels of @pos
 // To force OpenCL to do this, mark a dummy binding as first writable
@@ -4291,11 +4291,13 @@ inline void atomic_add_f(volatile __global float* addr, const float val) {
     #endif
 }
 
-// Skipping alpha for now, since we don't know the compositing order
-inline void atomic_add_rgb(global float *addr, float3 color, float weight) {
+inline void atomic_add_rgb(global float *addr, float4 color, float weight) {
     atomic_add_f(addr + 0, color.r * weight);
     atomic_add_f(addr + 1, color.g * weight);
     atomic_add_f(addr + 2, color.b * weight);
+#ifdef USE_ALPHA
+    atomic_add_f(addr + 3, color.a * weight);
+#endif
 }
 
 @KERNEL {
@@ -4325,7 +4327,7 @@ inline void atomic_add_rgb(global float *addr, float3 color, float weight) {
     bool inX1 = pos.x+1 >= 0 && pos.x+1 < @dst.xres;
     bool inY1 = pos.y+1 >= 0 && pos.y+1 < @dst.yres;
     
-    float3 color = @Cd * @brightness;
+    float4 color = @Cd * @brightness;
     if (inX0 && inY0) atomic_add_rgb(addr, color, w0.x*w0.y);
     if (inX1 && inY0) atomic_add_rgb(addr + strideX, color, w1.x*w0.y);
     if (inX0 && inY1) atomic_add_rgb(addr + strideY, color, w0.x*w1.y);
