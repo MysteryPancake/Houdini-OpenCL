@@ -4259,7 +4259,7 @@ I added new features including bounds checking, bilinear interpolation and 3D ca
 
 This is a fast alternative to the rasterization method in the [Points to SDF section](#copernicus-points-to-sdf).
 
-<img src="./images/cops/particle_rasterize_3d.webp" width="600">
+<img src="./images/cops/particle_rasterize_3d.webp" width="400">
 
 | [Download the HIP file!](./hips/cops/particle_rasterize_3d.hiplc) |
 | --- |
