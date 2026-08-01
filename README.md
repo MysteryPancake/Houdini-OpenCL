@@ -2070,7 +2070,7 @@ With BVH acceleration, this is much faster and easier:
 }
 ```
 
-[See the Point Rasterizing example](#copernicus-point-rasterizing) for more information.
+[See the Points to SDF example](#copernicus-points-to-sdf) for more information.
 
 ### Nearest surface with BVH acceleration
 
@@ -4249,7 +4249,7 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 }
 ```
 
-## Copernicus: Point Rasterizing
+## Copernicus: Points to SDF
 
 Inside The Mind wanted to find a way to rasterize points to an SDF, respecting repeated tiling.
 
