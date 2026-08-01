@@ -4249,6 +4249,84 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 }
 ```
 
+## Copernicus: Fast Particle Rasterization
+
+Using atomics, you can rasterize particles directly to the image buffer for incredible performance.
+
+This technique was originally created and shared by [Lewis Saunders](https://github.com/lcrs/_.hips#ls_cop3gpuparticles_v01hipnc).
+
+I added new features to the version below, including bounds checking, bilinear interpolation and projection from 3D to 2D.
+
+This is a faster alternative to the rasterization method described in the [Points to SDF section](#copernicus-points-to-sdf).
+
+<img src="./images/cops/particle_rasterize_3d.webp" width="600">
+
+| [Download the HIP file!](./hips/cops/particle_rasterize_3d.hiplc) |
+| --- |
+
+```cpp
+#bind parm brightness float val=0.01
+
+#bind layer pos float3
+#bind layer ?Cd float3 val=1
+#bind layer &dst float4
+
+// atomic_add() only works on ints, floats need custom handling
+// From violetspace.github.io/blog/atomic-float-addition-in-opencl.html
+inline void atomic_add_f(volatile __global float* addr, const float val) {
+    #if defined(cl_nv_pragma_unroll) // use hardware-supported atomic addition on Nvidia GPUs with inline PTX assembly
+        float ret; asm volatile("atom.global.add.f32 %0,[%1],%2;":"=f"(ret):"l"(addr),"f"(val):"memory");
+    #elif defined(__opencl_c_ext_fp32_global_atomic_add) // use hardware-supported atomic addition on some Intel GPUs
+        atomic_fetch_add_explicit((volatile global atomic_float*)addr, val, memory_order_relaxed);
+    #elif __has_builtin(__builtin_amdgcn_global_atomic_fadd_f32) // use hardware-supported atomic addition on some AMD GPUs
+        __builtin_amdgcn_global_atomic_fadd_f32(addr, val);
+    #else // fallback emulation: forums.developer.nvidia.com/t/atomicadd-float-float-atomicmul-float-float/14639/5
+        float old = val; while((old=atomic_xchg(addr, atomic_xchg(addr, 0.0f)+old))!=0.0f);
+    #endif
+}
+
+// Skipping alpha for now, since we don't know the compositing order
+inline void atomic_add_rgb(global float *addr, float3 color, float weight) {
+    atomic_add_f(addr + 0, color.r * weight);
+    atomic_add_f(addr + 1, color.g * weight);
+    atomic_add_f(addr + 2, color.b * weight);
+}
+
+@KERNEL {
+    // Each pixel in the @pos texture represents a particle at that position
+    // First transform the pixel's world space coordinate to image space
+    // This automatically handles camera transforms when a camera is connected
+    float2 imagePos  = @dst.worldToImage(@pos);
+    // Next transform from image space into buffer space, used by atomic_add()
+    float2 samplePos = @dst.imageToBuffer(imagePos) - 0.5f;
+    int2 pos = convert_int2(floor(samplePos));
+    
+    // Early exit if the entire particle isn't visible
+    if (pos.x+1 < 0 || pos.x >= @dst.xres || pos.y+1 < 0 || pos.y >= @dst.yres) return;
+    
+    // _linearIndex() returns a pixel index, scale by the channel count for RGBA
+    global float *addr = (global float *)@dst.data + _linearIndex(@dst.stat, pos) * @dst.channels;
+    int strideX = @dst.stat->stride_x * @dst.channels;
+    int strideY = @dst.stat->stride_y * @dst.channels;
+    
+    // Bilinearly interpolate the pixel coordinates to reduce aliasing
+    float2 f = samplePos - convert_float2(pos);
+    float2 w0 = 1.0f - f, w1 = f;
+    
+    // The particle is spread across a 2x2 region, skip offscreen parts
+    bool inX0 = pos.x >= 0 && pos.x < @xres;
+    bool inY0 = pos.y >= 0 && pos.y < @yres;
+    bool inX1 = pos.x+1 >= 0 && pos.x+1 < @xres;
+    bool inY1 = pos.y+1 >= 0 && pos.y+1 < @yres;
+    
+    float3 color = @Cd * @brightness;
+    if (inX0 && inY0) atomic_add_rgb(addr, color, w0.x*w0.y);
+    if (inX1 && inY0) atomic_add_rgb(addr + strideX, color, w1.x*w0.y);
+    if (inX0 && inY1) atomic_add_rgb(addr + strideY, color, w0.x*w1.y);
+    if (inX1 && inY1) atomic_add_rgb(addr + strideX + strideY, color, w1.x*w1.y);
+}
+```
+
 ## Copernicus: Points to SDF
 
 Inside The Mind wanted to find a way to rasterize points to an SDF, respecting repeated tiling.
