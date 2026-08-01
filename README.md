@@ -4314,10 +4314,10 @@ inline void atomic_add_rgb(global float *addr, float3 color, float weight) {
     float2 w0 = 1.0f - f, w1 = f;
     
     // The particle is spread across a 2x2 region, skip offscreen parts
-    bool inX0 = pos.x >= 0 && pos.x < @xres;
-    bool inY0 = pos.y >= 0 && pos.y < @yres;
-    bool inX1 = pos.x+1 >= 0 && pos.x+1 < @xres;
-    bool inY1 = pos.y+1 >= 0 && pos.y+1 < @yres;
+    bool inX0 = pos.x >= 0 && pos.x < @dst.xres;
+    bool inY0 = pos.y >= 0 && pos.y < @dst.yres;
+    bool inX1 = pos.x+1 >= 0 && pos.x+1 < @dst.xres;
+    bool inY1 = pos.y+1 >= 0 && pos.y+1 < @dst.yres;
     
     float3 color = @Cd * @brightness;
     if (inX0 && inY0) atomic_add_rgb(addr, color, w0.x*w0.y);
