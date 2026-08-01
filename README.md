@@ -4257,7 +4257,7 @@ This technique was originally created and shared by [Lewis Saunders](https://git
 
 I added new features including bounds checking, bilinear interpolation and 3D camera projection.
 
-This is a faster alternative to the rasterization method described in the [Points to SDF section](#copernicus-points-to-sdf).
+This is a fast alternative to the rasterization method in the [Points to SDF section](#copernicus-points-to-sdf).
 
 <img src="./images/cops/particle_rasterize_3d.webp" width="600">
 
