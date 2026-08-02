@@ -3510,7 +3510,7 @@ The difference between 1st and 2nd order is the number of velocity samples used.
 - 1st order uses 1 previous velocity sample: `v@v`.
 - 2nd order uses 3 previous velocity samples: `v@v`, `v@vprevious` and `v@vlast`.<br>It also uses 2 previous position samples: `v@pprevious` and `v@plast`.
 
-For simplicity, I'll just implement 1st order integration (BDF1) for now.
+For simplicity, I'll just implement 1st order integration for now.
 
 The code for 2nd order integration can be found in Vellum inside `point_update_2nd_order_fallback`.
 
@@ -3524,7 +3524,7 @@ v@pprevious = v@P;
 // Add gravity to velocity (Vellum uses a Gravity Force instead)
 v@v += chv("gravity") * f@TimeInc;
 
-// First order BDF1 integration (point_update_1st_order in the Vellum solver)
+// First order integration (point_update_1st_order in the Vellum solver)
 v@P += v@v * f@TimeInc;
 ```
 
@@ -3602,7 +3602,7 @@ Like with integration, the difference between 1st and 2nd order is the number of
 - 1st order uses 1 previous position sample: `v@pprevious`.
 - 2nd order uses 2 previous position samples: `v@pprevious`, `v@plast`.
 
-For simplicity, I'll just implement 1st order velocity recalculation (BDF1) for now.
+For simplicity, I'll just implement 1st order velocity recalculation for now.
 
 The code for 2nd order recalculation can be found in Vellum inside `calc_v_2nd_order_fallback`.
 
@@ -3610,7 +3610,7 @@ The code for 2nd order recalculation can be found in Vellum inside `calc_v_2nd_o
 // Skip pinned points
 if (point(-1, "mass", i@ptnum) <= 0.0) return;
 
-// First order BDF1 integration (calc_v_1st_order in the Vellum solver)
+// First order integration (calc_v_1st_order in the Vellum solver)
 v@v = (v@P - v@pprevious) / f@TimeInc;
 ```
 
@@ -3655,7 +3655,7 @@ The benefit of running it in OpenCL is the data stays on the OpenCL device. This
     v += @gravity * @TimeInc;
     @v.set(v);
     
-    // First order BDF1 integration (point_update_1st_order in the Vellum solver)
+    // First order integration (point_update_1st_order in the Vellum solver)
     @P.set(P + v * @TimeInc);
 }
 ```
@@ -3795,7 +3795,7 @@ This is exactly the same as in VEX, except the data stays on the OpenCL device.
     // Skip pinned points
     if (@mass <= 0.0f) return;
     
-    // First order BDF1 integration (calc_v_1st_order in the Vellum solver)
+    // First order integration (calc_v_1st_order in the Vellum solver)
     @v.set((@P - @pprevious) / @TimeInc);
 }
 ```
