@@ -1725,13 +1725,13 @@ Atomic operations prevent the overlaps seen above. They're slower since they red
 
 #### Atomic add
 
-One atomic operation is `atomic_add()`. It takes a pointer to an integer's memory address, and an integer to add to it.
+`atomic_add()` takes a pointer to an integer's memory address, and an integer to add to it.
 
-`atomic_add()` combines `read -> modify -> write -> make visible` into a single action, so nothing runs in between.
+`atomic_add()` combines `read -> write -> make visible` into a single action, so nothing runs in between.
 
 To be clear, atomics don't force everything to run in order (like barriers). They just prevent overlaps for a few actions at once.
 
-The rest still runs in parallel, so both of the orders below are possible:
+The rest still runs in parallel, so both orders below are possible:
 
 #### Order 1
 
@@ -1828,7 +1828,7 @@ local int sum;
 __local int sum;
 ```
 
-Local memory can be used for a similar purpose as atomics, but only within the current workgroup.
+Local memory can be used for a similar purpose as [atomics](#atomic-operations), but only within the current workgroup.
 
 OpenCL provides [workgroup reduction functions](https://registry.khronos.org/OpenCL/sdk/3.0/docs/man/html/workGroupFunctions.html) to use local memory for operations like addition, subtraction, min and max.
 
@@ -3816,14 +3816,14 @@ It uses jacobians and hessians for everything, so the math is confusing. If usin
 
 ## Copernicus: Sun Detection
 
-As well as global accumulation, workgroup reduction is useful for global min and max operations. This helps find the darkest or brightest parts of an image, like the sun in a HDRI.
+As well as global accumulation, [workgroup reduction](#workgroup-reduction) is useful for global min and max operations. This helps find the darkest or brightest parts of an image, like the sun in a HDRI.
 
 This is like Attribute Promote set to "Maximum" except it runs in parallel on the GPU, so the performance may be better.
 
 The process is the same as in [the previous example](#sop-laplacian-filter):
 
-1. Get the local max using workgroup reduction, this time using `work_group_reduce_max()` rather than `work_group_reduce_add3()`.
-2. Get the global max using atomics, this time using `atomic_max()` rather than `atomic_add()`.
+1. Get the local max using [workgroup reduction](#workgroup-reduction), this time using `work_group_reduce_max()` rather than `work_group_reduce_add3()`.
+2. Get the global max using [atomics](#atomic-operations), this time using `atomic_max()` rather than `atomic_add()`.
 3. Move the point to the biggest value in the writeback kernel, assuming only one value is the largest.
 
 <img src="./images/cops/workgroup_max.png" width="600">
@@ -3876,9 +3876,9 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 
 The Prefix Sum node is quite slow because it uses for loops rather than fully parallel code.
 
-Sadly it can't use workgroup reduction since it has to run horizontally and vertically. Workgroups aren't usually aligned to a spatial dimension.
+Sadly it can't use [workgroup reduction](#workgroup-reduction) since it has to run horizontally and vertically. Workgroups aren't usually aligned to a spatial dimension.
 
-Instead I tried iterative binary reduction, inspired by workgroup reduction. Each iteration takes 2 pixels next to eachother, does the operation and writes the result in a ping-pong way, [like Attribute Blur](#example-2-remaking-attribute-blur).
+Instead I tried iterative binary reduction, inspired by [workgroup reduction](#workgroup-reduction). Each iteration takes 2 pixels next to eachother, does the operation and writes the result in a ping-pong way, [like Attribute Blur](#example-2-remaking-attribute-blur).
 
 <img src="./images/cops/prefixsum_max.png">
 
@@ -4103,7 +4103,7 @@ The tricky part is masking. I found the mask can be applied beforehand to get th
 
 The Statistics and Equalize nodes are very slow since they use Prefix Sum.
 
-Although I optimized Prefix Sum above, it's orders of magnitude faster to use workgroup reduction!
+Although I optimized Prefix Sum above, it's orders of magnitude faster to use [workgroup reduction](#workgroup-reduction)!
 
 **EDIT: This was a bug fixed in Houdini 21.0.594. The performance is much closer now.**
 
@@ -4251,7 +4251,7 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 
 ## Copernicus: Fast Particle Rasterization
 
-Using atomics, you can rasterize particles directly to the image buffer for incredible performance.
+Using [atomics](#atomic-operations), you can rasterize particles directly to the image buffer for incredible performance.
 
 This technique was originally created and shared by [Lewis Saunders](https://github.com/lcrs/_.hips#ls_cop3gpuparticles_v01hipnc).
 
