@@ -3229,9 +3229,11 @@ f@surface = smin(dist, dist2, k);
 f@surface = opSubtraction(dist2, f@surface);
 ```
 
-## SOP: Laplacian Filter
+## SOP: Laplacian Frequency Filter
 
-The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) lets you break geometry into frequencies, similar to a fourier transform. You can exaggerate or reduce certain frequencies (eigenvectors) of the geometry for blurring and sharpening effects.
+The [Laplacian node](https://www.sidefx.com/docs/houdini//nodes/sop/laplacian.html) lets you break geometry into frequencies, like a fourier transform.
+
+You can exaggerate or reduce certain frequencies (eigenvectors) of the geometry for blurring and sharpening effects.
 
 This is based on [White Dog's Eigenspace Projection example](https://drive.google.com/drive/folders/1gFYlmsFgpeihmcqZLFITvYQIW5mpYyJd). It uses global sums in a feedback loop. Perfect candidate for OpenCL!
 
@@ -3240,7 +3242,7 @@ This is based on [White Dog's Eigenspace Projection example](https://drive.googl
      <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/hdas/laplacianfilter2.png" width="45%">
 </p>
 
-| [Download the HDA!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/hdas/laplacian_filter.hiplc) |
+| [Download the HDA!](https://github.com/MysteryPancake/Houdini-Fun/blob/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://github.com/MysteryPancake/Houdini-Fun/blob/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) |
 | --- | --- |
 
 Global sums are hard to compute in OpenCL due to [parallel processing headaches](#parallel-processing-headaches).
