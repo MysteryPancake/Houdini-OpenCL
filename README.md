@@ -3242,7 +3242,7 @@ This is based on [White Dog's Eigenspace Projection example](https://drive.googl
      <img src="https://raw.githubusercontent.com/MysteryPancake/Houdini-Fun/main/images/hdas/laplacianfilter2.png" width="45%">
 </p>
 
-| [Download the HDA!](https://github.com/MysteryPancake/Houdini-Fun/blob/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://github.com/MysteryPancake/Houdini-Fun/blob/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) |
+| [Download the HDA!](https://github.com/MysteryPancake/Houdini-Fun/blob/main/hdas/MysteryPancake.laplacian_filter.1.0.hdalc) | [Download the HIP file!](https://github.com/MysteryPancake/Houdini-Fun/blob/main/hdas/laplacian_filter.hiplc) |
 | --- | --- |
 
 Global sums are hard to compute in OpenCL due to [parallel processing headaches](#parallel-processing-headaches).
