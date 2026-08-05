@@ -4341,12 +4341,16 @@ inline void atomic_add_rgb(global float *addr, float4 color, float weight) {
 
 ## Copernicus: Fast Point Rasterization
 
-The rasterizer above also works on points after a simulation. For better performance, the simulation can be written in OpenCL too.
+The rasterizer above also works on points after a simulation.
+
+For better performance, the simulation can be written in OpenCL too.
 
 - Simulating in OpenCL is about 5-10x faster than using a POP solver.
 - Rasterizing in OpenCL is about 1.5-2x faster than viewing the simulation in viewport.
 
-Note the viewport renders much faster than OpenCL, yet the performance is worse if you use it. I think this happens because it forces data to be copied from GPU to CPU every frame, whereas OpenCL doesn't.
+Note the viewport renders much faster than OpenCL, yet the performance is worse if you use it.
+
+I think this happens because the viewport forces data from GPU to CPU every frame, whereas OpenCL stays on GPU.
 
 Below is simulating and rendering 10 million points. This runs at about 20 FPS on my machine.
 
