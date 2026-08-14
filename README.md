@@ -3033,9 +3033,9 @@ Note if the function has derivatives, there's analytical ways that may require l
 | [Download the HIP file!](./hips/cops/cops_graph.hiplc) |
 | --- |
 
-### 1. Baseline
+### 1. Baseline graph
 
-The base graph is based on a sine wave pattern with gradually increasing frequency.
+The baseline graph is based on a sine wave pattern with gradually increasing frequency.
 
 <img src="./images/cops/graph0.png">
 
