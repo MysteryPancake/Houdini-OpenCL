@@ -3012,6 +3012,227 @@ float distance_metric(float3 r, int metric)
 }
 ```
 
+## Copernicus: Graph plotting
+
+Conlen Breheny was wondering how to graph a function with antialiasing.
+
+There's a bunch of great Shadertoy articles and code on this topic, such as [this one by Xor](https://mini.gmshaders.com/p/antialiasing).
+
+The methods below are the most general purpose, sampling with a subpixel offset and averaging the results together (jittered AA).
+
+Note if the function has derivatives, there's analytical ways that may require less samples.
+
+<p align="left">
+	<img src="./images/cops/graph1.png">
+	<img src="./images/cops/graph2.png">
+	<br>
+	<img src="./images/cops/graph3.png">
+	<img src="./images/cops/graph4.png">
+</p>
+
+| [Download the HIP file!](./hips/cops/cops_graph.hiplc) |
+| --- |
+
+### 1. Baseline
+
+The base graph is based on a sine wave pattern with gradually increasing frequency.
+
+<img src="./images/cops/graph0.png">
+
+```cpp
+#bind parm frequency fpreal val=50
+#bind parm amplitude fpreal val=0.5
+#bind parm decay fpreal val=4
+#bind parm power fpreal val=1.25
+
+#bind layer src? val=0 fpreal
+#bind layer !&dst fpreal
+
+@KERNEL
+{
+    // Inspired by a spring (simple harmonic oscillator)
+    fpreal p = @P.texture.x;
+    fpreal wave = sin(pow(p, @power) * @frequency);
+    fpreal amp = exp(-@decay * p) * @amplitude;
+    @dst.set(wave * amp + 0.5f);
+}
+```
+
+This function has derivatives so it could be graphed in a smarter way, but for now assume it's just an image.
+
+The simplest way is to measure the distance to the line along the Y axis at each pixel.
+
+Sadly this has aliasing issues, because the conditional makes the blend extremely sharp.
+
+<img src="./images/cops/graph1.png">
+
+```cpp
+#bind parm line_width fpreal val=0.1
+
+#bind layer src fpreal val=0
+#bind layer !&dst fpreal
+
+@KERNEL
+{
+    // Sample the function at each corresponding pixel
+    fpreal2 uv = @P.texture;
+    fpreal value = @src.textureSample((fpreal2)(uv.x, 0.0f));
+    fpreal2 target = (fpreal2)(uv.x, value);
+    
+    // Sharp blend is due to the < conditional
+    float sdf = distance(uv, target) < @line_width;
+    @dst.set(sdf);
+}
+```
+
+### 2. Jittered AA
+
+A better approach is sampling with a random subpixel offset and averaging the results together.
+
+This is jittered antialiasing, and helps smooth out the harsh edge nicely.
+
+<img src="./images/cops/graph2.png">
+
+```cpp
+#bind parm samples int val=64
+#bind parm line_width fpreal val=0.1
+
+#bind layer src fpreal val=0
+#bind layer !&dst fpreal
+
+@KERNEL
+{
+    fpreal sum = 0.0f;
+    int samples = @samples;
+    
+    for (int i = 0; i < samples; ++i)
+    {
+        // Sample with subpixel offset (plastic ratio from github.com/MysteryPancake/Houdini-Fun#weyl-sequence)
+        float2 flr;
+        fpreal2 offset = fract((fpreal2)(0.754877669f, 0.569840296f) * i, &flr) - 0.5f;
+        fpreal2 uv = @P.texture + offset * @dPdxy.texture;
+        
+        fpreal value = @src.textureSample((fpreal2)(uv.x, 0.0f));
+        fpreal2 target = (fpreal2)(uv.x, value);
+
+        // Average a bunch of samples together
+        fpreal sdf = distance(uv, target) < @line_width;
+        sum += sdf / samples;
+    }
+
+    @dst.set(sum);
+}
+```
+
+### 3. Jittered AA with normals
+
+You can compute the curve's normal using derivatives, like the Trail node set to "Central Difference".
+
+The normal can give better results, but it tends to distort if the curve is too steep.
+
+<img src="./images/cops/graph3.png">
+
+```cpp
+#bind parm samples int val=64
+#bind parm line_width fpreal val=0.001
+
+#bind layer src fpreal val=0
+#bind layer !&dst fpreal
+
+@KERNEL
+{
+    float average = 0.0f;
+    int samples = @samples;
+    fpreal aa = length(@dPdxy.texture);
+    fpreal delta = fabs(@dPdx.texture.x);
+
+    for (int i = 0; i < samples; ++i)
+    {
+        // Sample with subpixel offset (plastic ratio from github.com/MysteryPancake/Houdini-Fun#weyl-sequence)
+        fpreal2 flr;
+        fpreal2 offset = fract((fpreal2)(0.754877669f, 0.569840296f) * i, &flr) - 0.5f;
+        fpreal2 uv = @P.texture + offset * @dPdxy.texture;
+
+        // Center sample
+        fpreal value = @src.textureSample((fpreal2)(uv.x, 0.0f));
+        fpreal2 p = (fpreal2)(uv.x, value);
+
+        // Central difference for the tangent
+        fpreal backward = @src.textureSample((fpreal2)(uv.x - delta * 0.5f, 0.0f));
+        fpreal forward = @src.textureSample((fpreal2)(uv.x + delta * 0.5f, 0.0f));
+        fpreal2 tangent = (fpreal2)(delta, forward - backward);
+        
+        // Use the cross product of the tangent as the line's normal
+        fpreal2 normal = normalize((fpreal2)(-tangent.y, tangent.x));
+        fpreal dist = fabs(dot(uv - p, normal));
+        fpreal line = (@line_width * 0.5f + aa - dist) / aa;
+        
+        // Average a bunch of samples together
+        average += clamp(line, 0.0f, 1.0f) / samples;
+    }
+    
+    @dst.set(average);
+}
+```
+
+### 4. Distance to line segment
+
+Another way is measuring the distance to a [2D line segment SDF](https://iquilezles.org/articles/distfunctions2d/).
+
+This keeps the width consistent and gives higher quality results.
+
+<img src="./images/cops/graph4.png">
+
+```cpp
+#bind parm samples int val=64
+#bind parm line_width fpreal val=0.001
+
+#bind layer src fpreal val=0
+#bind layer !&dst fpreal
+
+// From https://iquilezles.org/articles/distfunctions2d
+fpreal sdSegment(fpreal2 p, fpreal2 a, fpreal2 b)
+{
+    fpreal2 pa = p - a;
+    fpreal2 ba = b - a;
+    fpreal h = clamp(dot(pa, ba) / dot(ba, ba), 0.0f, 1.0f);
+    return length(pa - ba * h);
+}
+
+@KERNEL
+{
+    int samples = @samples;
+    fpreal aa = length(@dPdxy.texture);
+    fpreal half_width = @line_width * 0.5f;
+    fpreal search_radius = half_width + aa;
+
+    fpreal2 uv = @P.texture;
+    fpreal min_dist = FLT_MAX;
+    
+    for (int i = 0; i < samples; ++i)
+    {
+        // Sample with subpixel offset (plastic ratio from github.com/MysteryPancake/Houdini-Fun#weyl-sequence)
+        fpreal2 flr;
+        fpreal2 offset = fract((fpreal2)(0.754877669f, 0.569840296f) * i, &flr) - 0.5f;
+
+        // Offset to check neighbouring points
+        fpreal sx = uv.x + offset.x * 2.0f * search_radius;
+
+        // Build a short line segment on the curve
+        fpreal sx0 = sx - aa * 0.5f;
+        fpreal sx1 = sx + aa * 0.5f;
+        fpreal sy0 = @src.textureSample((fpreal2)(sx0, 0.5f)) + 0.5f;
+        fpreal sy1 = @src.textureSample((fpreal2)(sx1, 0.5f)) + 0.5f;
+        fpreal2 p0 = (fpreal2)(sx0, sy0);
+        fpreal2 p1 = (fpreal2)(sx1, sy1);
+        min_dist = min(min_dist, sdSegment(uv, p0, p1));
+    }
+    
+    fpreal line = (half_width + aa - min_dist) / aa;
+    @dst.set(clamp(line, 0.0f, 1.0f));
+}
+```
+
 ## Copernicus: Brute Force Convolution
 
 Copernicus has a Convolve 3x3 node, but sometimes 3x3 isn't enough. This node takes an image kernel as a kernel, then convolves each pixel.
