@@ -4474,11 +4474,9 @@ void atomic_max_float(volatile __global float *source, const float operand) {
 
 ## Copernicus: Fast Particle Rasterization
 
-Using [atomics](#atomic-operations), you can add particles directly to the image buffer.
+Using [atomics](#atomic-operations), you can add particles directly to the image buffer. This technique was originally by [Lewis Saunders](https://github.com/lcrs/_.hips#ls_cop3gpuparticles_v01hipnc).
 
 Normally you'd want to avoid atomics because they reduce parallelization, but in this case it's surprisingly fast.
-
-This technique was originally shared by [Lewis Saunders](https://github.com/lcrs/_.hips#ls_cop3gpuparticles_v01hipnc).
 
 I added new features including bounds checking, bilinear interpolation and 3D camera projection.
 
