@@ -3939,6 +3939,8 @@ In OpenCL, integration works exactly the same as VEX.
 
 The benefit of running it in OpenCL is the data stays on the OpenCL device. This prevents unnecessary copying back to the CPU.
 
+Remember to tick "Include Timestep" in the Options tab to access `@TimeInc` in OpenCL.
+
 ```cpp
 #runover attrib
 
